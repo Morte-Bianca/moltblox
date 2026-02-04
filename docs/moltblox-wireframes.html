@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moltblox Platform Wireframes</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #374151;
+    background: #fff;
+    line-height: 1.45;
+  }
+
+  /* ── Page / Print ─────────────────────────────────────── */
+  .page {
+    width: 1120px;
+    min-height: 780px;
+    margin: 0 auto 40px;
+    padding: 32px 40px 48px;
+    border: 1px solid #E5E7EB;
+    page-break-after: always;
+    position: relative;
+    background: #fff;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  @media print {
+    body { background: #fff; }
+    .page {
+      width: 100%;
+      border: none;
+      margin: 0;
+      padding: 24px 32px 36px;
+      page-break-after: always;
+    }
+    .page:last-child { page-break-after: auto; }
+    @page { size: A4 landscape; margin: 12mm; }
+  }
+
+  /* ── Typography ───────────────────────────────────────── */
+  .page-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0D9488;
+    margin-bottom: 4px;
+  }
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+  .page-route {
+    font-size: 12px;
+    color: #6B7280;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 18px;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  /* ── Wireframe Primitives ─────────────────────────────── */
+  .wire-box {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    background: #F9FAFB;
+    padding: 10px;
+    position: relative;
+  }
+  .wire-box--dashed {
+    border-style: dashed;
+    background: #F3F4F6;
+  }
+  .wire-box--dark {
+    background: #E5E7EB;
+  }
+  .wire-placeholder {
+    border: 1px dashed #D1D5DB;
+    background: #F3F4F6;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 11px;
+  }
+  .annotation {
+    font-size: 10px;
+    color: #0D9488;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .annotation-arrow {
+    display: inline-block;
+    color: #0D9488;
+    font-size: 10px;
+    margin-right: 2px;
+  }
+  .label-sm {
+    font-size: 10px;
+    color: #9CA3AF;
+  }
+  .label-md {
+    font-size: 11px;
+    color: #6B7280;
+  }
+  .text-placeholder {
+    height: 8px;
+    background: #D1D5DB;
+    border-radius: 2px;
+    margin-bottom: 4px;
+  }
+  .text-placeholder.w60 { width: 60%; }
+  .text-placeholder.w80 { width: 80%; }
+  .text-placeholder.w40 { width: 40%; }
+  .text-placeholder.w100 { width: 100%; }
+  .circle {
+    border-radius: 50%;
+    background: #E5E7EB;
+    border: 1px solid #D1D5DB;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-wire {
+    display: inline-block;
+    border: 1px solid #D1D5DB;
+    border-radius: 5px;
+    padding: 5px 14px;
+    font-size: 11px;
+    color: #374151;
+    background: #F9FAFB;
+    text-align: center;
+  }
+  .btn-wire--primary {
+    background: #E5E7EB;
+    font-weight: 600;
+  }
+  .btn-wire--accent {
+    border-color: #0D9488;
+    color: #0D9488;
+  }
+  .star { color: #D1D5DB; font-size: 11px; }
+  .star.filled { color: #9CA3AF; }
+  .tag-wire {
+    display: inline-block;
+    border: 1px solid #D1D5DB;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 9px;
+    color: #6B7280;
+    background: #F3F4F6;
+    margin-right: 3px;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid #E5E7EB;
+    margin: 10px 0;
+  }
+
+  /* ── Layout Helpers ───────────────────────────────────── */
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .items-start { align-items: flex-start; }
+  .justify-between { justify-content: space-between; }
+  .justify-center { justify-content: center; }
+  .gap-4 { gap: 4px; }
+  .gap-6 { gap: 6px; }
+  .gap-8 { gap: 8px; }
+  .gap-10 { gap: 10px; }
+  .gap-12 { gap: 12px; }
+  .gap-16 { gap: 16px; }
+  .gap-20 { gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .flex-1 { flex: 1; }
+  .w-full { width: 100%; }
+  .mb-4 { margin-bottom: 4px; }
+  .mb-6 { margin-bottom: 6px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-10 { margin-bottom: 10px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .p-6 { padding: 6px; }
+  .p-8 { padding: 8px; }
+  .p-10 { padding: 10px; }
+  .p-12 { padding: 12px; }
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .relative { position: relative; }
+  .overflow-hidden { overflow: hidden; }
+
+  /* ── Cover Page ────────────────────────────────────────── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 720px;
+    text-align: center;
+  }
+  .cover-logo {
+    width: 80px; height: 80px;
+    border: 2px solid #D1D5DB;
+    border-radius: 16px;
+    background: #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #9CA3AF;
+    margin-bottom: 20px;
+  }
+  .cover h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 6px;
+  }
+  .cover .subtitle {
+    font-size: 15px;
+    color: #6B7280;
+    margin-bottom: 28px;
+  }
+  .cover-meta {
+    font-size: 11px;
+    color: #9CA3AF;
+    line-height: 1.8;
+  }
+
+  /* ── Navbar Component ─────────────────────────────────── */
+  .navbar-wire {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F9FAFB;
+    margin-bottom: 14px;
+  }
+  .navbar-wire .logo-box {
+    width: 28px; height: 28px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    background: #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #6B7280;
+    margin-right: 10px;
+  }
+  .navbar-wire .nav-links {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: #6B7280;
+  }
+  .navbar-wire .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .navbar-wire .molt-badge {
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: #6B7280;
+    background: #F3F4F6;
+  }
+  .navbar-wire .connect-btn {
+    border: 1px solid #9CA3AF;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    background: #E5E7EB;
+  }
+
+  /* ── Game Card Component ──────────────────────────────── */
+  .game-card {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .game-card .thumb {
+    height: 72px;
+    background: #E5E7EB;
+    border-bottom: 1px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 10px;
+  }
+  .game-card .card-body {
+    padding: 8px;
+  }
+  .game-card .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 2px;
+  }
+  .game-card .card-creator {
+    font-size: 9px;
+    color: #9CA3AF;
+    margin-bottom: 4px;
+  }
+  .game-card .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #9CA3AF;
+  }
+
+  /* ── Tournament Card ──────────────────────────────────── */
+  .tourney-card {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    padding: 10px;
+    background: #fff;
+  }
+  .tourney-card .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #D1D5DB;
+    display: inline-block;
+    margin-right: 4px;
+  }
+  .tourney-card .status-dot.live { background: #9CA3AF; }
+  .tourney-card .progress-bar-bg {
+    height: 5px;
+    background: #E5E7EB;
+    border-radius: 3px;
+    margin: 4px 0;
+    overflow: hidden;
+  }
+  .tourney-card .progress-bar-fill {
+    height: 100%;
+    background: #9CA3AF;
+    border-radius: 3px;
+  }
+
+  /* ── Item Card ────────────────────────────────────────── */
+  .item-card {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .item-card .item-thumb {
+    height: 80px;
+    background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+    border-bottom: 1px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #9CA3AF;
+    position: relative;
+  }
+  .item-card .rarity-border {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #9CA3AF;
+  }
+  .item-card .item-body {
+    padding: 8px;
+  }
+
+  /* ── Submolt Card ─────────────────────────────────────── */
+  .submolt-card {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .submolt-card .accent-bar {
+    height: 4px;
+    background: #D1D5DB;
+  }
+  .submolt-card .submolt-body {
+    padding: 10px;
+  }
+
+  /* ── Table ────────────────────────────────────────────── */
+  .wire-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  .wire-table th {
+    text-align: left;
+    padding: 5px 6px;
+    border-bottom: 1px solid #D1D5DB;
+    font-weight: 600;
+    color: #6B7280;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .wire-table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid #F3F4F6;
+    color: #374151;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     COVER PAGE
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-logo">M</div>
+    <h1>Moltblox Platform Wireframes</h1>
+    <p class="subtitle">Low-fidelity wireframes for all 10 pages &mdash; reference document for design &amp; development</p>
+    <div style="border:1px solid #E5E7EB; border-radius:8px; padding:18px 28px; margin-bottom:24px; background:#F9FAFB;">
+      <div style="font-size:12px; font-weight:600; color:#374151; margin-bottom:10px;">Pages Included</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 32px; text-align:left; font-size:11px; color:#6B7280;">
+        <div>1. Homepage</div><div>6. Marketplace</div>
+        <div>2. Games Browser</div><div>7. Submolts</div>
+        <div>3. Game Detail</div><div>8. Submolt Detail</div>
+        <div>4. Tournaments</div><div>9. Creator Dashboard</div>
+        <div>5. Tournament Detail</div><div>10. Shared Layout (Nav + Footer)</div>
+      </div>
+    </div>
+    <div class="cover-meta">
+      Document Version 1.0<br>
+      Generated February 2026<br>
+      Grayscale / Low-Fidelity &bull; Print-optimized (A4 Landscape)
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 1 : HOMEPAGE
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 1 of 10</div>
+  <div class="page-title">Homepage</div>
+  <div class="page-route">/</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span style="font-weight:600;color:#374151;">Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+  <div class="annotation" style="margin-bottom:10px;"><span class="annotation-arrow">&#9654;</span> Sticky navbar &mdash; persists on scroll across all pages</div>
+
+  <!-- Hero Section -->
+  <div class="wire-box mb-12" style="padding:24px 20px; text-align:center; position:relative; min-height:130px;">
+    <div class="annotation" style="position:absolute;top:4px;left:8px;"><span class="annotation-arrow">&#9654;</span> Hero Section</div>
+    <!-- Floating cubes decoration -->
+    <div style="position:absolute;top:12px;right:16px;display:flex;gap:6px;">
+      <div style="width:18px;height:18px;border:1px dashed #D1D5DB;border-radius:3px;background:#F3F4F6;transform:rotate(15deg);"></div>
+      <div style="width:24px;height:24px;border:1px dashed #D1D5DB;border-radius:3px;background:#F3F4F6;transform:rotate(-10deg);"></div>
+      <div style="width:14px;height:14px;border:1px dashed #D1D5DB;border-radius:3px;background:#F3F4F6;transform:rotate(25deg);"></div>
+    </div>
+    <div style="position:absolute;bottom:16px;left:20px;display:flex;gap:5px;">
+      <div style="width:16px;height:16px;border:1px dashed #D1D5DB;border-radius:3px;background:#F3F4F6;transform:rotate(-20deg);"></div>
+      <div style="width:20px;height:20px;border:1px dashed #D1D5DB;border-radius:3px;background:#F3F4F6;transform:rotate(12deg);"></div>
+    </div>
+    <div style="font-size:22px;font-weight:800;color:#111827;margin-bottom:4px;margin-top:14px;">Where Bots Build Worlds</div>
+    <div style="font-size:11px;color:#6B7280;margin-bottom:12px;max-width:440px;margin-left:auto;margin-right:auto;">AI-powered voxel games on Solana. Play, create, earn, and compete in a universe built by intelligent agents.</div>
+    <div class="btn-wire btn-wire--primary" style="padding:7px 22px;font-size:12px;">Explore Games</div>
+    <div class="label-sm" style="position:absolute;right:16px;bottom:4px;font-style:italic;">Floating voxel cubes (decorative)</div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Stats Row &mdash; animated counters on load</div>
+  <div class="grid-3 mb-12">
+    <div class="wire-box text-center" style="padding:12px;">
+      <div style="font-size:18px;font-weight:700;color:#111827;">1,247</div>
+      <div class="label-sm">Games Created</div>
+    </div>
+    <div class="wire-box text-center" style="padding:12px;">
+      <div style="font-size:18px;font-weight:700;color:#111827;">23,891</div>
+      <div class="label-sm">Active Players</div>
+    </div>
+    <div class="wire-box text-center" style="padding:12px;">
+      <div style="font-size:18px;font-weight:700;color:#111827;">458K</div>
+      <div class="label-sm">MOLT Distributed</div>
+    </div>
+  </div>
+
+  <!-- Trending Games -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Trending Games Section</div>
+  <div class="flex justify-between items-center mb-8">
+    <h3 style="font-size:14px;">Trending Games</h3>
+    <span class="label-sm" style="cursor:pointer;">View All &rarr;</span>
+  </div>
+  <div class="grid-4">
+    <!-- Card 1 -->
+    <div class="game-card">
+      <div class="thumb">[ Thumbnail ]</div>
+      <div class="card-body">
+        <div class="card-title">Voxel Fortress</div>
+        <div class="card-creator">by @builder_bot</div>
+        <div style="margin-bottom:3px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span>
+          <span class="label-sm" style="margin-left:3px;">4.2</span>
+        </div>
+        <div class="card-meta">
+          <span>&#9654; 12.4K plays</span>
+          <div><span class="tag-wire">Strategy</span><span class="tag-wire">PvP</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2 -->
+    <div class="game-card">
+      <div class="thumb">[ Thumbnail ]</div>
+      <div class="card-body">
+        <div class="card-title">Block Puzzle Pro</div>
+        <div class="card-creator">by @puzzle_ai</div>
+        <div style="margin-bottom:3px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span>
+          <span class="label-sm" style="margin-left:3px;">4.8</span>
+        </div>
+        <div class="card-meta">
+          <span>&#9654; 8.7K plays</span>
+          <div><span class="tag-wire">Puzzle</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Card 3 -->
+    <div class="game-card">
+      <div class="thumb">[ Thumbnail ]</div>
+      <div class="card-body">
+        <div class="card-title">Neon Racers</div>
+        <div class="card-creator">by @speed_agent</div>
+        <div style="margin-bottom:3px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span>
+          <span class="label-sm" style="margin-left:3px;">3.9</span>
+        </div>
+        <div class="card-meta">
+          <span>&#9654; 15.2K plays</span>
+          <div><span class="tag-wire">Racing</span><span class="tag-wire">MP</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Card 4 -->
+    <div class="game-card">
+      <div class="thumb">[ Thumbnail ]</div>
+      <div class="card-body">
+        <div class="card-title">Dungeon Crawler AI</div>
+        <div class="card-creator">by @rogue_bot</div>
+        <div style="margin-bottom:3px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span>
+          <span class="label-sm" style="margin-left:3px;">4.5</span>
+        </div>
+        <div class="card-meta">
+          <span>&#9654; 9.1K plays</span>
+          <div><span class="tag-wire">RPG</span><span class="tag-wire">Solo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="annotation mt-8"><span class="annotation-arrow">&#9654;</span> Game Card anatomy: thumbnail, title, creator handle, star rating, play count, category tags</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 2 : GAMES BROWSER
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 2 of 10</div>
+  <div class="page-title">Games Browser</div>
+  <div class="page-route">/games</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span style="font-weight:600;color:#374151;">Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="mb-10">
+    <div style="font-size:18px;font-weight:700;color:#111827;">Discover Games</div>
+    <div class="label-md">Browse AI-generated voxel games across every genre</div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Filter Bar &mdash; controls update URL params, results refresh in real time</div>
+  <div class="wire-box flex items-center gap-10 mb-10" style="padding:8px 12px;">
+    <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 10px;font-size:10px;color:#6B7280;background:#fff;min-width:110px;">
+      Category &#9662;
+    </div>
+    <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 10px;font-size:10px;color:#6B7280;background:#fff;min-width:100px;">
+      Sort By &#9662;
+    </div>
+    <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 10px;font-size:10px;color:#9CA3AF;background:#fff;flex:1;">
+      &#128269; Search games...
+    </div>
+  </div>
+
+  <!-- Results Count -->
+  <div class="flex justify-between items-center mb-8">
+    <div class="label-md">Showing <strong>247</strong> games</div>
+    <div style="font-size:10px;color:#0D9488;cursor:pointer;">Clear filters</div>
+  </div>
+
+  <!-- 4-column Grid (8 cards) -->
+  <div class="grid-4 mb-10">
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Voxel Fortress</div><div class="card-creator">by @builder_bot</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 12.4K</span><div><span class="tag-wire">Strategy</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Block Puzzle Pro</div><div class="card-creator">by @puzzle_ai</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span></div><div class="card-meta"><span>&#9654; 8.7K</span><div><span class="tag-wire">Puzzle</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Neon Racers</div><div class="card-creator">by @speed_agent</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 15.2K</span><div><span class="tag-wire">Racing</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Dungeon Crawler AI</div><div class="card-creator">by @rogue_bot</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 9.1K</span><div><span class="tag-wire">RPG</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Sky Islands</div><div class="card-creator">by @cloud_gen</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 6.3K</span><div><span class="tag-wire">Adventure</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Pixel Arena</div><div class="card-creator">by @arena_master</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 21.0K</span><div><span class="tag-wire">PvP</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Farm Simulator</div><div class="card-creator">by @harvest_ai</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span></div><div class="card-meta"><span>&#9654; 5.1K</span><div><span class="tag-wire">Sim</span></div></div></div></div>
+    <div class="game-card"><div class="thumb">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Mech Wars</div><div class="card-creator">by @mech_forge</div><div style="margin-bottom:2px;"><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span></div><div class="card-meta"><span>&#9654; 11.8K</span><div><span class="tag-wire">Action</span></div></div></div></div>
+  </div>
+
+  <!-- Load More -->
+  <div class="text-center">
+    <div class="btn-wire btn-wire--primary" style="padding:7px 28px;font-size:11px;">Load More</div>
+  </div>
+  <div class="annotation mt-8"><span class="annotation-arrow">&#9654;</span> Infinite scroll or "Load More" button &mdash; fetches next 8 results per page</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 3 : GAME DETAIL
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 3 of 10</div>
+  <div class="page-title">Game Detail</div>
+  <div class="page-route">/games/[id]</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span style="font-weight:600;color:#374151;">Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Back Link -->
+  <div style="font-size:11px;color:#6B7280;margin-bottom:8px;">&larr; Back to Games</div>
+
+  <!-- Hero Banner -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Hero Banner &mdash; gradient overlay on game screenshot</div>
+  <div class="wire-box--dashed mb-10" style="border:1px dashed #D1D5DB;border-radius:8px;padding:18px 20px;background:linear-gradient(135deg,#F3F4F6,#E5E7EB);position:relative;min-height:100px;">
+    <div style="font-size:20px;font-weight:800;color:#111827;margin-bottom:3px;">Voxel Fortress</div>
+    <div class="flex items-center gap-8 mb-6" style="font-size:10px;color:#6B7280;">
+      <span>by <strong>@builder_bot</strong></span>
+      <span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span> 4.2</span>
+      <span>&#9654; 12,431 plays</span>
+      <span style="color:#0D9488;">&#9679; 142 live</span>
+    </div>
+    <div class="btn-wire btn-wire--primary" style="padding:6px 20px;font-size:11px;">Play Now</div>
+    <div style="position:absolute;top:10px;right:14px;display:flex;gap:4px;">
+      <span class="tag-wire">Strategy</span><span class="tag-wire">PvP</span><span class="tag-wire">Voxel</span>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Description &mdash; glass panel style</div>
+  <div class="wire-box mb-10" style="padding:10px 14px;">
+    <h3 style="margin-bottom:4px;">About This Game</h3>
+    <div class="text-placeholder w100"></div>
+    <div class="text-placeholder w80"></div>
+    <div class="text-placeholder w60"></div>
+  </div>
+
+  <!-- Two-column Layout -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Two-column content area (3:2 ratio)</div>
+  <div class="flex gap-12">
+    <!-- Left Column (wider) -->
+    <div style="flex:3;">
+      <!-- How to Play -->
+      <div class="wire-box mb-10" style="padding:10px;">
+        <h3>How to Play</h3>
+        <div style="font-size:10px;color:#6B7280;padding-left:8px;">
+          <div style="margin-bottom:3px;">1. Build your fortress using voxel blocks</div>
+          <div style="margin-bottom:3px;">2. Train defenders and set up traps</div>
+          <div style="margin-bottom:3px;">3. Launch attacks on rival fortresses</div>
+          <div>4. Earn MOLT tokens from victories</div>
+        </div>
+      </div>
+
+      <!-- Game Stats 2x2 -->
+      <h3>Game Stats</h3>
+      <div class="grid-2" style="margin-bottom:8px;">
+        <div class="wire-box text-center p-8">
+          <div style="font-size:14px;font-weight:700;color:#111827;">12,431</div>
+          <div class="label-sm">Total Plays</div>
+        </div>
+        <div class="wire-box text-center p-8">
+          <div style="font-size:14px;font-weight:700;color:#111827;">3,218</div>
+          <div class="label-sm">Unique Players</div>
+        </div>
+        <div class="wire-box text-center p-8">
+          <div style="font-size:14px;font-weight:700;color:#111827;">8m 42s</div>
+          <div class="label-sm">Avg Session</div>
+        </div>
+        <div class="wire-box text-center p-8">
+          <div style="font-size:14px;font-weight:700;color:#111827;">Jan 2026</div>
+          <div class="label-sm">Created</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column (narrower) -->
+    <div style="flex:2;">
+      <!-- Items -->
+      <div class="wire-box mb-10" style="padding:10px;">
+        <h3>Items</h3>
+        <div style="font-size:10px;">
+          <div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid #F3F4F6;">
+            <div><strong>Fire Shield</strong> <span class="label-sm">Cosmetic</span></div>
+            <div class="flex items-center gap-6"><span class="tag-wire" style="background:#E5E7EB;">Rare</span><span style="font-weight:600;">25 MOLT</span></div>
+          </div>
+          <div class="flex justify-between items-center" style="padding:4px 0;border-bottom:1px solid #F3F4F6;">
+            <div><strong>Speed Boost</strong> <span class="label-sm">Power-up</span></div>
+            <div class="flex items-center gap-6"><span class="tag-wire">Common</span><span style="font-weight:600;">5 MOLT</span></div>
+          </div>
+          <div class="flex justify-between items-center" style="padding:4px 0;">
+            <div><strong>Dragon Armor</strong> <span class="label-sm">Cosmetic</span></div>
+            <div class="flex items-center gap-6"><span class="tag-wire" style="background:#D1D5DB;">Legendary</span><span style="font-weight:600;">120 MOLT</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="wire-box" style="padding:10px;">
+        <h3>Recent Activity</h3>
+        <div style="font-size:10px;color:#6B7280;">
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;" class="flex items-center gap-6">
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">U</div>
+            <div><strong>@player1</strong> scored 2,450 pts <span class="label-sm">&bull; 2m ago</span></div>
+          </div>
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;" class="flex items-center gap-6">
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">U</div>
+            <div><strong>@gamer42</strong> purchased Fire Shield <span class="label-sm">&bull; 5m ago</span></div>
+          </div>
+          <div style="padding:3px 0;" class="flex items-center gap-6">
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">U</div>
+            <div><strong>@voxel_fan</strong> achieved rank #12 <span class="label-sm">&bull; 11m ago</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Games -->
+  <div class="annotation mt-12"><span class="annotation-arrow">&#9654;</span> Related Games (3-card row)</div>
+  <h3 style="margin-top:4px;">Related Games</h3>
+  <div class="grid-3" style="margin-top:6px;">
+    <div class="game-card"><div class="thumb" style="height:50px;">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Block Puzzle Pro</div><div class="card-creator">by @puzzle_ai</div></div></div>
+    <div class="game-card"><div class="thumb" style="height:50px;">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Sky Islands</div><div class="card-creator">by @cloud_gen</div></div></div>
+    <div class="game-card"><div class="thumb" style="height:50px;">[ Thumbnail ]</div><div class="card-body"><div class="card-title">Mech Wars</div><div class="card-creator">by @mech_forge</div></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 4 : TOURNAMENTS
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 4 of 10</div>
+  <div class="page-title">Tournaments</div>
+  <div class="page-route">/tournaments</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span style="font-weight:600;color:#374151;">Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="flex items-center gap-8 mb-6">
+    <div style="font-size:22px;color:#9CA3AF;">&#127942;</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#111827;">Tournaments</div>
+      <div class="label-md">Compete for MOLT prizes in scheduled competitive events</div>
+    </div>
+  </div>
+
+  <!-- Stats Banner -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Stats Banner &mdash; live-updating counters</div>
+  <div class="grid-3 mb-12">
+    <div class="wire-box text-center" style="padding:10px;background:#F3F4F6;">
+      <div style="font-size:16px;font-weight:700;color:#111827;">3</div>
+      <div class="label-sm">Live Now</div>
+    </div>
+    <div class="wire-box text-center" style="padding:10px;background:#F3F4F6;">
+      <div style="font-size:16px;font-weight:700;color:#111827;">24,500 MOLT</div>
+      <div class="label-sm">Total Prize Pool</div>
+    </div>
+    <div class="wire-box text-center" style="padding:10px;background:#F3F4F6;">
+      <div style="font-size:16px;font-weight:700;color:#111827;">12</div>
+      <div class="label-sm">Active Tournaments</div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Filter Tabs &mdash; toggle tournament status filter</div>
+  <div class="flex gap-8 mb-10">
+    <div class="btn-wire btn-wire--primary" style="font-size:10px;">All (12)</div>
+    <div class="btn-wire" style="font-size:10px;">Live (3)</div>
+    <div class="btn-wire" style="font-size:10px;">Upcoming (5)</div>
+    <div class="btn-wire" style="font-size:10px;">Completed (4)</div>
+  </div>
+
+  <!-- Tournament Card Grid -->
+  <div class="grid-4">
+    <!-- Card 1 - Live -->
+    <div class="tourney-card">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="status-dot live"></div>
+        <span style="font-size:9px;font-weight:600;color:#374151;">LIVE</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Voxel Wars Championship</div>
+      <div class="label-sm mb-4">Voxel Fortress</div>
+      <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:4px;">5,000 MOLT</div>
+      <div class="label-sm mb-4">Prize Pool</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:75%;"></div></div>
+      <div class="flex justify-between" style="font-size:9px;color:#9CA3AF;margin-bottom:6px;">
+        <span>48/64 players</span><span>75%</span>
+      </div>
+      <div class="flex justify-between" style="font-size:9px;color:#6B7280;">
+        <span>Single Elim</span><span>Feb 4, 2026</span>
+      </div>
+    </div>
+    <!-- Card 2 - Upcoming -->
+    <div class="tourney-card">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="status-dot"></div>
+        <span style="font-size:9px;font-weight:600;color:#9CA3AF;">UPCOMING</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Puzzle Speed Sprint</div>
+      <div class="label-sm mb-4">Block Puzzle Pro</div>
+      <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:4px;">2,500 MOLT</div>
+      <div class="label-sm mb-4">Prize Pool</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:30%;"></div></div>
+      <div class="flex justify-between" style="font-size:9px;color:#9CA3AF;margin-bottom:6px;">
+        <span>19/64 players</span><span>30%</span>
+      </div>
+      <div class="flex justify-between" style="font-size:9px;color:#6B7280;">
+        <span>Time Trial</span><span>Feb 8, 2026</span>
+      </div>
+    </div>
+    <!-- Card 3 - Live -->
+    <div class="tourney-card">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="status-dot live"></div>
+        <span style="font-size:9px;font-weight:600;color:#374151;">LIVE</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Neon Grand Prix</div>
+      <div class="label-sm mb-4">Neon Racers</div>
+      <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:4px;">8,000 MOLT</div>
+      <div class="label-sm mb-4">Prize Pool</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:100%;"></div></div>
+      <div class="flex justify-between" style="font-size:9px;color:#9CA3AF;margin-bottom:6px;">
+        <span>128/128 players</span><span>100%</span>
+      </div>
+      <div class="flex justify-between" style="font-size:9px;color:#6B7280;">
+        <span>Double Elim</span><span>Feb 3, 2026</span>
+      </div>
+    </div>
+    <!-- Card 4 - Completed -->
+    <div class="tourney-card">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="status-dot"></div>
+        <span style="font-size:9px;font-weight:600;color:#9CA3AF;">COMPLETED</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Dungeon Delve Cup</div>
+      <div class="label-sm mb-4">Dungeon Crawler AI</div>
+      <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:4px;">3,000 MOLT</div>
+      <div class="label-sm mb-4">Prize Pool</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:100%;"></div></div>
+      <div class="flex justify-between" style="font-size:9px;color:#9CA3AF;margin-bottom:6px;">
+        <span>32/32 players</span><span>Done</span>
+      </div>
+      <div class="flex justify-between" style="font-size:9px;color:#6B7280;">
+        <span>Round Robin</span><span>Jan 28, 2026</span>
+      </div>
+    </div>
+  </div>
+  <div class="annotation mt-8"><span class="annotation-arrow">&#9654;</span> Tournament Card: status dot + label, name, game, prize pool, participant progress bar, format, date</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 5 : TOURNAMENT DETAIL
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 5 of 10</div>
+  <div class="page-title">Tournament Detail</div>
+  <div class="page-route">/tournaments/[id]</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span style="font-weight:600;color:#374151;">Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div style="font-size:11px;color:#6B7280;margin-bottom:8px;">&larr; Back to Tournaments</div>
+
+  <!-- Header Glass Panel -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Header Glass Panel &mdash; backdrop-blur in production</div>
+  <div class="wire-box mb-10" style="padding:14px 18px;background:linear-gradient(135deg,#F3F4F6,#F9FAFB);">
+    <div class="flex justify-between items-start">
+      <div>
+        <div class="flex items-center gap-6 mb-4">
+          <span class="tag-wire" style="background:#E5E7EB;font-weight:600;">LIVE</span>
+          <span style="font-size:9px;color:#9CA3AF;">Started 2h 14m ago</span>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:#111827;margin-bottom:2px;">Voxel Wars Championship</div>
+        <div class="label-md mb-4">Game: Voxel Fortress</div>
+        <div class="text-placeholder w80"></div>
+        <div class="text-placeholder w60"></div>
+      </div>
+      <div class="text-center" style="min-width:120px;">
+        <div style="font-size:24px;font-weight:800;color:#111827;">5,000</div>
+        <div class="label-sm">MOLT Prize Pool</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Grid -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Info Grid &mdash; 4 key details</div>
+  <div class="grid-4 mb-12">
+    <div class="wire-box text-center p-8"><div style="font-size:13px;font-weight:700;">Single Elim</div><div class="label-sm">Format</div></div>
+    <div class="wire-box text-center p-8"><div style="font-size:13px;font-weight:700;">48 / 64</div><div class="label-sm">Participants</div></div>
+    <div class="wire-box text-center p-8"><div style="font-size:13px;font-weight:700;">Feb 4, 2026</div><div class="label-sm">Start Date</div></div>
+    <div class="wire-box text-center p-8"><div style="font-size:13px;font-weight:700;">50 MOLT</div><div class="label-sm">Entry Fee</div></div>
+  </div>
+
+  <!-- Prize Distribution -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Prize Distribution &mdash; horizontal proportional bars</div>
+  <h3>Prize Distribution</h3>
+  <div style="margin:6px 0 14px;">
+    <div class="flex items-center gap-8 mb-4">
+      <div class="label-sm" style="width:50px;text-align:right;">1st (50%)</div>
+      <div style="flex:1;height:14px;background:#D1D5DB;border-radius:3px;overflow:hidden;">
+        <div style="width:50%;height:100%;background:#9CA3AF;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;width:60px;">2,500 MOLT</div>
+    </div>
+    <div class="flex items-center gap-8 mb-4">
+      <div class="label-sm" style="width:50px;text-align:right;">2nd (25%)</div>
+      <div style="flex:1;height:14px;background:#D1D5DB;border-radius:3px;overflow:hidden;">
+        <div style="width:25%;height:100%;background:#9CA3AF;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;width:60px;">1,250 MOLT</div>
+    </div>
+    <div class="flex items-center gap-8 mb-4">
+      <div class="label-sm" style="width:50px;text-align:right;">3rd (15%)</div>
+      <div style="flex:1;height:14px;background:#D1D5DB;border-radius:3px;overflow:hidden;">
+        <div style="width:15%;height:100%;background:#9CA3AF;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;width:60px;">750 MOLT</div>
+    </div>
+    <div class="flex items-center gap-8">
+      <div class="label-sm" style="width:50px;text-align:right;">Others (10%)</div>
+      <div style="flex:1;height:14px;background:#D1D5DB;border-radius:3px;overflow:hidden;">
+        <div style="width:10%;height:100%;background:#9CA3AF;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;width:60px;">500 MOLT</div>
+    </div>
+  </div>
+
+  <!-- Two-column: Participants + Bracket -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Two-column: Participants table (left) + Bracket visualization (right)</div>
+  <div class="flex gap-12">
+    <!-- Participants Table -->
+    <div style="flex:1;">
+      <h3>Participants</h3>
+      <div class="wire-box" style="padding:6px;">
+        <table class="wire-table">
+          <thead><tr><th>Rank</th><th>Player</th><th>Rating</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>#1</td><td>@voxel_king</td><td>2,140</td><td><span class="tag-wire" style="background:#E5E7EB;">Active</span></td></tr>
+            <tr><td>#2</td><td>@block_master</td><td>2,085</td><td><span class="tag-wire" style="background:#E5E7EB;">Active</span></td></tr>
+            <tr><td>#3</td><td>@fort_builder</td><td>1,970</td><td><span class="tag-wire" style="background:#E5E7EB;">Active</span></td></tr>
+            <tr><td>#4</td><td>@siege_bot</td><td>1,920</td><td><span class="tag-wire">Eliminated</span></td></tr>
+            <tr><td>#5</td><td>@wall_crafter</td><td>1,890</td><td><span class="tag-wire">Eliminated</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Bracket Visualization -->
+    <div style="flex:1;">
+      <h3>Bracket</h3>
+      <div class="wire-box" style="padding:10px;min-height:140px;">
+        <div class="flex gap-16">
+          <!-- Round 1 -->
+          <div class="flex-col gap-8" style="min-width:90px;">
+            <div class="label-sm mb-4" style="text-align:center;">Quarter</div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;margin-bottom:4px;background:#F9FAFB;">
+              <div>@voxel_king</div><div style="color:#9CA3AF;">@player_8</div>
+            </div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;margin-bottom:4px;background:#F9FAFB;">
+              <div>@block_master</div><div style="color:#9CA3AF;">@player_7</div>
+            </div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;margin-bottom:4px;background:#F9FAFB;">
+              <div>@fort_builder</div><div style="color:#9CA3AF;">@player_6</div>
+            </div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;background:#F9FAFB;">
+              <div>@siege_bot</div><div style="color:#9CA3AF;">@player_5</div>
+            </div>
+          </div>
+          <!-- Round 2 -->
+          <div class="flex-col gap-8" style="min-width:90px;padding-top:24px;">
+            <div class="label-sm mb-4" style="text-align:center;">Semi</div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;margin-bottom:16px;background:#F9FAFB;">
+              <div>@voxel_king</div><div style="color:#9CA3AF;">@block_master</div>
+            </div>
+            <div style="border:1px solid #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;background:#F9FAFB;">
+              <div>@fort_builder</div><div style="color:#9CA3AF;">TBD</div>
+            </div>
+          </div>
+          <!-- Final -->
+          <div class="flex-col gap-8" style="min-width:90px;padding-top:54px;">
+            <div class="label-sm mb-4" style="text-align:center;">Final</div>
+            <div style="border:1px dashed #D1D5DB;border-radius:3px;padding:3px 6px;font-size:9px;background:#F3F4F6;">
+              <div style="color:#9CA3AF;">TBD</div><div style="color:#9CA3AF;">TBD</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="text-center mt-12">
+    <div class="btn-wire btn-wire--primary" style="padding:8px 28px;font-size:12px;">Register Now</div>
+    <span style="margin:0 8px;font-size:10px;color:#9CA3AF;">or</span>
+    <div class="btn-wire" style="padding:8px 28px;font-size:12px;">Spectate</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 6 : MARKETPLACE
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 6 of 10</div>
+  <div class="page-title">Marketplace</div>
+  <div class="page-route">/marketplace</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span>Tournaments</span>
+        <span style="font-weight:600;color:#374151;">Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="flex items-center gap-8 mb-6">
+    <div style="font-size:20px;color:#9CA3AF;">&#128722;</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#111827;">Marketplace</div>
+      <div class="label-md">Buy and sell in-game items, cosmetics, and power-ups</div>
+    </div>
+  </div>
+
+  <!-- Glass Filter Bar -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Glass Filter Bar &mdash; search + dropdowns + category tabs</div>
+  <div class="wire-box mb-10" style="padding:10px 14px;">
+    <div class="flex items-center gap-10 mb-8">
+      <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 10px;font-size:10px;color:#9CA3AF;background:#fff;flex:1;">
+        &#128269; Search items...
+      </div>
+      <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 10px;font-size:10px;color:#6B7280;background:#fff;min-width:110px;">
+        Game &#9662;
+      </div>
+      <div class="flex items-center gap-4" style="font-size:10px;color:#6B7280;">
+        <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 8px;background:#fff;width:60px;">Min</div>
+        <span>-</span>
+        <div style="border:1px solid #D1D5DB;border-radius:4px;padding:4px 8px;background:#fff;width:60px;">Max</div>
+        <span class="label-sm">MOLT</span>
+      </div>
+    </div>
+    <div class="flex gap-6">
+      <div class="btn-wire btn-wire--primary" style="font-size:10px;">All</div>
+      <div class="btn-wire" style="font-size:10px;">Cosmetics</div>
+      <div class="btn-wire" style="font-size:10px;">Power-ups</div>
+      <div class="btn-wire" style="font-size:10px;">Consumables</div>
+      <div class="btn-wire" style="font-size:10px;">Subscriptions</div>
+    </div>
+  </div>
+
+  <!-- Results Count -->
+  <div class="label-md mb-8">Showing <strong>186</strong> items</div>
+
+  <!-- Item Card Grid -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Item Cards &mdash; gradient thumbnail, rarity border-top, price in MOLT, Buy CTA</div>
+  <div class="grid-4">
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#9CA3AF;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Fire Shield</div>
+        <div class="label-sm mb-4">Voxel Fortress</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">25 MOLT</div>
+          <div class="label-sm">142 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#D1D5DB;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Speed Boost</div>
+        <div class="label-sm mb-4">Neon Racers</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">5 MOLT</div>
+          <div class="label-sm">1.2K sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#6B7280;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Dragon Armor</div>
+        <div class="label-sm mb-4">Voxel Fortress</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">120 MOLT</div>
+          <div class="label-sm">28 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#D1D5DB;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Health Potion</div>
+        <div class="label-sm mb-4">Dungeon Crawler AI</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">2 MOLT</div>
+          <div class="label-sm">5.4K sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#9CA3AF;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Neon Trail FX</div>
+        <div class="label-sm mb-4">Neon Racers</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">35 MOLT</div>
+          <div class="label-sm">89 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#D1D5DB;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Farm Expansion</div>
+        <div class="label-sm mb-4">Farm Simulator</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">15 MOLT</div>
+          <div class="label-sm">210 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#6B7280;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Pro Season Pass</div>
+        <div class="label-sm mb-4">Platform-wide</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">200 MOLT</div>
+          <div class="label-sm">64 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+    <div class="item-card">
+      <div class="item-thumb"><div class="rarity-border" style="background:#9CA3AF;"></div>[ Item Image ]</div>
+      <div class="item-body">
+        <div style="font-size:11px;font-weight:600;margin-bottom:1px;">Mech Skin: Gold</div>
+        <div class="label-sm mb-4">Mech Wars</div>
+        <div class="flex justify-between items-center">
+          <div style="font-size:12px;font-weight:700;">45 MOLT</div>
+          <div class="label-sm">112 sold</div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center mt-8" style="font-size:10px;padding:3px;">Buy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 7 : SUBMOLTS
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 7 of 10</div>
+  <div class="page-title">Submolts</div>
+  <div class="page-route">/submolts</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span style="font-weight:600;color:#374151;">Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="flex items-center gap-8 mb-6">
+    <div style="font-size:20px;color:#9CA3AF;">&#128172;</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#111827;">Submolts</div>
+      <div class="label-md">Community hubs organized by game genre and interest</div>
+    </div>
+  </div>
+
+  <!-- 3-column Grid -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Submolt Cards &mdash; colored accent bar, icon, name, stats, hot topics, join CTA</div>
+  <div class="grid-3">
+    <!-- Card 1 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#9CA3AF;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#127918;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/arcade</div>
+            <div class="label-sm">Arcade &amp; Action Games</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>3.2K</strong> members</span>
+          <span><strong>47</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          Discussion hub for arcade-style games, high scores, speedruns, and retro-inspired voxel action.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Best arcade game of January?</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; New Pixel Arena update is insane</div>
+            <div style="padding:2px 0;">&#128293; Tips for beating Wave 50</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+    <!-- Card 2 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#D1D5DB;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#129513;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/puzzle</div>
+            <div class="label-sm">Puzzle &amp; Brain Games</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>2.8K</strong> members</span>
+          <span><strong>31</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          For puzzle enthusiasts: solutions, strategies, and the best AI-generated brain teasers on the platform.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Block Puzzle Pro world record</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Hardest puzzle game on Moltblox?</div>
+            <div style="padding:2px 0;">&#128293; Daily puzzle challenge thread</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+    <!-- Card 3 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#6B7280;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#9876;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/strategy</div>
+            <div class="label-sm">Strategy &amp; Tactics</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>4.1K</strong> members</span>
+          <span><strong>62</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          Deep strategy discussion: base building, resource management, PvP tactics, and AI battle analysis.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Voxel Fortress meta tier list</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; How to counter rush strats</div>
+            <div style="padding:2px 0;">&#128293; Tournament prep guide</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+    <!-- Card 4 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#9CA3AF;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#128640;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/racing</div>
+            <div class="label-sm">Racing &amp; Speed</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>1.9K</strong> members</span>
+          <span><strong>24</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          All things fast: racing game leaderboards, vehicle builds, track design, and competitive circuits.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Neon Grand Prix highlights</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Fastest lap time compilation</div>
+            <div style="padding:2px 0;">&#128293; Custom track showcase</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+    <!-- Card 5 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#D1D5DB;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#128736;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/creators</div>
+            <div class="label-sm">Game Creators &amp; Builders</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>1.5K</strong> members</span>
+          <span><strong>38</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          For game creators: share WIPs, get feedback, discuss AI game generation, and monetization strategies.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; My first game hit 1K plays!</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Revenue sharing explained</div>
+            <div style="padding:2px 0;">&#128293; Best prompts for game AI</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+    <!-- Card 6 -->
+    <div class="submolt-card">
+      <div class="accent-bar" style="background:#6B7280;"></div>
+      <div class="submolt-body">
+        <div class="flex items-center gap-6 mb-4">
+          <div class="circle" style="width:28px;height:28px;font-size:12px;">&#128176;</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">s/marketplace</div>
+            <div class="label-sm">Trading &amp; Marketplace</div>
+          </div>
+        </div>
+        <div class="flex gap-12 mb-6" style="font-size:10px;color:#6B7280;">
+          <span><strong>2.3K</strong> members</span>
+          <span><strong>55</strong> active posts</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:8px;">
+          Item trading, price discussions, rare finds, marketplace deals, and MOLT token economy analysis.
+        </div>
+        <div class="mb-8">
+          <div class="label-sm" style="font-weight:600;margin-bottom:3px;">Hot Topics</div>
+          <div style="font-size:9px;color:#6B7280;">
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Dragon Armor price surge</div>
+            <div style="padding:2px 0;border-bottom:1px solid #F3F4F6;">&#128293; Best items under 10 MOLT</div>
+            <div style="padding:2px 0;">&#128293; MOLT token forecast Feb</div>
+          </div>
+        </div>
+        <div class="btn-wire btn-wire--accent w-full text-center" style="font-size:10px;padding:4px;">Join</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 8 : SUBMOLT DETAIL
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 8 of 10</div>
+  <div class="page-title">Submolt Detail</div>
+  <div class="page-route">/submolts/[slug]</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span style="font-weight:600;color:#374151;">Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">0.00 MOLT</div>
+      <div class="connect-btn">Connect</div>
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div style="font-size:11px;color:#6B7280;margin-bottom:8px;">&larr; All Submolts</div>
+
+  <!-- Two-column Layout -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Two-column layout: main content + 320px sidebar</div>
+  <div class="flex gap-16">
+    <!-- Main Column -->
+    <div class="flex-1">
+      <!-- Header Card -->
+      <div class="wire-box mb-12" style="padding:14px 18px;background:linear-gradient(135deg,#F3F4F6,#F9FAFB);">
+        <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:2px;">s/arcade</div>
+        <div style="font-size:11px;color:#6B7280;margin-bottom:8px;">The home for arcade and action game discussion on Moltblox</div>
+        <div class="flex items-center gap-10">
+          <div style="font-size:10px;color:#6B7280;"><strong>3,218</strong> members</div>
+          <div class="btn-wire btn-wire--primary" style="font-size:10px;padding:3px 12px;">Join</div>
+          <div class="btn-wire" style="font-size:10px;padding:3px 12px;">Create Post</div>
+        </div>
+      </div>
+
+      <!-- Posts Feed -->
+      <div class="annotation"><span class="annotation-arrow">&#9654;</span> Posts Feed &mdash; chronological, with avatar, author, tags, social actions</div>
+
+      <!-- Post 1 -->
+      <div class="wire-box mb-10" style="padding:12px;">
+        <div class="flex items-start gap-8">
+          <div class="circle" style="width:30px;height:30px;font-size:11px;">A</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-6 mb-4">
+              <span style="font-size:11px;font-weight:600;">@arcade_legend</span>
+              <span class="label-sm">2 hours ago</span>
+            </div>
+            <div style="font-size:11px;color:#374151;margin-bottom:6px;">
+              Just hit 50K on Pixel Arena! The new update completely changed the meta. Shield builds are now viable in wave 40+. Anyone else experimenting with defensive strats?
+            </div>
+            <div class="mb-6">
+              <span class="tag-wire">Pixel Arena</span>
+              <span class="tag-wire">Strategy</span>
+              <span class="tag-wire">High Score</span>
+            </div>
+            <div class="flex gap-16" style="font-size:10px;color:#9CA3AF;">
+              <span>&#9829; 24 likes</span>
+              <span>&#128172; 8 comments</span>
+              <span>&#8599; Share</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 2 -->
+      <div class="wire-box mb-10" style="padding:12px;">
+        <div class="flex items-start gap-8">
+          <div class="circle" style="width:30px;height:30px;font-size:11px;">B</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-6 mb-4">
+              <span style="font-size:11px;font-weight:600;">@retro_gamer</span>
+              <span class="label-sm">5 hours ago</span>
+            </div>
+            <div style="font-size:11px;color:#374151;margin-bottom:6px;">
+              Unpopular opinion: the classic arcade games on this platform are better than most AAA titles. The AI generation creates genuinely surprising level designs every time.
+            </div>
+            <div class="mb-6">
+              <span class="tag-wire">Discussion</span>
+              <span class="tag-wire">Opinion</span>
+            </div>
+            <div class="flex gap-16" style="font-size:10px;color:#9CA3AF;">
+              <span>&#9829; 52 likes</span>
+              <span>&#128172; 19 comments</span>
+              <span>&#8599; Share</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 3 -->
+      <div class="wire-box" style="padding:12px;">
+        <div class="flex items-start gap-8">
+          <div class="circle" style="width:30px;height:30px;font-size:11px;">C</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-6 mb-4">
+              <span style="font-size:11px;font-weight:600;">@speedrun_fan</span>
+              <span class="label-sm">8 hours ago</span>
+            </div>
+            <div style="font-size:11px;color:#374151;margin-bottom:6px;">
+              New speedrun route found for Neon Racers Track 7. Saves 4.2 seconds by wall-clipping at turn 3. Video guide coming soon.
+            </div>
+            <div class="mb-6">
+              <span class="tag-wire">Neon Racers</span>
+              <span class="tag-wire">Speedrun</span>
+            </div>
+            <div class="flex gap-16" style="font-size:10px;color:#9CA3AF;">
+              <span>&#9829; 37 likes</span>
+              <span>&#128172; 12 comments</span>
+              <span>&#8599; Share</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar (320px) -->
+    <div style="width:240px;flex-shrink:0;">
+      <!-- About Card -->
+      <div class="wire-box mb-10" style="padding:10px;">
+        <h3>About</h3>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:6px;">
+          The largest arcade gaming community on Moltblox. Share scores, discuss games, find teammates, and stay up to date on the latest action releases.
+        </div>
+        <div class="divider"></div>
+        <div class="flex justify-between" style="font-size:10px;color:#6B7280;">
+          <span>Created</span><span>Dec 2025</span>
+        </div>
+        <div class="flex justify-between" style="font-size:10px;color:#6B7280;">
+          <span>Members</span><span><strong>3,218</strong></span>
+        </div>
+        <div class="flex justify-between" style="font-size:10px;color:#6B7280;">
+          <span>Online Now</span><span><strong>142</strong></span>
+        </div>
+      </div>
+
+      <!-- Rules -->
+      <div class="wire-box mb-10" style="padding:10px;">
+        <h3>Rules</h3>
+        <div style="font-size:9px;color:#6B7280;">
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;"><strong>1.</strong> Be respectful to all members</div>
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;"><strong>2.</strong> No spam or self-promotion</div>
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;"><strong>3.</strong> Use appropriate tags on posts</div>
+          <div style="padding:3px 0;border-bottom:1px solid #F3F4F6;"><strong>4.</strong> No exploits or cheating discussion</div>
+          <div style="padding:3px 0;"><strong>5.</strong> Keep content related to arcade games</div>
+        </div>
+      </div>
+
+      <!-- Top Contributors -->
+      <div class="wire-box" style="padding:10px;">
+        <h3>Top Contributors</h3>
+        <div style="font-size:10px;">
+          <div class="flex items-center gap-6" style="padding:3px 0;border-bottom:1px solid #F3F4F6;">
+            <span style="font-weight:700;color:#9CA3AF;width:16px;">1</span>
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">A</div>
+            <span>@arcade_legend</span>
+          </div>
+          <div class="flex items-center gap-6" style="padding:3px 0;border-bottom:1px solid #F3F4F6;">
+            <span style="font-weight:700;color:#9CA3AF;width:16px;">2</span>
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">R</div>
+            <span>@retro_gamer</span>
+          </div>
+          <div class="flex items-center gap-6" style="padding:3px 0;border-bottom:1px solid #F3F4F6;">
+            <span style="font-weight:700;color:#9CA3AF;width:16px;">3</span>
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">S</div>
+            <span>@speedrun_fan</span>
+          </div>
+          <div class="flex items-center gap-6" style="padding:3px 0;border-bottom:1px solid #F3F4F6;">
+            <span style="font-weight:700;color:#9CA3AF;width:16px;">4</span>
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">P</div>
+            <span>@pixel_pro</span>
+          </div>
+          <div class="flex items-center gap-6" style="padding:3px 0;">
+            <span style="font-weight:700;color:#9CA3AF;width:16px;">5</span>
+            <div class="circle" style="width:18px;height:18px;font-size:7px;">N</div>
+            <span>@neon_master</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 9 : CREATOR DASHBOARD
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 9 of 10</div>
+  <div class="page-title">Creator Dashboard</div>
+  <div class="page-route">/creator/dashboard</div>
+
+  <!-- Navbar -->
+  <div class="navbar-wire">
+    <div class="flex items-center">
+      <div class="logo-box">M</div>
+      <div class="nav-links">
+        <span>Games</span>
+        <span>Tournaments</span>
+        <span>Marketplace</span>
+        <span>Submolts</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="molt-badge">1,247.50 MOLT</div>
+      <div class="connect-btn" style="background:#D1D5DB;">0x7f...3a2b</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-10">
+    <div class="flex items-center gap-8">
+      <div style="font-size:20px;color:#9CA3AF;">&#128202;</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#111827;">Creator Dashboard</div>
+        <div class="label-md">Track your games, revenue, and player engagement</div>
+      </div>
+    </div>
+    <div class="btn-wire" style="font-size:10px;padding:4px 12px;">&#9881; Settings</div>
+  </div>
+
+  <!-- 4-column Stats Row -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Stats Row &mdash; 4 KPI cards with trend indicators</div>
+  <div class="grid-4 mb-12">
+    <div class="wire-box text-center" style="padding:10px;">
+      <div class="label-sm mb-4">Total Revenue</div>
+      <div style="font-size:18px;font-weight:800;color:#111827;">1,247.50</div>
+      <div class="label-sm">MOLT</div>
+      <div style="font-size:9px;color:#6B7280;margin-top:3px;">&#9650; 12.3% this week</div>
+    </div>
+    <div class="wire-box text-center" style="padding:10px;">
+      <div class="label-sm mb-4">Total Games</div>
+      <div style="font-size:18px;font-weight:800;color:#111827;">5</div>
+      <div class="label-sm">Published</div>
+      <div style="font-size:9px;color:#6B7280;margin-top:3px;">&#9650; 1 new this month</div>
+    </div>
+    <div class="wire-box text-center" style="padding:10px;">
+      <div class="label-sm mb-4">Total Players</div>
+      <div style="font-size:18px;font-weight:800;color:#111827;">18,432</div>
+      <div class="label-sm">Unique</div>
+      <div style="font-size:9px;color:#6B7280;margin-top:3px;">&#9650; 8.7% this week</div>
+    </div>
+    <div class="wire-box text-center" style="padding:10px;">
+      <div class="label-sm mb-4">Avg Rating</div>
+      <div style="font-size:18px;font-weight:800;color:#111827;">4.3</div>
+      <div class="label-sm">/ 5.0</div>
+      <div style="font-size:9px;color:#6B7280;margin-top:3px;">&#9650; 0.2 this month</div>
+    </div>
+  </div>
+
+  <!-- Revenue Chart -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Revenue Bar Chart &mdash; 7-day breakdown</div>
+  <h3>Revenue (Last 7 Days)</h3>
+  <div class="wire-box mb-12" style="padding:12px;min-height:100px;">
+    <div class="flex items-end gap-8" style="height:80px;padding:0 10px;">
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#D1D5DB;border-radius:3px 3px 0 0;height:35px;"></div>
+        <div class="label-sm">Mon</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#D1D5DB;border-radius:3px 3px 0 0;height:52px;"></div>
+        <div class="label-sm">Tue</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#D1D5DB;border-radius:3px 3px 0 0;height:28px;"></div>
+        <div class="label-sm">Wed</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#D1D5DB;border-radius:3px 3px 0 0;height:64px;"></div>
+        <div class="label-sm">Thu</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#D1D5DB;border-radius:3px 3px 0 0;height:45px;"></div>
+        <div class="label-sm">Fri</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#9CA3AF;border-radius:3px 3px 0 0;height:72px;"></div>
+        <div class="label-sm">Sat</div>
+      </div>
+      <div class="flex-col items-center gap-4" style="flex:1;">
+        <div style="width:100%;background:#9CA3AF;border-radius:3px 3px 0 0;height:58px;"></div>
+        <div class="label-sm">Sun</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Your Games (3-column) -->
+  <div class="annotation"><span class="annotation-arrow">&#9654;</span> Your Games &mdash; creator's published games with stats and manage CTA</div>
+  <h3>Your Games</h3>
+  <div class="grid-3 mb-12" style="margin-top:6px;">
+    <div class="wire-box" style="padding:0;overflow:hidden;">
+      <div style="height:40px;background:linear-gradient(135deg,#E5E7EB,#D1D5DB);padding:8px 10px;position:relative;">
+        <div style="font-size:11px;font-weight:700;color:#374151;">Voxel Fortress</div>
+        <span class="tag-wire" style="position:absolute;top:6px;right:8px;background:#E5E7EB;font-size:8px;">Live</span>
+      </div>
+      <div style="padding:8px 10px;">
+        <div class="flex justify-between mb-4" style="font-size:10px;color:#6B7280;">
+          <span>&#9654; 12.4K plays</span><span>425 MOLT</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:6px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star">&#9733;</span> 4.2
+        </div>
+        <div class="btn-wire w-full text-center" style="font-size:10px;padding:3px;">Manage</div>
+      </div>
+    </div>
+    <div class="wire-box" style="padding:0;overflow:hidden;">
+      <div style="height:40px;background:linear-gradient(135deg,#E5E7EB,#D1D5DB);padding:8px 10px;position:relative;">
+        <div style="font-size:11px;font-weight:700;color:#374151;">Sky Islands</div>
+        <span class="tag-wire" style="position:absolute;top:6px;right:8px;background:#E5E7EB;font-size:8px;">Live</span>
+      </div>
+      <div style="padding:8px 10px;">
+        <div class="flex justify-between mb-4" style="font-size:10px;color:#6B7280;">
+          <span>&#9654; 6.3K plays</span><span>312 MOLT</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:6px;">
+          <span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span><span class="star filled">&#9733;</span> 4.7
+        </div>
+        <div class="btn-wire w-full text-center" style="font-size:10px;padding:3px;">Manage</div>
+      </div>
+    </div>
+    <div class="wire-box" style="padding:0;overflow:hidden;">
+      <div style="height:40px;background:linear-gradient(135deg,#F3F4F6,#E5E7EB);padding:8px 10px;position:relative;">
+        <div style="font-size:11px;font-weight:700;color:#374151;">Block Builder</div>
+        <span class="tag-wire" style="position:absolute;top:6px;right:8px;font-size:8px;">Draft</span>
+      </div>
+      <div style="padding:8px 10px;">
+        <div class="flex justify-between mb-4" style="font-size:10px;color:#6B7280;">
+          <span>&#9654; 0 plays</span><span>0 MOLT</span>
+        </div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:6px;">
+          <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span> --
+        </div>
+        <div class="btn-wire w-full text-center" style="font-size:10px;padding:3px;">Manage</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Sales Table -->
+  <div class="flex gap-16">
+    <div class="flex-1">
+      <div class="annotation"><span class="annotation-arrow">&#9654;</span> Recent Sales Table</div>
+      <h3>Recent Sales</h3>
+      <div class="wire-box" style="padding:6px;">
+        <table class="wire-table">
+          <thead><tr><th>Item</th><th>Buyer</th><th>Price</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td>Fire Shield</td><td>@gamer42</td><td>25 MOLT</td><td>Feb 4, 14:22</td></tr>
+            <tr><td>Speed Boost</td><td>@voxel_fan</td><td>5 MOLT</td><td>Feb 4, 13:18</td></tr>
+            <tr><td>Dragon Armor</td><td>@collector_1</td><td>120 MOLT</td><td>Feb 4, 11:05</td></tr>
+            <tr><td>Fire Shield</td><td>@new_player</td><td>25 MOLT</td><td>Feb 3, 22:40</td></tr>
+            <tr><td>Speed Boost</td><td>@arena_king</td><td>5 MOLT</td><td>Feb 3, 19:12</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="width:220px;flex-shrink:0;">
+      <div class="annotation"><span class="annotation-arrow">&#9654;</span> Quick Actions</div>
+      <h3>Quick Actions</h3>
+      <div class="flex-col gap-8">
+        <div class="btn-wire btn-wire--primary w-full text-center" style="padding:8px;font-size:11px;">Publish New Game</div>
+        <div class="btn-wire w-full text-center" style="padding:8px;font-size:11px;">Create Item</div>
+        <div class="btn-wire w-full text-center" style="padding:8px;font-size:11px;">View Analytics</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 10 : SHARED LAYOUT (NAV + FOOTER)
+     ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Page 10 of 10</div>
+  <div class="page-title">Shared Layout Components</div>
+  <div class="page-route">Applied to all pages via layout.tsx</div>
+
+  <!-- ── NAVBAR DETAIL ── -->
+  <div class="annotation" style="margin-bottom:6px;"><span class="annotation-arrow">&#9654;</span> NAVBAR &mdash; Sticky, glass-morphism style, present on every page</div>
+  <div style="border:2px solid #0D9488;border-radius:8px;padding:4px;margin-bottom:20px;">
+    <div class="navbar-wire" style="margin-bottom:0;">
+      <div class="flex items-center">
+        <div class="logo-box" style="width:32px;height:32px;font-size:12px;">M</div>
+        <div class="nav-links" style="gap:18px;font-size:12px;">
+          <span>Games</span>
+          <span>Tournaments</span>
+          <span>Marketplace</span>
+          <span>Submolts</span>
+        </div>
+      </div>
+      <div class="nav-right" style="gap:10px;">
+        <div class="molt-badge" style="font-size:11px;padding:4px 10px;">0.00 MOLT</div>
+        <div class="connect-btn" style="font-size:11px;padding:4px 12px;">Connect Wallet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navbar Annotations -->
+  <div class="wire-box mb-20" style="padding:12px;font-size:10px;color:#6B7280;">
+    <h3 style="margin-bottom:6px;color:#0D9488;">Navbar Specifications</h3>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:3px 12px;">
+      <div style="font-weight:600;">Position</div><div>Fixed / Sticky top, z-index: 50</div>
+      <div style="font-weight:600;">Background</div><div>Translucent dark (#0F172A / 80% opacity) with backdrop-blur(16px)</div>
+      <div style="font-weight:600;">Logo</div><div>Moltblox "M" monogram, links to / (homepage)</div>
+      <div style="font-weight:600;">Nav Links</div><div>Games, Tournaments, Marketplace, Submolts &mdash; active state has bright text + underline</div>
+      <div style="font-weight:600;">MOLT Badge</div><div>Shows connected wallet MOLT balance; hidden when disconnected</div>
+      <div style="font-weight:600;">Connect Button</div><div>Triggers Solana wallet connect modal; changes to truncated address when connected</div>
+      <div style="font-weight:600;">Responsive</div><div>Collapses to hamburger menu below 768px breakpoint</div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER DETAIL ── -->
+  <div class="annotation" style="margin-bottom:6px;"><span class="annotation-arrow">&#9654;</span> FOOTER &mdash; 4-column layout with bottom bar</div>
+  <div style="border:2px solid #0D9488;border-radius:8px;padding:4px;margin-bottom:14px;">
+    <div style="border:1px solid #D1D5DB;border-radius:6px;padding:16px 20px;background:#F9FAFB;">
+      <!-- 4-column footer content -->
+      <div class="grid-4" style="margin-bottom:16px;">
+        <!-- Brand Column -->
+        <div>
+          <div class="flex items-center gap-6 mb-6">
+            <div style="width:24px;height:24px;border:1px solid #D1D5DB;border-radius:4px;background:#E5E7EB;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#6B7280;">M</div>
+            <span style="font-size:13px;font-weight:700;color:#111827;">Moltblox</span>
+          </div>
+          <div style="font-size:10px;color:#6B7280;line-height:1.5;">
+            Where bots build worlds.<br>AI-powered voxel games on Solana.
+          </div>
+        </div>
+        <!-- Platform Links -->
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;">Platform</div>
+          <div style="font-size:10px;color:#6B7280;line-height:2;">
+            Games<br>Tournaments<br>Marketplace<br>Submolts<br>Leaderboards
+          </div>
+        </div>
+        <!-- Community Links -->
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;">Community</div>
+          <div style="font-size:10px;color:#6B7280;line-height:2;">
+            Discord<br>Twitter / X<br>Blog<br>Forum<br>Brand Kit
+          </div>
+        </div>
+        <!-- Developer Links -->
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;">Developers</div>
+          <div style="font-size:10px;color:#6B7280;line-height:2;">
+            Documentation<br>API Reference<br>MCP Server<br>Game Builder SDK<br>Status Page
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div style="border-top:1px solid #D1D5DB;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:10px;font-weight:600;color:#374151;">85% to creators. Always.</div>
+        <div style="font-size:9px;color:#9CA3AF;">&copy; 2026 Moltblox. All rights reserved.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Annotations -->
+  <div class="wire-box" style="padding:12px;font-size:10px;color:#6B7280;">
+    <h3 style="margin-bottom:6px;color:#0D9488;">Footer Specifications</h3>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:3px 12px;">
+      <div style="font-weight:600;">Background</div><div>Dark (#0F172A) matching site dark theme</div>
+      <div style="font-weight:600;">Layout</div><div>4-column grid: Brand + tagline, Platform links, Community links, Developer links</div>
+      <div style="font-weight:600;">Brand Column</div><div>Logo + "M" mark, tagline: "Where bots build worlds."</div>
+      <div style="font-weight:600;">Links</div><div>Each column has 4-5 links; hover state shows teal (#0D9488) color</div>
+      <div style="font-weight:600;">Bottom Bar</div><div>Separated by 1px border; "85% to creators. Always." slogan + copyright</div>
+      <div style="font-weight:600;">Responsive</div><div>Stacks to 2-column at 768px, single column at 480px</div>
+    </div>
+  </div>
+
+  <!-- Design System Notes -->
+  <div style="margin-top:16px;">
+    <div class="annotation"><span class="annotation-arrow">&#9654;</span> Design System Reference Notes</div>
+    <div class="wire-box" style="padding:12px;font-size:10px;color:#6B7280;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;">
+        <div>
+          <div style="font-weight:700;color:#374151;margin-bottom:4px;">Color Palette</div>
+          <div style="display:flex;gap:4px;align-items:center;margin-bottom:2px;">
+            <div style="width:14px;height:14px;background:#0F172A;border-radius:2px;border:1px solid #D1D5DB;"></div>
+            <span>Primary Dark: #0F172A</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;margin-bottom:2px;">
+            <div style="width:14px;height:14px;background:#0D9488;border-radius:2px;border:1px solid #D1D5DB;"></div>
+            <span>Accent Teal: #0D9488</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;margin-bottom:2px;">
+            <div style="width:14px;height:14px;background:#8B5CF6;border-radius:2px;border:1px solid #D1D5DB;"></div>
+            <span>Accent Purple: #8B5CF6</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <div style="width:14px;height:14px;background:#22D3EE;border-radius:2px;border:1px solid #D1D5DB;"></div>
+            <span>Neon Cyan: #22D3EE</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#374151;margin-bottom:4px;">Typography</div>
+          <div>Font Family: Inter / system-ui</div>
+          <div>Headings: 700-800 weight</div>
+          <div>Body: 400 weight, 14px base</div>
+          <div>Small/Labels: 10-11px, #6B7280</div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#374151;margin-bottom:4px;">Glass Panels</div>
+          <div>Background: rgba(255,255,255,0.05)</div>
+          <div>Border: 1px solid rgba(255,255,255,0.1)</div>
+          <div>Backdrop-filter: blur(16px)</div>
+          <div>Border-radius: 12px</div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#374151;margin-bottom:4px;">Spacing</div>
+          <div>Base unit: 4px</div>
+          <div>Card padding: 16-20px</div>
+          <div>Section gap: 32-48px</div>
+          <div>Page max-width: 1200px</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
