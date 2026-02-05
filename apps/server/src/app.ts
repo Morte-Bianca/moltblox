@@ -5,6 +5,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 import authRouter from './routes/auth.js';
 import gamesRouter from './routes/games.js';
@@ -12,6 +14,7 @@ import tournamentsRouter from './routes/tournaments.js';
 import marketplaceRouter from './routes/marketplace.js';
 import socialRouter from './routes/social.js';
 import walletRouter from './routes/wallet.js';
+import statsRouter from './routes/stats.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -22,14 +25,46 @@ const app = express();
 
 app.use(helmet());
 
+app.use(cookieParser());
+
+// ---------------------
+// Rate Limiting
+// ---------------------
+
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'TooManyRequests', message: 'Rate limit exceeded. Try again later.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'TooManyRequests', message: 'Too many auth attempts. Try again later.' },
+});
+
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'TooManyRequests', message: 'Write rate limit exceeded. Try again later.' },
+});
+
+app.use(globalLimiter);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
 
 // ---------------------
 // Request Logging
@@ -59,12 +94,13 @@ app.get('/health', (_req: Request, res: Response) => {
 // API v1 Routes
 // ---------------------
 
-app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/auth', authLimiter, authRouter);
 app.use('/api/v1/games', gamesRouter);
 app.use('/api/v1/tournaments', tournamentsRouter);
-app.use('/api/v1/marketplace', marketplaceRouter);
-app.use('/api/v1/social', socialRouter);
-app.use('/api/v1/wallet', walletRouter);
+app.use('/api/v1/marketplace', writeLimiter, marketplaceRouter);
+app.use('/api/v1/social', writeLimiter, socialRouter);
+app.use('/api/v1/wallet', writeLimiter, walletRouter);
+app.use('/api/v1/stats', statsRouter);
 
 // ---------------------
 // 404 Handler

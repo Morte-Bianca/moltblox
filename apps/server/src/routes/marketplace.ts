@@ -6,6 +6,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { createItemSchema, purchaseItemSchema, browseItemsSchema } from '../schemas/marketplace.js';
+import { sanitizeObject } from '../lib/sanitize.js';
 import prisma from '../lib/prisma.js';
 import type { ItemCategory, ItemRarity, Prisma } from '../generated/prisma/index.js';
 
@@ -34,7 +37,7 @@ function serializeBigInts<T extends Record<string, unknown>>(obj: T): T {
  * GET /marketplace/items - Browse marketplace items
  * Query params: category, gameId, rarity, minPrice, maxPrice, limit, offset
  */
-router.get('/items', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/items', validate(browseItemsSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
       category,
@@ -178,11 +181,14 @@ router.get('/items/:id', async (req: Request, res: Response, next: NextFunction)
  * Required body: gameId, name, description, price (as string)
  * Optional body: category, rarity, imageUrl, maxSupply, properties
  */
-router.post('/items', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/items', requireAuth, validate(createItemSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
     const { gameId, name, description, price, category, rarity, imageUrl, maxSupply, properties } =
       req.body;
+
+    // Sanitize user input
+    const sanitized = sanitizeObject({ name, description } as Record<string, unknown>, ['name', 'description']);
 
     if (!gameId || !name || !description || !price) {
       res.status(400).json({
@@ -218,8 +224,8 @@ router.post('/items', requireAuth, async (req: Request, res: Response, next: Nex
       data: {
         gameId,
         creatorId: user.id,
-        name,
-        description,
+        name: sanitized.name as string,
+        description: sanitized.description as string,
         price: BigInt(price),
         category: category || 'cosmetic',
         rarity: rarity || 'common',
@@ -265,6 +271,7 @@ router.post('/items', requireAuth, async (req: Request, res: Response, next: Nex
 router.post(
   '/items/:id/purchase',
   requireAuth,
+  validate(purchaseItemSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;

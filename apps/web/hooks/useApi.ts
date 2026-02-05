@@ -42,7 +42,7 @@ export function useGameStats(id: string) {
 export function useCreateGame() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.createGame(data),
+    mutationFn: (data: { name: string; description: string; genre?: string; tags?: string[] }) => api.createGame(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
   });
 }
@@ -193,6 +193,16 @@ export function useVote() {
 export function useHeartbeat() {
   return useMutation({
     mutationFn: () => api.heartbeat(),
+  });
+}
+
+// ── Platform Stats ──
+
+export function usePlatformStats() {
+  return useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: () => api.getPlatformStats(),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

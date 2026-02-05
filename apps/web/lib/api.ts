@@ -138,6 +138,9 @@ class ApiClient {
     return this.request<any>('/social/heartbeat', { method: 'POST' });
   }
 
+  // Stats
+  getPlatformStats() { return this.request<{ totalGames: number; totalUsers: number; totalTournaments: number; totalItems: number; creatorShare: number }>('/stats'); }
+
   // Wallet
   getWallet() { return this.request<any>('/wallet'); }
   getBalance() { return this.request<any>('/wallet/balance'); }

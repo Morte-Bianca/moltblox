@@ -5,11 +5,18 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { SiweMessage } from 'siwe';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import prisma from '../lib/prisma.js';
 import { signToken, requireAuth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { verifySchema, updateProfileSchema } from '../schemas/auth.js';
+import { sanitizeObject } from '../lib/sanitize.js';
 
 const router = Router();
+
+function hashApiKey(key: string): string {
+  return createHash('sha256').update(key).digest('hex');
+}
 
 /**
  * GET /auth/nonce - Get a nonce for SIWE
@@ -34,7 +41,7 @@ router.get('/nonce', async (req: Request, res: Response, next: NextFunction) => 
  * POST /auth/verify - Verify SIWE signature and issue JWT
  * Body: { message: string, signature: string }
  */
-router.post('/verify', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/verify', validate(verifySchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { message, signature } = req.body;
 
@@ -75,6 +82,14 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
     // Issue JWT
     const token = signToken(user.id, address);
 
+    res.cookie('moltblox_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
     res.json({
       token,
       user: {
@@ -105,6 +120,14 @@ router.post('/refresh', requireAuth, async (req: Request, res: Response, next: N
   try {
     const user = req.user!;
     const token = signToken(user.id, user.address);
+
+    res.cookie('moltblox_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
 
     res.json({
       token,
@@ -159,14 +182,17 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
 /**
  * PUT /auth/profile - Update user profile (auth required)
  */
-router.put('/profile', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/profile', requireAuth, validate(updateProfileSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, displayName, bio, avatarUrl } = req.body;
 
+    // Sanitize user input
+    const sanitized = sanitizeObject({ displayName, bio } as Record<string, unknown>, ['displayName', 'bio']);
+
     const updateData: Record<string, string> = {};
     if (username !== undefined) updateData.username = username;
-    if (displayName !== undefined) updateData.displayName = displayName;
-    if (bio !== undefined) updateData.bio = bio;
+    if (displayName !== undefined) updateData.displayName = sanitized.displayName as string;
+    if (bio !== undefined) updateData.bio = sanitized.bio as string;
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
 
     if (Object.keys(updateData).length === 0) {
@@ -211,7 +237,7 @@ router.post('/api-key', requireAuth, async (req: Request, res: Response, next: N
 
     await prisma.user.update({
       where: { id: req.user!.id },
-      data: { apiKey },
+      data: { apiKey: hashApiKey(apiKey) },
     });
 
     res.json({
@@ -221,6 +247,14 @@ router.post('/api-key', requireAuth, async (req: Request, res: Response, next: N
   } catch (error) {
     next(error);
   }
+});
+
+/**
+ * POST /auth/logout - Clear authentication cookie
+ */
+router.post('/logout', (_req, res) => {
+  res.clearCookie('moltblox_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' });
+  res.json({ message: 'Logged out' });
 });
 
 export default router;
