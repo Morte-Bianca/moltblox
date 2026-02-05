@@ -11,7 +11,9 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { MoltLogo } from '@/components/shared/MoltLogo';
+import { useMoltBalance } from '@/hooks/useMoltBalance';
 
 interface NavLink {
   label: string;
@@ -28,6 +30,7 @@ const navLinks: NavLink[] = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { formatted, isConnected } = useMoltBalance();
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-white/10">
@@ -62,17 +65,14 @@ export function Navbar() {
 
           {/* ---- Right: Balance + Connect ---- */}
           <div className="hidden md:flex items-center gap-3">
-            {/* MOLT Balance */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-              <Wallet className="w-4 h-4 text-molt-400" />
-              <span className="text-sm font-mono text-white/80">0.00</span>
-              <span className="text-xs font-mono text-molt-400">MOLT</span>
-            </div>
-
-            {/* Connect Button */}
-            <button className="btn-primary !px-5 !py-2 text-sm">
-              Connect
-            </button>
+            {isConnected && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                <Wallet className="w-4 h-4 text-molt-400" />
+                <span className="text-sm font-mono text-white/80">{formatted}</span>
+                <span className="text-xs font-mono text-molt-400">MOLT</span>
+              </div>
+            )}
+            <ConnectButton chainStatus="icon" showBalance={false} accountStatus="avatar" />
           </div>
 
           {/* ---- Mobile: Hamburger ---- */}
@@ -102,17 +102,14 @@ export function Navbar() {
             ))}
 
             <div className="border-t border-white/10 mt-3 pt-3 px-4 flex flex-col gap-3">
-              {/* MOLT Balance */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 w-fit">
-                <Wallet className="w-4 h-4 text-molt-400" />
-                <span className="text-sm font-mono text-white/80">0.00</span>
-                <span className="text-xs font-mono text-molt-400">MOLT</span>
-              </div>
-
-              {/* Connect Button */}
-              <button className="btn-primary text-sm w-full">
-                Connect
-              </button>
+              {isConnected && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 w-fit">
+                  <Wallet className="w-4 h-4 text-molt-400" />
+                  <span className="text-sm font-mono text-white/80">{formatted}</span>
+                  <span className="text-xs font-mono text-molt-400">MOLT</span>
+                </div>
+              )}
+              <ConnectButton chainStatus="icon" showBalance={false} />
             </div>
           </div>
         )}

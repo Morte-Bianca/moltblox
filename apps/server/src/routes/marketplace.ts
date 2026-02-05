@@ -1,218 +1,474 @@
 /**
  * Marketplace routes for Moltblox API
  * 85% creator / 15% platform revenue split
+ * Uses Prisma for all database operations
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import prisma from '../lib/prisma.js';
+import type { ItemCategory, ItemRarity, Prisma } from '../generated/prisma/index.js';
 
 const router = Router();
 
 /**
- * GET /marketplace/items - Browse marketplace items
- * Query params: category, game, minPrice, maxPrice
+ * Serialize BigInt fields to strings in an object.
+ * JSON.stringify cannot handle BigInt natively.
  */
-router.get('/items', (req: Request, res: Response) => {
-  const {
-    category = 'all',
-    game = 'all',
-    minPrice = '0',
-    maxPrice = '999999',
-  } = req.query;
+function serializeBigInts<T extends Record<string, unknown>>(obj: T): T {
+  const result = { ...obj };
+  for (const key in result) {
+    const value = result[key];
+    if (typeof value === 'bigint') {
+      (result as Record<string, unknown>)[key] = value.toString();
+    } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      (result as Record<string, unknown>)[key] = serializeBigInts(
+        value as Record<string, unknown>,
+      );
+    }
+  }
+  return result;
+}
 
-  res.json({
-    items: [
-      {
-        id: 'item-001',
-        gameId: 'game-002',
-        creatorId: 'creator-002',
-        name: 'Golden Block Skin',
-        description: 'A shimmering golden skin for your blocks in Block Clash',
-        category: 'cosmetic',
-        rarity: 'rare',
-        price: '2000000000000000000', // 2 MOLT
-        currency: 'MOLT',
-        maxSupply: 500,
-        currentSupply: 500,
-        soldCount: 127,
-        active: true,
-        imageUrl: 'https://cdn.moltblox.com/items/golden-block.png',
-        createdAt: '2025-02-01T10:00:00Z',
-      },
-      {
-        id: 'item-002',
-        gameId: 'game-001',
-        creatorId: 'creator-001',
-        name: 'Speed Boost Pack x5',
-        description: 'Five speed boost consumables for Molt Runner',
-        category: 'consumable',
-        rarity: 'common',
-        price: '300000000000000000', // 0.3 MOLT
-        currency: 'MOLT',
-        maxSupply: null,
-        currentSupply: 0,
-        soldCount: 3450,
-        active: true,
-        imageUrl: 'https://cdn.moltblox.com/items/speed-boost.png',
-        createdAt: '2025-01-20T15:00:00Z',
-      },
-      {
-        id: 'item-003',
-        gameId: 'game-003',
-        creatorId: 'creator-003',
-        name: 'Legendary Puzzle Theme',
-        description: 'An exclusive visual theme for Puzzle Molt with animated backgrounds',
-        category: 'cosmetic',
-        rarity: 'legendary',
-        price: '25000000000000000000', // 25 MOLT
-        currency: 'MOLT',
-        maxSupply: 50,
-        currentSupply: 50,
-        soldCount: 12,
-        active: true,
-        imageUrl: 'https://cdn.moltblox.com/items/legendary-theme.png',
-        createdAt: '2025-02-10T08:00:00Z',
-      },
-    ],
-    pagination: {
-      total: 3,
-      limit: 20,
-      offset: 0,
-      hasMore: false,
-    },
-    filters: {
+/**
+ * GET /marketplace/items - Browse marketplace items
+ * Query params: category, gameId, rarity, minPrice, maxPrice, limit, offset
+ */
+router.get('/items', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {
       category,
-      game,
+      gameId,
+      rarity,
       minPrice,
       maxPrice,
-    },
-  });
+      limit = '20',
+      offset = '0',
+    } = req.query;
+
+    const take = Math.min(parseInt(limit as string, 10) || 20, 100);
+    const skip = parseInt(offset as string, 10) || 0;
+
+    const where: Prisma.ItemWhereInput = {
+      active: true,
+    };
+
+    if (category && category !== 'all') {
+      where.category = category as ItemCategory;
+    }
+
+    if (gameId && gameId !== 'all') {
+      where.gameId = gameId as string;
+    }
+
+    if (rarity && rarity !== 'all') {
+      where.rarity = rarity as ItemRarity;
+    }
+
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) {
+        where.price.gte = BigInt(minPrice as string);
+      }
+      if (maxPrice) {
+        where.price.lte = BigInt(maxPrice as string);
+      }
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.item.findMany({
+        where,
+        take,
+        skip,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          game: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              thumbnailUrl: true,
+            },
+          },
+          creator: {
+            select: {
+              id: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+      }),
+      prisma.item.count({ where }),
+    ]);
+
+    const serializedItems = items.map((item) => ({
+      ...item,
+      price: item.price.toString(),
+    }));
+
+    res.json({
+      items: serializedItems,
+      pagination: {
+        total,
+        limit: take,
+        offset: skip,
+        hasMore: skip + take < total,
+      },
+      filters: {
+        category: category || 'all',
+        gameId: gameId || 'all',
+        rarity: rarity || 'all',
+        minPrice: minPrice || null,
+        maxPrice: maxPrice || null,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * GET /marketplace/items/:id - Get item details
  */
-router.get('/items/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
+router.get('/items/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
 
-  res.json({
-    id,
-    gameId: 'game-002',
-    creatorId: 'creator-002',
-    creatorAddress: '0xbbb222ccc333ddd444eee555fff666aaa777bbb8',
-    name: 'Golden Block Skin',
-    description: 'A shimmering golden skin for your blocks in Block Clash. Turns all your placed blocks into gold, with particle effects on placement.',
-    category: 'cosmetic',
-    rarity: 'rare',
-    price: '2000000000000000000',
-    currency: 'MOLT',
-    maxSupply: 500,
-    currentSupply: 373,
-    soldCount: 127,
-    active: true,
-    imageUrl: 'https://cdn.moltblox.com/items/golden-block.png',
-    properties: {
-      effect: 'golden_glow',
-      particles: true,
-      animated: true,
-    },
-    createdAt: '2025-02-01T10:00:00Z',
-    updatedAt: '2025-03-01T08:00:00Z',
-  });
+    const item = await prisma.item.findUnique({
+      where: { id },
+      include: {
+        game: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            thumbnailUrl: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    if (!item) {
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Item with id "${id}" not found`,
+      });
+      return;
+    }
+
+    res.json({
+      ...item,
+      price: item.price.toString(),
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * POST /marketplace/items - Create a new marketplace item (auth required)
+ * Required body: gameId, name, description, price (as string)
+ * Optional body: category, rarity, imageUrl, maxSupply, properties
  */
-router.post('/items', requireAuth, (req: Request, res: Response) => {
-  const user = req.user!;
+router.post('/items', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const { gameId, name, description, price, category, rarity, imageUrl, maxSupply, properties } =
+      req.body;
 
-  res.status(201).json({
-    id: 'item-new-001',
-    gameId: req.body.gameId,
-    creatorId: user.id,
-    creatorAddress: user.address,
-    name: req.body.name || 'Untitled Item',
-    description: req.body.description || '',
-    category: req.body.category || 'cosmetic',
-    rarity: req.body.rarity || 'common',
-    price: req.body.price || '0',
-    currency: 'MOLT',
-    maxSupply: req.body.maxSupply || null,
-    currentSupply: req.body.maxSupply || 0,
-    soldCount: 0,
-    active: true,
-    properties: req.body.properties || {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    message: 'Item created successfully',
-  });
+    if (!gameId || !name || !description || !price) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Missing required fields: gameId, name, description, price',
+      });
+      return;
+    }
+
+    // Verify the user owns the game
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true, creatorId: true },
+    });
+
+    if (!game) {
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Game with id "${gameId}" not found`,
+      });
+      return;
+    }
+
+    if (game.creatorId !== user.id) {
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only create items for games you own',
+      });
+      return;
+    }
+
+    const item = await prisma.item.create({
+      data: {
+        gameId,
+        creatorId: user.id,
+        name,
+        description,
+        price: BigInt(price),
+        category: category || 'cosmetic',
+        rarity: rarity || 'common',
+        imageUrl: imageUrl || null,
+        maxSupply: maxSupply != null ? parseInt(maxSupply, 10) : null,
+        currentSupply: maxSupply != null ? parseInt(maxSupply, 10) : 0,
+        properties: properties || {},
+        active: true,
+      },
+      include: {
+        game: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      ...item,
+      price: item.price.toString(),
+      message: 'Item created successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * POST /marketplace/items/:id/purchase - Purchase an item (auth required)
+ * Uses a Prisma transaction for atomicity.
+ * 85% goes to the creator, 15% is platform fee.
  */
-router.post('/items/:id/purchase', requireAuth, (req: Request, res: Response) => {
-  const { id } = req.params;
-  const user = req.user!;
+router.post(
+  '/items/:id/purchase',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const user = req.user!;
+      const quantity = parseInt(req.body.quantity, 10) || 1;
 
-  const totalPrice = '2000000000000000000'; // 2 MOLT
-  const creatorAmount = '1700000000000000000'; // 85%
-  const platformAmount = '300000000000000000'; // 15%
+      const result = await prisma.$transaction(async (tx) => {
+        // Fetch item and verify it exists and is active
+        const item = await tx.item.findUnique({
+          where: { id },
+          include: {
+            creator: {
+              select: {
+                id: true,
+                walletAddress: true,
+                displayName: true,
+              },
+            },
+          },
+        });
 
-  res.json({
-    purchase: {
-      id: 'purchase-001',
-      itemId: id,
-      gameId: 'game-002',
-      buyerId: user.id,
-      buyerAddress: user.address,
-      sellerId: 'creator-002',
-      sellerAddress: '0xbbb222ccc333ddd444eee555fff666aaa777bbb8',
-      price: totalPrice,
-      creatorAmount,
-      platformAmount,
-      quantity: req.body.quantity || 1,
-      txHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-      blockNumber: 12345678,
-      timestamp: new Date().toISOString(),
-    },
-    message: 'Purchase successful. Item added to your inventory.',
-  });
-});
+        if (!item) {
+          throw Object.assign(new Error(`Item with id "${id}" not found`), { statusCode: 404 });
+        }
+
+        if (!item.active) {
+          throw Object.assign(new Error('This item is no longer available for purchase'), {
+            statusCode: 400,
+          });
+        }
+
+        // Check supply if limited
+        if (item.maxSupply !== null && item.currentSupply < quantity) {
+          throw Object.assign(
+            new Error(
+              `Insufficient supply. Requested: ${quantity}, available: ${item.currentSupply}`,
+            ),
+            { statusCode: 400 },
+          );
+        }
+
+        // Calculate 85/15 split
+        const price = BigInt(item.price) * BigInt(quantity);
+        const creatorAmount = (price * 85n) / 100n;
+        const platformAmount = price - creatorAmount;
+
+        // Create purchase record
+        const purchase = await tx.purchase.create({
+          data: {
+            itemId: item.id,
+            gameId: item.gameId,
+            buyerId: user.id,
+            sellerId: item.creatorId,
+            price,
+            creatorAmount,
+            platformAmount,
+            quantity,
+          },
+        });
+
+        // Upsert inventory item (increment quantity if already owned)
+        await tx.inventoryItem.upsert({
+          where: {
+            userId_itemId: {
+              userId: user.id,
+              itemId: item.id,
+            },
+          },
+          create: {
+            userId: user.id,
+            itemId: item.id,
+            quantity,
+          },
+          update: {
+            quantity: {
+              increment: quantity,
+            },
+          },
+        });
+
+        // Increment sold count and decrement supply if limited
+        const itemUpdate: Prisma.ItemUpdateInput = {
+          soldCount: { increment: quantity },
+        };
+        if (item.maxSupply !== null) {
+          itemUpdate.currentSupply = { decrement: quantity };
+        }
+        await tx.item.update({
+          where: { id: item.id },
+          data: itemUpdate,
+        });
+
+        // Record transaction for buyer (purchase)
+        await tx.transaction.create({
+          data: {
+            userId: user.id,
+            type: 'purchase',
+            amount: price,
+            itemId: item.id,
+            counterparty: item.creator.walletAddress,
+            description: `Purchased: ${item.name}${quantity > 1 ? ` x${quantity}` : ''}`,
+          },
+        });
+
+        // Record transaction for seller (sale)
+        await tx.transaction.create({
+          data: {
+            userId: item.creatorId,
+            type: 'sale',
+            amount: creatorAmount,
+            itemId: item.id,
+            counterparty: user.address,
+            description: `Item sale: ${item.name}${quantity > 1 ? ` x${quantity}` : ''}`,
+          },
+        });
+
+        return {
+          purchase: {
+            id: purchase.id,
+            itemId: purchase.itemId,
+            gameId: purchase.gameId,
+            buyerId: purchase.buyerId,
+            buyerAddress: user.address,
+            sellerId: purchase.sellerId,
+            sellerAddress: item.creator.walletAddress,
+            price: price.toString(),
+            creatorAmount: creatorAmount.toString(),
+            platformAmount: platformAmount.toString(),
+            quantity: purchase.quantity,
+            txHash: purchase.txHash,
+            blockNumber: purchase.blockNumber,
+            createdAt: purchase.createdAt,
+          },
+        };
+      });
+
+      res.json({
+        ...result,
+        message: 'Purchase successful. Item added to your inventory.',
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error && 'statusCode' in error) {
+        const statusCode = (error as Error & { statusCode: number }).statusCode;
+        res.status(statusCode).json({
+          error: statusCode === 404 ? 'Not Found' : 'Bad Request',
+          message: error.message,
+        });
+        return;
+      }
+      next(error);
+    }
+  },
+);
 
 /**
  * GET /marketplace/inventory - Get player inventory (auth required)
  */
-router.get('/inventory', requireAuth, (req: Request, res: Response) => {
-  const user = req.user!;
+router.get('/inventory', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
 
-  res.json({
-    playerId: user.id,
-    items: [
-      {
-        itemId: 'item-001',
-        gameId: 'game-002',
-        name: 'Golden Block Skin',
-        category: 'cosmetic',
-        rarity: 'rare',
-        quantity: 1,
-        acquiredAt: '2025-02-15T12:00:00Z',
-        transactionHash: '0xaaa111bbb222ccc333ddd444eee555fff666aaa777bbb888ccc999ddd000eee1',
+    const inventoryItems = await prisma.inventoryItem.findMany({
+      where: { userId: user.id },
+      orderBy: { acquiredAt: 'desc' },
+      include: {
+        item: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            rarity: true,
+            imageUrl: true,
+            game: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
-      {
-        itemId: 'item-002',
-        gameId: 'game-001',
-        name: 'Speed Boost Pack x5',
-        category: 'consumable',
-        rarity: 'common',
-        quantity: 3,
-        acquiredAt: '2025-03-01T09:00:00Z',
-        transactionHash: '0xfff111eee222ddd333ccc444bbb555aaa666fff777eee888ddd999ccc000bbb1',
-      },
-    ],
-    totalItems: 2,
-  });
+    });
+
+    const items = inventoryItems.map((inv) => ({
+      itemId: inv.itemId,
+      gameId: inv.item.game.id,
+      gameName: inv.item.game.name,
+      name: inv.item.name,
+      category: inv.item.category,
+      rarity: inv.item.rarity,
+      imageUrl: inv.item.imageUrl,
+      quantity: inv.quantity,
+      acquiredAt: inv.acquiredAt,
+      txHash: inv.txHash,
+    }));
+
+    res.json({
+      playerId: user.id,
+      items,
+      totalItems: items.length,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

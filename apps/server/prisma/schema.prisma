@@ -1,0 +1,665 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  walletAddress  String   @unique
+  username       String?  @unique
+  displayName    String?
+  avatarUrl      String?
+  bio            String?
+
+  // Auth
+  nonce          String?
+  apiKey         String?  @unique
+  lastLoginAt    DateTime?
+
+  // Reputation scores
+  reputationTotal    Int @default(0)
+  reputationCreator  Int @default(0)
+  reputationPlayer   Int @default(0)
+  reputationCommunity Int @default(0)
+  reputationTournament Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  games                Game[]
+  items                Item[]
+  purchases            Purchase[]         @relation("Buyer")
+  sales                Purchase[]         @relation("Seller")
+  inventory            InventoryItem[]
+  tournamentEntries    TournamentParticipant[]
+  sponsoredTournaments Tournament[]
+  posts                Post[]
+  comments             Comment[]
+  votes                Vote[]
+  notifications        Notification[]
+  heartbeatLogs        HeartbeatLog[]
+  gameSessions         GameSessionPlayer[]
+  transactions         Transaction[]
+
+  @@index([walletAddress])
+  @@index([username])
+  @@map("users")
+}
+
+// ─── Games ───────────────────────────────────────────────
+
+enum GameGenre {
+  arcade
+  puzzle
+  multiplayer
+  casual
+  competitive
+  strategy
+  simulation
+  rpg
+  other
+}
+
+enum GameStatus {
+  draft
+  review
+  published
+  suspended
+  archived
+}
+
+model Game {
+  id             String     @id @default(cuid())
+  name           String
+  slug           String     @unique
+  description    String
+  creatorId      String
+  creator        User       @relation(fields: [creatorId], references: [id])
+
+  // Assets
+  wasmUrl        String?
+  thumbnailUrl   String?
+  screenshots    String[]   @default([])
+
+  // Config
+  maxPlayers     Int        @default(1)
+  genre          GameGenre  @default(other)
+  tags           String[]   @default([])
+
+  // Status
+  status         GameStatus @default(draft)
+  publishedAt    DateTime?
+
+  // Stats (denormalized for fast reads)
+  totalPlays     Int        @default(0)
+  uniquePlayers  Int        @default(0)
+  totalRevenue   BigInt     @default(0)
+  averageRating  Float      @default(0)
+  ratingCount    Int        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  versions       GameVersion[]
+  items          Item[]
+  tournaments    Tournament[]
+  sessions       GameSession[]
+  posts          Post[]        @relation("GamePosts")
+  submoltGames   SubmoltGame[]
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([genre])
+  @@index([totalPlays])
+  @@index([averageRating])
+  @@map("games")
+}
+
+model GameVersion {
+  id        String @id @default(cuid())
+  gameId    String
+  game      Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  version   String
+  wasmUrl   String
+  changelog String?
+  createdAt DateTime @default(now())
+
+  @@unique([gameId, version])
+  @@map("game_versions")
+}
+
+// ─── Game Sessions ───────────────────────────────────────
+
+enum SessionStatus {
+  waiting
+  active
+  paused
+  completed
+  abandoned
+}
+
+model GameSession {
+  id        String        @id @default(cuid())
+  gameId    String
+  game      Game          @relation(fields: [gameId], references: [id])
+  status    SessionStatus @default(waiting)
+
+  currentTurn Int?
+  state       Json         @default("{}")
+
+  winnerId  String?
+  scores    Json?
+
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  players   GameSessionPlayer[]
+
+  @@index([gameId])
+  @@index([status])
+  @@map("game_sessions")
+}
+
+model GameSessionPlayer {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+  @@map("game_session_players")
+}
+
+// ─── Marketplace ─────────────────────────────────────────
+
+enum ItemCategory {
+  cosmetic
+  consumable
+  power_up
+  access
+  subscription
+}
+
+enum ItemRarity {
+  common
+  uncommon
+  rare
+  epic
+  legendary
+}
+
+model Item {
+  id             String       @id @default(cuid())
+  gameId         String
+  game           Game         @relation(fields: [gameId], references: [id])
+  creatorId      String
+  creator        User         @relation(fields: [creatorId], references: [id])
+
+  name           String
+  description    String
+  category       ItemCategory @default(cosmetic)
+  imageUrl       String?
+  properties     Json         @default("{}")
+
+  // Pricing (stored in wei as BigInt)
+  price          BigInt       @default(0)
+
+  // Supply
+  maxSupply      Int?
+  currentSupply  Int          @default(0)
+  soldCount      Int          @default(0)
+
+  rarity         ItemRarity   @default(common)
+  active         Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  purchases      Purchase[]
+  inventoryItems InventoryItem[]
+
+  @@index([gameId])
+  @@index([creatorId])
+  @@index([category])
+  @@index([rarity])
+  @@map("items")
+}
+
+model Purchase {
+  id             String   @id @default(cuid())
+  itemId         String
+  item           Item     @relation(fields: [itemId], references: [id])
+  gameId         String
+  buyerId        String
+  buyer          User     @relation("Buyer", fields: [buyerId], references: [id])
+  sellerId       String
+  seller         User     @relation("Seller", fields: [sellerId], references: [id])
+
+  // Amounts (wei)
+  price          BigInt
+  creatorAmount  BigInt
+  platformAmount BigInt
+  quantity       Int      @default(1)
+
+  // On-chain
+  txHash         String?
+  blockNumber    Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([itemId])
+  @@map("purchases")
+}
+
+model InventoryItem {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+  itemId    String
+  item      Item   @relation(fields: [itemId], references: [id])
+
+  quantity  Int    @default(1)
+  acquiredAt DateTime @default(now())
+  txHash    String?
+
+  @@unique([userId, itemId])
+  @@map("inventory_items")
+}
+
+// ─── Tournaments ─────────────────────────────────────────
+
+enum TournamentType {
+  platform_sponsored
+  creator_sponsored
+  community_sponsored
+}
+
+enum TournamentStatus {
+  upcoming
+  registration
+  active
+  completed
+  cancelled
+}
+
+enum TournamentFormat {
+  single_elimination
+  double_elimination
+  swiss
+  round_robin
+}
+
+model Tournament {
+  id             String           @id @default(cuid())
+  name           String
+  description    String
+  gameId         String
+  game           Game             @relation(fields: [gameId], references: [id])
+  sponsorId      String
+  sponsor        User             @relation(fields: [sponsorId], references: [id])
+
+  type           TournamentType   @default(community_sponsored)
+
+  // Prize (wei)
+  prizePool      BigInt           @default(0)
+  entryFee       BigInt           @default(0)
+  prizeFirst     Int              @default(50)
+  prizeSecond    Int              @default(25)
+  prizeThird     Int              @default(15)
+  prizeParticipation Int          @default(10)
+
+  // Participants
+  maxParticipants    Int
+  currentParticipants Int         @default(0)
+
+  // Format
+  format         TournamentFormat @default(single_elimination)
+  matchBestOf    Int              @default(1)
+  rules          String?
+
+  // Schedule
+  registrationStart DateTime
+  registrationEnd   DateTime
+  startTime         DateTime
+  endTime           DateTime?
+
+  status         TournamentStatus @default(upcoming)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  participants   TournamentParticipant[]
+  matches        TournamentMatch[]
+  winners        TournamentWinner[]
+  posts          Post[]            @relation("TournamentPosts")
+
+  @@index([gameId])
+  @@index([status])
+  @@index([startTime])
+  @@map("tournaments")
+}
+
+enum ParticipantStatus {
+  registered
+  active
+  eliminated
+  winner
+  withdrawn
+}
+
+model TournamentParticipant {
+  id             String            @id @default(cuid())
+  tournamentId   String
+  tournament     Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+
+  entryFeePaid   BigInt            @default(0)
+  status         ParticipantStatus @default(registered)
+  placement      Int?
+  prizeWon       BigInt?
+
+  registeredAt DateTime @default(now())
+
+  @@unique([tournamentId, userId])
+  @@map("tournament_participants")
+}
+
+enum MatchStatus {
+  pending
+  scheduled
+  in_progress
+  completed
+  forfeit
+}
+
+model TournamentMatch {
+  id             String      @id @default(cuid())
+  tournamentId   String
+  tournament     Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  round          Int
+  matchNumber    Int
+  bracket        String      @default("winners")
+
+  player1Id      String?
+  player2Id      String?
+
+  status         MatchStatus @default(pending)
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+
+  winnerId       String?
+  scorePlayer1   Int?
+  scorePlayer2   Int?
+  games          Json?
+
+  @@index([tournamentId])
+  @@index([round])
+  @@map("tournament_matches")
+}
+
+model TournamentWinner {
+  id             String     @id @default(cuid())
+  tournamentId   String
+  tournament     Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId         String
+  placement      Int
+  prizeAmount    BigInt
+  txHash         String?
+  paidAt         DateTime?
+
+  @@unique([tournamentId, placement])
+  @@map("tournament_winners")
+}
+
+// ─── Social (Submolts) ───────────────────────────────────
+
+model Submolt {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  description  String
+  iconUrl      String?
+  bannerUrl    String?
+
+  memberCount  Int     @default(0)
+  postCount    Int     @default(0)
+
+  moderators   String[] @default([])
+  rules        String[] @default([])
+  active       Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  posts        Post[]
+  games        SubmoltGame[]
+
+  @@map("submolts")
+}
+
+model SubmoltGame {
+  id        String  @id @default(cuid())
+  submoltId String
+  submolt   Submolt @relation(fields: [submoltId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([submoltId, gameId])
+  @@map("submolt_games")
+}
+
+enum PostType {
+  announcement
+  update
+  discussion
+  question
+  showcase
+  tournament
+  feedback
+}
+
+model Post {
+  id           String   @id @default(cuid())
+  submoltId    String
+  submolt      Submolt  @relation(fields: [submoltId], references: [id])
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id])
+
+  title        String
+  content      String
+  type         PostType @default(discussion)
+
+  // Linked content
+  gameId       String?
+  game         Game?       @relation("GamePosts", fields: [gameId], references: [id])
+  tournamentId String?
+  tournament   Tournament? @relation("TournamentPosts", fields: [tournamentId], references: [id])
+
+  // Engagement (denormalized)
+  upvotes      Int      @default(0)
+  downvotes    Int      @default(0)
+  commentCount Int      @default(0)
+
+  pinned       Boolean  @default(false)
+  locked       Boolean  @default(false)
+  deleted      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  comments     Comment[]
+  votes        Vote[]
+
+  @@index([submoltId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String  @id @default(cuid())
+  postId    String
+  post      Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  authorId  String
+  author    User    @relation(fields: [authorId], references: [id])
+
+  content   String
+
+  upvotes   Int     @default(0)
+  downvotes Int     @default(0)
+  deleted   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  votes     Vote[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@map("comments")
+}
+
+model Vote {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  postId    String?
+  post      Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  value     Int      // 1 = upvote, -1 = downvote
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@map("votes")
+}
+
+// ─── Notifications ───────────────────────────────────────
+
+enum NotificationType {
+  game_play
+  item_purchase
+  earning
+  tournament_start
+  tournament_result
+  prize_received
+  comment
+  mention
+  achievement
+  new_follower
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  type         NotificationType
+  title        String
+  message      String
+
+  gameId       String?
+  itemId       String?
+  tournamentId String?
+  postId       String?
+
+  read         Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ─── Wallet / Transactions ───────────────────────────────
+
+enum TransactionType {
+  purchase
+  sale
+  tournament_entry
+  tournament_prize
+  transfer_in
+  transfer_out
+  platform_fee
+}
+
+model Transaction {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  type      TransactionType
+  amount    BigInt
+  txHash    String?
+  blockNumber Int?
+
+  // Reference
+  itemId       String?
+  tournamentId String?
+  counterparty String?
+
+  description  String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+// ─── Heartbeat ───────────────────────────────────────────
+
+model HeartbeatLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  trendingGamesFound    Int @default(0)
+  newNotifications      Int @default(0)
+  newGamesFound         Int @default(0)
+  submoltActivity       Int @default(0)
+  upcomingTournaments   Int @default(0)
+  gamesPlayed           Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("heartbeat_logs")
+}
+
+// ─── Ratings ─────────────────────────────────────────────
+
+model GameRating {
+  id     String @id @default(cuid())
+  gameId String
+  userId String
+  rating Int    // 1-5
+  review String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, userId])
+  @@map("game_ratings")
+}

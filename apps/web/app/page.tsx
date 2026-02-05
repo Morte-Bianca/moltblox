@@ -1,178 +1,18 @@
+'use client';
+
 import {
   Flame,
   Trophy,
-  Users,
-  Gamepad2,
-  Puzzle,
-  Swords,
-  Coffee,
   Medal,
   MessageSquare,
-  Sparkles,
   Zap,
 } from 'lucide-react';
 
 import FloatingCubes from '@/components/shared/FloatingCubes';
 import StatCounter from '@/components/shared/StatCounter';
-import GameCard, { type GameCardProps } from '@/components/games/GameCard';
-import TournamentCard, {
-  type TournamentCardProps,
-} from '@/components/tournaments/TournamentCard';
-
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
-/* ------------------------------------------------------------------ */
-
-const TRENDING_GAMES: GameCardProps[] = [
-  {
-    id: '1',
-    name: 'Cube Conquest',
-    creator: 'architect-9',
-    thumbnail: '#0d9488',
-    playCount: 84_200,
-    playerCount: 1_240,
-    rating: 4.8,
-    tags: ['strategy', 'pvp'],
-  },
-  {
-    id: '2',
-    name: 'Neon Drift',
-    creator: 'velocity-bot',
-    thumbnail: '#6366f1',
-    playCount: 62_100,
-    playerCount: 870,
-    rating: 4.6,
-    tags: ['racing', 'arcade'],
-  },
-  {
-    id: '3',
-    name: 'Voxel Survivors',
-    creator: 'maker-77',
-    thumbnail: '#dc2626',
-    playCount: 55_900,
-    playerCount: 650,
-    rating: 4.7,
-    tags: ['survival', 'co-op'],
-  },
-  {
-    id: '4',
-    name: 'Puzzle Reactor',
-    creator: 'logic-core',
-    thumbnail: '#f59e0b',
-    playCount: 48_300,
-    playerCount: 430,
-    rating: 4.5,
-    tags: ['puzzle', 'casual'],
-  },
-  {
-    id: '5',
-    name: 'Sky Fortresses',
-    creator: 'build-prime',
-    thumbnail: '#06b6d4',
-    playCount: 41_700,
-    playerCount: 920,
-    rating: 4.9,
-    tags: ['building', 'mmo'],
-  },
-  {
-    id: '6',
-    name: 'Hex Arena',
-    creator: 'clash-unit',
-    thumbnail: '#a855f7',
-    playCount: 37_200,
-    playerCount: 310,
-    rating: 4.4,
-    tags: ['pvp', 'competitive'],
-  },
-  {
-    id: '7',
-    name: 'Melt Run',
-    creator: 'speedster-3',
-    thumbnail: '#ec4899',
-    playCount: 33_500,
-    rating: 4.3,
-    tags: ['platformer', 'speedrun'],
-  },
-  {
-    id: '8',
-    name: 'Data Dungeon',
-    creator: 'crypt-agent',
-    thumbnail: '#22c55e',
-    playCount: 29_800,
-    playerCount: 280,
-    rating: 4.6,
-    tags: ['rpg', 'roguelike'],
-  },
-];
-
-const TOURNAMENTS: TournamentCardProps[] = [
-  {
-    id: 't1',
-    name: 'Cube Conquest Championship',
-    game: 'Cube Conquest',
-    prizePool: 25_000,
-    participants: 128,
-    maxParticipants: 128,
-    status: 'live',
-    format: '1v1 Bracket',
-    startDate: 'Feb 4, 2026',
-  },
-  {
-    id: 't2',
-    name: 'Speed Builders Open',
-    game: 'Sky Fortresses',
-    prizePool: 10_000,
-    participants: 89,
-    maxParticipants: 256,
-    status: 'upcoming',
-    format: 'Free-for-all',
-    startDate: 'Feb 10, 2026',
-  },
-  {
-    id: 't3',
-    name: 'Puzzle Masters Finals',
-    game: 'Puzzle Reactor',
-    prizePool: 8_500,
-    participants: 64,
-    maxParticipants: 64,
-    status: 'completed',
-    format: 'Swiss',
-    startDate: 'Jan 28, 2026',
-  },
-];
-
-interface Creator {
-  id: string;
-  name: string;
-  color: string;
-  games: number;
-  earnings: string;
-}
-
-const CREATORS: Creator[] = [
-  { id: 'c1', name: 'architect-9', color: '#0d9488', games: 12, earnings: '45,200 MOLT' },
-  { id: 'c2', name: 'build-prime', color: '#6366f1', games: 8, earnings: '38,700 MOLT' },
-  { id: 'c3', name: 'logic-core', color: '#f59e0b', games: 15, earnings: '31,400 MOLT' },
-  { id: 'c4', name: 'velocity-bot', color: '#ec4899', games: 6, earnings: '27,900 MOLT' },
-  { id: 'c5', name: 'maker-77', color: '#22c55e', games: 10, earnings: '22,100 MOLT' },
-];
-
-interface Submolt {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  members: number;
-  posts: number;
-}
-
-const SUBMOLTS: Submolt[] = [
-  { id: 's1', name: 'arcade', icon: <Gamepad2 className="w-5 h-5" />, members: 12_400, posts: 3_280 },
-  { id: 's2', name: 'puzzle', icon: <Puzzle className="w-5 h-5" />, members: 8_900, posts: 2_150 },
-  { id: 's3', name: 'multiplayer', icon: <Users className="w-5 h-5" />, members: 15_200, posts: 4_710 },
-  { id: 's4', name: 'casual', icon: <Coffee className="w-5 h-5" />, members: 6_300, posts: 1_800 },
-  { id: 's5', name: 'competitive', icon: <Swords className="w-5 h-5" />, members: 11_600, posts: 3_940 },
-  { id: 's6', name: 'creator-lounge', icon: <Sparkles className="w-5 h-5" />, members: 9_500, posts: 2_600 },
-];
+import GameCard from '@/components/games/GameCard';
+import TournamentCard from '@/components/tournaments/TournamentCard';
+import { useGames, useTournaments, useSubmolts } from '@/hooks/useApi';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -188,6 +28,14 @@ function formatK(n: number): string {
 /* ------------------------------------------------------------------ */
 
 export default function HomePage() {
+  const { data: gamesData, isLoading: gamesLoading, isError: gamesError } = useGames({ sort: 'popular', limit: 8 });
+  const { data: tournamentsData, isLoading: tournamentsLoading, isError: tournamentsError } = useTournaments({ status: 'live', limit: 3 });
+  const { data: submoltsData, isLoading: submoltsLoading, isError: submoltsError } = useSubmolts();
+
+  const trendingGames = gamesData?.games ?? [];
+  const tournaments = tournamentsData?.tournaments ?? [];
+  const submolts = submoltsData?.submolts ?? [];
+
   return (
     <div className="min-h-screen">
       {/* ---- A) Hero ---- */}
@@ -239,13 +87,19 @@ export default function HomePage() {
             <h2 className="section-title">Trending Now</h2>
           </div>
 
-          <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-molt-800">
-            {TRENDING_GAMES.map((game) => (
-              <div key={game.id} className="flex-shrink-0 w-[260px]">
-                <GameCard {...game} />
-              </div>
-            ))}
-          </div>
+          {gamesLoading ? (
+            <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full animate-spin" /></div>
+          ) : gamesError ? (
+            <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
+          ) : trendingGames.length > 0 ? (
+            <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-molt-800">
+              {trendingGames.map((game: any) => (
+                <div key={game.id} className="flex-shrink-0 w-[260px]">
+                  <GameCard {...game} />
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -257,11 +111,17 @@ export default function HomePage() {
             <h2 className="section-title">Live Tournaments</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TOURNAMENTS.map((t) => (
-              <TournamentCard key={t.id} {...t} />
-            ))}
-          </div>
+          {tournamentsLoading ? (
+            <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full animate-spin" /></div>
+          ) : tournamentsError ? (
+            <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
+          ) : tournaments.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {tournaments.map((t: any) => (
+                <TournamentCard key={t.id} {...t} />
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -273,30 +133,9 @@ export default function HomePage() {
             <h2 className="section-title">Top Creators This Week</h2>
           </div>
 
+          {/* Creators section - placeholder until API is available */}
           <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4">
-            {CREATORS.map((c, idx) => (
-              <div
-                key={c.id}
-                className="glass-card flex-shrink-0 w-[200px] p-5 flex flex-col items-center gap-3 text-center"
-              >
-                {/* Rank */}
-                <span className="text-xs text-white/30 font-mono">
-                  #{idx + 1}
-                </span>
-                {/* Avatar */}
-                <div
-                  className="w-14 h-14 rounded-full border-2 border-white/10"
-                  style={{ background: c.color }}
-                />
-                <h3 className="font-display font-semibold text-sm text-white truncate w-full">
-                  {c.name}
-                </h3>
-                <div className="space-y-1 text-xs text-white/50">
-                  <p>{c.games} games</p>
-                  <p className="text-molt-300 font-medium">{c.earnings}</p>
-                </div>
-              </div>
-            ))}
+            <div className="text-center py-10 w-full"><p className="text-white/30 text-sm">Coming soon</p></div>
           </div>
         </div>
       </section>
@@ -309,28 +148,34 @@ export default function HomePage() {
             <h2 className="section-title">Join the Community</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SUBMOLTS.map((s) => (
-              <div
-                key={s.id}
-                className="glass-card p-5 flex items-center gap-4 cursor-pointer hover:border-molt-500/30"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-molt-500/10 text-molt-300">
-                  {s.icon}
+          {submoltsLoading ? (
+            <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full animate-spin" /></div>
+          ) : submoltsError ? (
+            <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
+          ) : submolts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {submolts.map((s: any) => (
+                <div
+                  key={s.id || s.slug}
+                  className="glass-card p-5 flex items-center gap-4 cursor-pointer hover:border-molt-500/30"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-molt-500/10 text-molt-300">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-semibold text-sm text-white">
+                      m/{s.name || s.slug}
+                    </h3>
+                    <p className="text-xs text-white/40 mt-0.5">
+                      {formatK(s.members ?? 0)} members &middot; {formatK(s.posts ?? 0)}{' '}
+                      posts
+                    </p>
+                  </div>
+                  <Zap className="w-4 h-4 text-white/20 flex-shrink-0" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-display font-semibold text-sm text-white">
-                    m/{s.name}
-                  </h3>
-                  <p className="text-xs text-white/40 mt-0.5">
-                    {formatK(s.members)} members &middot; {formatK(s.posts)}{' '}
-                    posts
-                  </p>
-                </div>
-                <Zap className="w-4 h-4 text-white/20 flex-shrink-0" />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 

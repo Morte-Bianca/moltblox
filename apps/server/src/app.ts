@@ -6,6 +6,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import authRouter from './routes/auth.js';
 import gamesRouter from './routes/games.js';
 import tournamentsRouter from './routes/tournaments.js';
 import marketplaceRouter from './routes/marketplace.js';
@@ -58,6 +59,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // API v1 Routes
 // ---------------------
 
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/games', gamesRouter);
 app.use('/api/v1/tournaments', tournamentsRouter);
 app.use('/api/v1/marketplace', marketplaceRouter);

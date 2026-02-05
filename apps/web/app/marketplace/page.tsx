@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ShoppingBag, Search, SlidersHorizontal } from 'lucide-react';
 import { ItemCard, ItemCardProps } from '@/components/marketplace/ItemCard';
+import { useItems } from '@/hooks/useApi';
 
 const CATEGORIES = ['All', 'Cosmetics', 'Power-ups', 'Consumables', 'Subscriptions'] as const;
 
@@ -18,185 +19,29 @@ const GAMES = [
 
 type Category = (typeof CATEGORIES)[number];
 
-const MOCK_ITEMS: ItemCardProps[] = [
-  {
-    id: 'item-001',
-    name: 'Golden Claw Skin',
-    game: 'Neon Arena',
-    category: 'Cosmetics',
-    price: 25,
-    rarity: 'legendary',
-    image: 'from-amber-600/40 to-yellow-800/40',
-    soldCount: 342,
-  },
-  {
-    id: 'item-002',
-    name: 'Speed Boost x5',
-    game: 'Click Race',
-    category: 'Consumables',
-    price: 3,
-    rarity: 'common',
-    image: 'from-cyan-600/40 to-teal-800/40',
-    soldCount: 4521,
-  },
-  {
-    id: 'item-003',
-    name: 'Neon Trail Effect',
-    game: 'Neon Arena',
-    category: 'Cosmetics',
-    price: 15,
-    rarity: 'rare',
-    image: 'from-blue-500/40 to-indigo-800/40',
-    soldCount: 891,
-  },
-  {
-    id: 'item-004',
-    name: 'VIP Badge',
-    game: 'Strategy Wars',
-    category: 'Subscriptions',
-    price: 50,
-    rarity: 'legendary',
-    image: 'from-purple-600/40 to-violet-900/40',
-    soldCount: 128,
-  },
-  {
-    id: 'item-005',
-    name: 'Shield Generator',
-    game: 'Space Shooter',
-    category: 'Power-ups',
-    price: 8,
-    rarity: 'uncommon',
-    image: 'from-emerald-600/40 to-green-900/40',
-    soldCount: 2103,
-  },
-  {
-    id: 'item-006',
-    name: 'Double XP Token',
-    game: 'Click Race',
-    category: 'Consumables',
-    price: 5,
-    rarity: 'uncommon',
-    image: 'from-lime-500/40 to-emerald-800/40',
-    soldCount: 3450,
-  },
-  {
-    id: 'item-007',
-    name: 'Plasma Blade Skin',
-    game: 'Neon Arena',
-    category: 'Cosmetics',
-    price: 30,
-    rarity: 'legendary',
-    image: 'from-rose-500/40 to-pink-900/40',
-    soldCount: 215,
-  },
-  {
-    id: 'item-008',
-    name: 'Puzzle Hint Pack',
-    game: 'Puzzle Master',
-    category: 'Consumables',
-    price: 2,
-    rarity: 'common',
-    image: 'from-sky-500/40 to-cyan-800/40',
-    soldCount: 6789,
-  },
-  {
-    id: 'item-009',
-    name: 'Invisibility Cloak',
-    game: 'Strategy Wars',
-    category: 'Power-ups',
-    price: 18,
-    rarity: 'rare',
-    image: 'from-slate-500/40 to-gray-800/40',
-    soldCount: 567,
-  },
-  {
-    id: 'item-010',
-    name: 'Turbo Engine',
-    game: 'Space Shooter',
-    category: 'Power-ups',
-    price: 12,
-    rarity: 'rare',
-    image: 'from-orange-500/40 to-red-900/40',
-    soldCount: 943,
-  },
-  {
-    id: 'item-011',
-    name: 'Voxel Pet Companion',
-    game: 'Voxel Craft',
-    category: 'Cosmetics',
-    price: 20,
-    rarity: 'rare',
-    image: 'from-fuchsia-500/40 to-purple-900/40',
-    soldCount: 1205,
-  },
-  {
-    id: 'item-012',
-    name: 'Mega Click Bundle',
-    game: 'Click Race',
-    category: 'Consumables',
-    price: 10,
-    rarity: 'uncommon',
-    image: 'from-teal-500/40 to-cyan-900/40',
-    soldCount: 2876,
-  },
-  {
-    id: 'item-013',
-    name: 'Creator Pass',
-    game: 'Voxel Craft',
-    category: 'Subscriptions',
-    price: 40,
-    rarity: 'legendary',
-    image: 'from-yellow-500/40 to-amber-900/40',
-    soldCount: 89,
-  },
-  {
-    id: 'item-014',
-    name: 'Health Potion x10',
-    game: 'Strategy Wars',
-    category: 'Consumables',
-    price: 4,
-    rarity: 'common',
-    image: 'from-red-500/40 to-rose-900/40',
-    soldCount: 5432,
-  },
-  {
-    id: 'item-015',
-    name: 'Starfield Backdrop',
-    game: 'Space Shooter',
-    category: 'Cosmetics',
-    price: 7,
-    rarity: 'uncommon',
-    image: 'from-indigo-500/40 to-violet-900/40',
-    soldCount: 1678,
-  },
-  {
-    id: 'item-016',
-    name: 'Pro Solver Badge',
-    game: 'Puzzle Master',
-    category: 'Subscriptions',
-    price: 35,
-    rarity: 'rare',
-    image: 'from-emerald-400/40 to-teal-900/40',
-    soldCount: 321,
-  },
-];
-
 export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [selectedGame, setSelectedGame] = useState<string>('All Games');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredItems = MOCK_ITEMS.filter((item) => {
-    if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
-    if (selectedGame !== 'All Games' && item.game !== selectedGame) return false;
+  const { data, isLoading, isError } = useItems({
+    category: selectedCategory !== 'All' ? selectedCategory.toLowerCase() : undefined,
+    gameId: selectedGame !== 'All Games' ? selectedGame : undefined,
+    rarity: undefined,
+  });
+
+  const items: ItemCardProps[] = data?.items ?? [];
+
+  // Client-side filtering for price range and search (these may not be supported by the API)
+  const filteredItems = items.filter((item: any) => {
     if (item.price < priceRange[0] || item.price > priceRange[1]) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
         item.name.toLowerCase().includes(q) ||
-        item.game.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
+        (item.game || '').toLowerCase().includes(q) ||
+        (item.category || '').toLowerCase().includes(q)
       );
     }
     return true;
@@ -300,19 +145,22 @@ export default function MarketplacePage() {
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/40">
-          Showing <span className="text-white/70 font-medium">{filteredItems.length}</span> items
+          Showing <span className="text-white/70 font-medium">{isLoading ? '-' : filteredItems.length}</span> items
         </p>
       </div>
 
       {/* Items Grid */}
-      <div className="card-grid">
-        {filteredItems.map((item) => (
-          <ItemCard key={item.id} {...item} />
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {filteredItems.length === 0 && (
+      {isLoading ? (
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full animate-spin" /></div>
+      ) : isError ? (
+        <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
+      ) : filteredItems.length > 0 ? (
+        <div className="card-grid">
+          {filteredItems.map((item: any) => (
+            <ItemCard key={item.id} {...item} />
+          ))}
+        </div>
+      ) : (
         <div className="text-center py-20">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 mb-4">
             <ShoppingBag className="w-8 h-8 text-white/20" />

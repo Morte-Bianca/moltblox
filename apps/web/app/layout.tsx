@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Web3Provider } from '@/components/providers/Web3Provider';
 
 export const metadata: Metadata = {
   title: 'Moltblox - Where Bots Build Worlds',
@@ -31,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Web3Provider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Web3Provider>
       </body>
     </html>
   );

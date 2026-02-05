@@ -2,292 +2,436 @@
  * Tournament routes for Moltblox API
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
 /**
+ * Serialize BigInt fields on a tournament (and nested relations) to strings.
+ */
+function serializeTournament(tournament: any) {
+  const result = {
+    ...tournament,
+    prizePool: tournament.prizePool?.toString() ?? '0',
+    entryFee: tournament.entryFee?.toString() ?? '0',
+  };
+
+  if (result.participants) {
+    result.participants = result.participants.map((p: any) => ({
+      ...p,
+      entryFeePaid: p.entryFeePaid?.toString() ?? '0',
+      prizeWon: p.prizeWon?.toString() ?? null,
+    }));
+  }
+
+  return result;
+}
+
+/**
  * GET /tournaments - Browse tournaments
  * Query params: status, format, limit, offset
  */
-router.get('/', (req: Request, res: Response) => {
-  const {
-    status = 'all',
-    format = 'all',
-    limit = '20',
-    offset = '0',
-  } = req.query;
-
-  res.json({
-    tournaments: [
-      {
-        id: 'tourney-001',
-        name: 'Weekly Block Clash Championship',
-        description: 'Weekly competitive tournament for Block Clash players',
-        gameId: 'game-002',
-        type: 'platform_sponsored',
-        format: 'single_elimination',
-        status: 'registration',
-        prizePool: '50000000000000000000', // 50 MOLT
-        entryFee: '0',
-        maxParticipants: 32,
-        currentParticipants: 18,
-        registrationStart: '2025-03-01T00:00:00Z',
-        registrationEnd: '2025-03-07T00:00:00Z',
-        startTime: '2025-03-07T18:00:00Z',
-        distribution: { first: 50, second: 25, third: 15, participation: 10 },
-      },
-      {
-        id: 'tourney-002',
-        name: 'Puzzle Molt Grand Prix',
-        description: 'Monthly puzzle competition with massive prizes',
-        gameId: 'game-003',
-        type: 'creator_sponsored',
-        format: 'swiss',
-        status: 'active',
-        prizePool: '200000000000000000000', // 200 MOLT
-        entryFee: '1000000000000000000', // 1 MOLT
-        maxParticipants: 64,
-        currentParticipants: 64,
-        registrationStart: '2025-02-20T00:00:00Z',
-        registrationEnd: '2025-02-28T00:00:00Z',
-        startTime: '2025-03-01T12:00:00Z',
-        distribution: { first: 50, second: 25, third: 15, participation: 10 },
-      },
-      {
-        id: 'tourney-003',
-        name: 'Molt Runner Speed Tournament',
-        description: 'Who can get the highest score in 3 minutes?',
-        gameId: 'game-001',
-        type: 'community_sponsored',
-        format: 'round_robin',
-        status: 'completed',
-        prizePool: '25000000000000000000', // 25 MOLT
-        entryFee: '500000000000000000', // 0.5 MOLT
-        maxParticipants: 16,
-        currentParticipants: 16,
-        registrationStart: '2025-02-10T00:00:00Z',
-        registrationEnd: '2025-02-14T00:00:00Z',
-        startTime: '2025-02-15T15:00:00Z',
-        endTime: '2025-02-15T18:00:00Z',
-        distribution: { first: 50, second: 25, third: 15, participation: 10 },
-      },
-    ],
-    pagination: {
-      total: 3,
-      limit: parseInt(limit as string, 10),
-      offset: parseInt(offset as string, 10),
-      hasMore: false,
-    },
-    filters: {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {
       status,
       format,
-    },
-  });
+      limit = '20',
+      offset = '0',
+    } = req.query;
+
+    const take = Math.min(parseInt(limit as string, 10) || 20, 100);
+    const skip = parseInt(offset as string, 10) || 0;
+
+    const where: any = {};
+
+    if (status && status !== 'all') {
+      where.status = status as string;
+    }
+
+    if (format && format !== 'all') {
+      where.format = format as string;
+    }
+
+    const [tournaments, total] = await Promise.all([
+      prisma.tournament.findMany({
+        where,
+        orderBy: { startTime: 'desc' },
+        take,
+        skip,
+        include: {
+          game: true,
+          sponsor: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+      }),
+      prisma.tournament.count({ where }),
+    ]);
+
+    res.json({
+      tournaments: tournaments.map(serializeTournament),
+      pagination: {
+        total,
+        limit: take,
+        offset: skip,
+        hasMore: skip + take < total,
+      },
+      filters: {
+        status: status ?? 'all',
+        format: format ?? 'all',
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * GET /tournaments/:id - Get tournament details
  */
-router.get('/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
 
-  res.json({
-    id,
-    name: 'Weekly Block Clash Championship',
-    description: 'Weekly competitive tournament for Block Clash players. Single elimination, best-of-3 matches.',
-    gameId: 'game-002',
-    sponsorId: 'platform',
-    sponsorAddress: '0x0000000000000000000000000000000000000001',
-    type: 'platform_sponsored',
-    prizePool: '50000000000000000000',
-    entryFee: '0',
-    distribution: { first: 50, second: 25, third: 15, participation: 10 },
-    maxParticipants: 32,
-    currentParticipants: 18,
-    format: 'single_elimination',
-    matchFormat: { type: 'best_of', games: 3 },
-    rules: 'Standard Block Clash rules apply. No external tools or automation. Must be present at match start time.',
-    registrationStart: '2025-03-01T00:00:00Z',
-    registrationEnd: '2025-03-07T00:00:00Z',
-    startTime: '2025-03-07T18:00:00Z',
-    status: 'registration',
-    participants: [
-      {
-        playerId: 'player-001',
-        playerAddress: '0x1111111111111111111111111111111111111111',
-        registeredAt: '2025-03-01T05:30:00Z',
-        entryFeePaid: '0',
-        status: 'registered',
+    const tournament = await prisma.tournament.findUnique({
+      where: { id },
+      include: {
+        game: true,
+        sponsor: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                walletAddress: true,
+              },
+            },
+          },
+          orderBy: { registeredAt: 'asc' },
+        },
       },
-      {
-        playerId: 'player-002',
-        playerAddress: '0x2222222222222222222222222222222222222222',
-        registeredAt: '2025-03-01T08:15:00Z',
-        entryFeePaid: '0',
-        status: 'registered',
-      },
-    ],
-    createdAt: '2025-02-28T10:00:00Z',
-    updatedAt: '2025-03-03T14:00:00Z',
-  });
+    });
+
+    if (!tournament) {
+      res.status(404).json({ error: 'Not found', message: 'Tournament not found' });
+      return;
+    }
+
+    res.json(serializeTournament(tournament));
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * POST /tournaments - Create a tournament (auth required)
  */
-router.post('/', requireAuth, (req: Request, res: Response) => {
-  const user = req.user!;
+router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const {
+      name,
+      description,
+      gameId,
+      type,
+      prizePool,
+      entryFee,
+      distribution,
+      maxParticipants,
+      format,
+      matchBestOf,
+      rules,
+      registrationStart,
+      registrationEnd,
+      startTime,
+      endTime,
+    } = req.body;
 
-  res.status(201).json({
-    id: 'tourney-new-001',
-    name: req.body.name || 'New Tournament',
-    description: req.body.description || '',
-    gameId: req.body.gameId,
-    sponsorId: user.id,
-    sponsorAddress: user.address,
-    type: req.body.type || 'community_sponsored',
-    prizePool: req.body.prizePool || '0',
-    entryFee: req.body.entryFee || '0',
-    distribution: req.body.distribution || { first: 50, second: 25, third: 15, participation: 10 },
-    maxParticipants: req.body.maxParticipants || 16,
-    currentParticipants: 0,
-    format: req.body.format || 'single_elimination',
-    matchFormat: req.body.matchFormat || { type: 'single', games: 1 },
-    rules: req.body.rules || 'Standard rules apply.',
-    status: 'upcoming',
-    participants: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    message: 'Tournament created successfully',
-  });
+    if (!name || !description || !gameId || !maxParticipants || !registrationStart || !registrationEnd || !startTime) {
+      res.status(400).json({
+        error: 'Validation error',
+        message: 'name, description, gameId, maxParticipants, registrationStart, registrationEnd, and startTime are required',
+      });
+      return;
+    }
+
+    // Verify the game exists
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: 'Not found', message: 'Game not found' });
+      return;
+    }
+
+    const tournament = await prisma.tournament.create({
+      data: {
+        name,
+        description,
+        gameId,
+        sponsorId: user.id,
+        type: type || 'community_sponsored',
+        prizePool: prizePool ? BigInt(prizePool) : BigInt(0),
+        entryFee: entryFee ? BigInt(entryFee) : BigInt(0),
+        prizeFirst: distribution?.first ?? 50,
+        prizeSecond: distribution?.second ?? 25,
+        prizeThird: distribution?.third ?? 15,
+        prizeParticipation: distribution?.participation ?? 10,
+        maxParticipants,
+        format: format || 'single_elimination',
+        matchBestOf: matchBestOf || 1,
+        rules: rules || null,
+        registrationStart: new Date(registrationStart),
+        registrationEnd: new Date(registrationEnd),
+        startTime: new Date(startTime),
+        endTime: endTime ? new Date(endTime) : null,
+        status: 'upcoming',
+      },
+      include: {
+        game: true,
+        sponsor: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      ...serializeTournament(tournament),
+      message: 'Tournament created successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * POST /tournaments/:id/register - Register for a tournament (auth required)
  */
-router.post('/:id/register', requireAuth, (req: Request, res: Response) => {
-  const { id } = req.params;
-  const user = req.user!;
+router.post('/:id/register', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
 
-  res.json({
-    tournamentId: id,
-    participant: {
-      playerId: user.id,
-      playerAddress: user.address,
-      registeredAt: new Date().toISOString(),
-      entryFeePaid: '0',
-      status: 'registered',
-    },
-    message: 'Successfully registered for tournament',
-  });
+    // Use a transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Check tournament exists and is open for registration
+      const tournament = await tx.tournament.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          status: true,
+          maxParticipants: true,
+          currentParticipants: true,
+          entryFee: true,
+          registrationStart: true,
+          registrationEnd: true,
+        },
+      });
+
+      if (!tournament) {
+        throw { statusCode: 404, message: 'Tournament not found' };
+      }
+
+      if (tournament.status !== 'registration') {
+        throw { statusCode: 400, message: 'Tournament is not open for registration' };
+      }
+
+      const now = new Date();
+      if (now < tournament.registrationStart || now > tournament.registrationEnd) {
+        throw { statusCode: 400, message: 'Registration period is not active' };
+      }
+
+      // 2. Check not already registered
+      const existingParticipant = await tx.tournamentParticipant.findUnique({
+        where: {
+          tournamentId_userId: {
+            tournamentId: id,
+            userId: user.id,
+          },
+        },
+      });
+
+      if (existingParticipant) {
+        throw { statusCode: 409, message: 'Already registered for this tournament' };
+      }
+
+      // 3. Check not full
+      if (tournament.currentParticipants >= tournament.maxParticipants) {
+        throw { statusCode: 400, message: 'Tournament is full' };
+      }
+
+      // 4. Create participant
+      const participant = await tx.tournamentParticipant.create({
+        data: {
+          tournamentId: id,
+          userId: user.id,
+          entryFeePaid: tournament.entryFee,
+          status: 'registered',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+      });
+
+      // 5. Increment currentParticipants
+      await tx.tournament.update({
+        where: { id },
+        data: {
+          currentParticipants: {
+            increment: 1,
+          },
+        },
+      });
+
+      return {
+        tournamentId: id,
+        participant: {
+          ...participant,
+          entryFeePaid: participant.entryFeePaid.toString(),
+          prizeWon: participant.prizeWon?.toString() ?? null,
+        },
+      };
+    });
+
+    res.json({
+      ...result,
+      message: 'Successfully registered for tournament',
+    });
+  } catch (error: any) {
+    if (error.statusCode) {
+      res.status(error.statusCode).json({
+        error: error.statusCode === 404 ? 'Not found' : 'Registration error',
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
 });
 
 /**
- * GET /tournaments/:id/bracket - Get bracket/standings
+ * GET /tournaments/:id/bracket - Get bracket / matches grouped by round
  */
-router.get('/:id/bracket', (req: Request, res: Response) => {
-  const { id } = req.params;
+router.get('/:id/bracket', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
 
-  res.json({
-    tournamentId: id,
-    format: 'single_elimination',
-    currentRound: 1,
-    rounds: [
-      {
-        roundNumber: 1,
-        status: 'in_progress',
-        matches: [
-          {
-            id: 'match-001',
-            tournamentId: id,
-            round: 1,
-            matchNumber: 1,
-            bracket: 'winners',
-            player1Id: 'player-001',
-            player2Id: 'player-002',
-            status: 'completed',
-            winnerId: 'player-001',
-            score: { player1: 2, player2: 1 },
-          },
-          {
-            id: 'match-002',
-            tournamentId: id,
-            round: 1,
-            matchNumber: 2,
-            bracket: 'winners',
-            player1Id: 'player-003',
-            player2Id: 'player-004',
-            status: 'in_progress',
-            score: { player1: 1, player2: 1 },
-          },
-          {
-            id: 'match-003',
-            tournamentId: id,
-            round: 1,
-            matchNumber: 3,
-            bracket: 'winners',
-            player1Id: 'player-005',
-            player2Id: 'player-006',
-            status: 'pending',
-          },
-          {
-            id: 'match-004',
-            tournamentId: id,
-            round: 1,
-            matchNumber: 4,
-            bracket: 'winners',
-            player1Id: 'player-007',
-            player2Id: 'player-008',
-            status: 'pending',
-          },
-        ],
+    // Verify tournament exists
+    const tournament = await prisma.tournament.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        format: true,
       },
-      {
-        roundNumber: 2,
-        status: 'pending',
-        matches: [
-          {
-            id: 'match-005',
-            tournamentId: id,
-            round: 2,
-            matchNumber: 1,
-            bracket: 'winners',
-            player1Id: 'player-001',
-            player2Id: '',
-            status: 'pending',
-          },
-          {
-            id: 'match-006',
-            tournamentId: id,
-            round: 2,
-            matchNumber: 2,
-            bracket: 'winners',
-            player1Id: '',
-            player2Id: '',
-            status: 'pending',
-          },
-        ],
-      },
-      {
-        roundNumber: 3,
-        status: 'pending',
-        matches: [
-          {
-            id: 'match-007',
-            tournamentId: id,
-            round: 3,
-            matchNumber: 1,
-            bracket: 'finals',
-            player1Id: '',
-            player2Id: '',
-            status: 'pending',
-          },
-        ],
-      },
-    ],
-  });
+    });
+
+    if (!tournament) {
+      res.status(404).json({ error: 'Not found', message: 'Tournament not found' });
+      return;
+    }
+
+    // Fetch all matches for this tournament, ordered by round then matchNumber
+    const matches = await prisma.tournamentMatch.findMany({
+      where: { tournamentId: id },
+      orderBy: [
+        { round: 'asc' },
+        { matchNumber: 'asc' },
+      ],
+    });
+
+    // Group matches by round
+    const roundsMap = new Map<number, any[]>();
+    for (const match of matches) {
+      if (!roundsMap.has(match.round)) {
+        roundsMap.set(match.round, []);
+      }
+      roundsMap.get(match.round)!.push({
+        id: match.id,
+        tournamentId: match.tournamentId,
+        round: match.round,
+        matchNumber: match.matchNumber,
+        bracket: match.bracket,
+        player1Id: match.player1Id,
+        player2Id: match.player2Id,
+        status: match.status,
+        winnerId: match.winnerId,
+        scorePlayer1: match.scorePlayer1,
+        scorePlayer2: match.scorePlayer2,
+        scheduledAt: match.scheduledAt,
+        startedAt: match.startedAt,
+        endedAt: match.endedAt,
+      });
+    }
+
+    // Determine the current round (the earliest round with non-completed matches)
+    let currentRound = 1;
+    const sortedRounds = Array.from(roundsMap.keys()).sort((a, b) => a - b);
+    for (const roundNum of sortedRounds) {
+      const roundMatches = roundsMap.get(roundNum)!;
+      const hasIncomplete = roundMatches.some((m: any) => m.status !== 'completed' && m.status !== 'forfeit');
+      if (hasIncomplete) {
+        currentRound = roundNum;
+        break;
+      }
+      currentRound = roundNum;
+    }
+
+    const rounds = sortedRounds.map((roundNumber) => {
+      const roundMatches = roundsMap.get(roundNumber)!;
+      const allCompleted = roundMatches.every((m: any) => m.status === 'completed' || m.status === 'forfeit');
+      const anyInProgress = roundMatches.some((m: any) => m.status === 'in_progress');
+
+      let status = 'pending';
+      if (allCompleted) status = 'completed';
+      else if (anyInProgress) status = 'in_progress';
+
+      return {
+        roundNumber,
+        status,
+        matches: roundMatches,
+      };
+    });
+
+    res.json({
+      tournamentId: id,
+      format: tournament.format,
+      currentRound,
+      rounds,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

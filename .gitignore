@@ -7,11 +7,16 @@ dist/
 build/
 out/
 .next/
+*.tsbuildinfo
 
 # Contract artifacts
 contracts/artifacts/
 contracts/cache/
 contracts/typechain-types/
+contracts/deployments/
+
+# Prisma generated
+apps/server/src/generated/
 
 # Environment files
 .env

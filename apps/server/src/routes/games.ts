@@ -2,207 +2,424 @@
  * Game routes for Moltblox API
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
 /**
- * GET /games - Browse games
- * Query params: category, sort, limit, offset, search
+ * Generate a URL-friendly slug from a game name.
  */
-router.get('/', (req: Request, res: Response) => {
-  const {
-    category = 'all',
-    sort = 'popular',
-    limit = '20',
-    offset = '0',
-    search = '',
-  } = req.query;
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
-  res.json({
-    games: [
-      {
-        id: 'game-001',
-        name: 'Molt Runner',
-        description: 'An endless runner where you dodge obstacles as a molt',
-        creatorId: 'creator-001',
-        genre: 'arcade',
-        tags: ['runner', 'casual', 'single-player'],
-        status: 'published',
-        maxPlayers: 1,
-        totalPlays: 15420,
-        uniquePlayers: 3200,
-        averageRating: 4.3,
-        ratingCount: 287,
-        thumbnailUrl: 'https://cdn.moltblox.com/games/molt-runner/thumb.png',
-        createdAt: '2025-01-15T10:00:00Z',
+/**
+ * Serialize BigInt fields to strings so JSON.stringify doesn't throw.
+ */
+function serializeGame(game: any) {
+  return {
+    ...game,
+    totalRevenue: game.totalRevenue?.toString() ?? '0',
+  };
+}
+
+/**
+ * GET /games - Browse games
+ * Query params: genre, sort, limit, offset, search
+ */
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {
+      genre,
+      sort = 'popular',
+      limit = '20',
+      offset = '0',
+      search = '',
+    } = req.query;
+
+    const take = Math.min(parseInt(limit as string, 10) || 20, 100);
+    const skip = parseInt(offset as string, 10) || 0;
+
+    // Build the where clause
+    const where: any = {
+      status: 'published',
+    };
+
+    if (genre && genre !== 'all') {
+      where.genre = genre as string;
+    }
+
+    if (search) {
+      where.name = {
+        contains: search as string,
+        mode: 'insensitive',
+      };
+    }
+
+    // Build the orderBy clause
+    let orderBy: any;
+    switch (sort) {
+      case 'newest':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'rating':
+        orderBy = { averageRating: 'desc' };
+        break;
+      case 'popular':
+      default:
+        orderBy = { totalPlays: 'desc' };
+        break;
+    }
+
+    const [games, total] = await Promise.all([
+      prisma.game.findMany({
+        where,
+        orderBy,
+        take,
+        skip,
+        include: {
+          creator: {
+            select: {
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+      }),
+      prisma.game.count({ where }),
+    ]);
+
+    res.json({
+      games: games.map(serializeGame),
+      pagination: {
+        total,
+        limit: take,
+        offset: skip,
+        hasMore: skip + take < total,
       },
-      {
-        id: 'game-002',
-        name: 'Block Clash',
-        description: 'Competitive block-stacking multiplayer game',
-        creatorId: 'creator-002',
-        genre: 'multiplayer',
-        tags: ['competitive', 'puzzle', 'pvp'],
-        status: 'published',
-        maxPlayers: 4,
-        totalPlays: 8900,
-        uniquePlayers: 1800,
-        averageRating: 4.7,
-        ratingCount: 156,
-        thumbnailUrl: 'https://cdn.moltblox.com/games/block-clash/thumb.png',
-        createdAt: '2025-02-01T14:30:00Z',
+      filters: {
+        genre: genre ?? 'all',
+        sort,
+        search,
       },
-      {
-        id: 'game-003',
-        name: 'Puzzle Molt',
-        description: 'A challenging puzzle game with 100+ levels',
-        creatorId: 'creator-003',
-        genre: 'puzzle',
-        tags: ['puzzle', 'logic', 'casual'],
-        status: 'published',
-        maxPlayers: 1,
-        totalPlays: 22100,
-        uniquePlayers: 5600,
-        averageRating: 4.5,
-        ratingCount: 412,
-        thumbnailUrl: 'https://cdn.moltblox.com/games/puzzle-molt/thumb.png',
-        createdAt: '2025-01-20T09:00:00Z',
-      },
-    ],
-    pagination: {
-      total: 3,
-      limit: parseInt(limit as string, 10),
-      offset: parseInt(offset as string, 10),
-      hasMore: false,
-    },
-    filters: {
-      category,
-      sort,
-      search,
-    },
-  });
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * GET /games/:id - Get game details
  */
-router.get('/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
 
-  res.json({
-    id,
-    name: 'Molt Runner',
-    description: 'An endless runner where you dodge obstacles as a molt. Features procedurally generated levels, power-ups, and daily challenges.',
-    creatorId: 'creator-001',
-    creatorAddress: '0xabc123def456789abc123def456789abc123def4',
-    wasmUrl: 'https://cdn.moltblox.com/games/molt-runner/game.wasm',
-    thumbnailUrl: 'https://cdn.moltblox.com/games/molt-runner/thumb.png',
-    screenshots: [
-      'https://cdn.moltblox.com/games/molt-runner/screen1.png',
-      'https://cdn.moltblox.com/games/molt-runner/screen2.png',
-    ],
-    maxPlayers: 1,
-    genre: 'arcade',
-    tags: ['runner', 'casual', 'single-player'],
-    status: 'published',
-    createdAt: '2025-01-15T10:00:00Z',
-    updatedAt: '2025-03-01T12:00:00Z',
-    publishedAt: '2025-01-16T08:00:00Z',
-    totalPlays: 15420,
-    uniquePlayers: 3200,
-    totalRevenue: '4500000000000000000', // 4.5 MOLT in wei
-    averageRating: 4.3,
-    ratingCount: 287,
-  });
+    const game = await prisma.game.findUnique({
+      where: { id },
+      include: {
+        creator: {
+          select: {
+            username: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: 'Not found', message: 'Game not found' });
+      return;
+    }
+
+    res.json(serializeGame(game));
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * POST /games - Publish a new game (auth required)
  */
-router.post('/', requireAuth, (req: Request, res: Response) => {
-  const user = req.user!;
+router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const { name, description, genre, tags, maxPlayers, wasmUrl, thumbnailUrl, screenshots } = req.body;
 
-  res.status(201).json({
-    id: 'game-new-001',
-    name: req.body.name || 'Untitled Game',
-    description: req.body.description || '',
-    creatorId: user.id,
-    creatorAddress: user.address,
-    genre: req.body.genre || 'other',
-    tags: req.body.tags || [],
-    status: 'draft',
-    maxPlayers: req.body.maxPlayers || 1,
-    totalPlays: 0,
-    uniquePlayers: 0,
-    totalRevenue: '0',
-    averageRating: 0,
-    ratingCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    message: 'Game created successfully. Upload your WASM bundle to publish.',
-  });
+    if (!name || !description) {
+      res.status(400).json({
+        error: 'Validation error',
+        message: 'Name and description are required',
+      });
+      return;
+    }
+
+    const slug = slugify(name);
+
+    const game = await prisma.game.create({
+      data: {
+        name,
+        slug,
+        description,
+        creatorId: user.id,
+        genre: genre || 'other',
+        tags: tags || [],
+        maxPlayers: maxPlayers || 1,
+        wasmUrl: wasmUrl || null,
+        thumbnailUrl: thumbnailUrl || null,
+        screenshots: screenshots || [],
+        status: 'draft',
+      },
+      include: {
+        creator: {
+          select: {
+            username: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      ...serializeGame(game),
+      message: 'Game created successfully. Upload your WASM bundle to publish.',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * PUT /games/:id - Update a game (auth required)
  */
-router.put('/:id', requireAuth, (req: Request, res: Response) => {
-  const { id } = req.params;
+router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
 
-  res.json({
-    id,
-    name: req.body.name || 'Molt Runner',
-    description: req.body.description || 'Updated description',
-    genre: req.body.genre || 'arcade',
-    tags: req.body.tags || ['runner', 'casual'],
-    status: req.body.status || 'published',
-    updatedAt: new Date().toISOString(),
-    message: 'Game updated successfully',
-  });
+    // Verify ownership
+    const existing = await prisma.game.findUnique({
+      where: { id },
+      select: { creatorId: true },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Not found', message: 'Game not found' });
+      return;
+    }
+
+    if (existing.creatorId !== user.id) {
+      res.status(403).json({ error: 'Forbidden', message: 'You do not own this game' });
+      return;
+    }
+
+    const { name, description, genre, tags, maxPlayers, status, wasmUrl, thumbnailUrl, screenshots } = req.body;
+
+    const data: any = {};
+    if (name !== undefined) {
+      data.name = name;
+      data.slug = slugify(name);
+    }
+    if (description !== undefined) data.description = description;
+    if (genre !== undefined) data.genre = genre;
+    if (tags !== undefined) data.tags = tags;
+    if (maxPlayers !== undefined) data.maxPlayers = maxPlayers;
+    if (status !== undefined) {
+      data.status = status;
+      if (status === 'published') {
+        data.publishedAt = new Date();
+      }
+    }
+    if (wasmUrl !== undefined) data.wasmUrl = wasmUrl;
+    if (thumbnailUrl !== undefined) data.thumbnailUrl = thumbnailUrl;
+    if (screenshots !== undefined) data.screenshots = screenshots;
+
+    const game = await prisma.game.update({
+      where: { id },
+      data,
+      include: {
+        creator: {
+          select: {
+            username: true,
+            displayName: true,
+            walletAddress: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      ...serializeGame(game),
+      message: 'Game updated successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * GET /games/:id/stats - Get game statistics
  */
-router.get('/:id/stats', (req: Request, res: Response) => {
-  const { id } = req.params;
+router.get('/:id/stats', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
 
-  res.json({
-    gameId: id,
-    period: 'last_30_days',
-    plays: {
-      total: 15420,
-      daily: Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 86400000).toISOString().split('T')[0],
-        count: Math.floor(Math.random() * 800) + 200,
-      })),
-    },
-    players: {
-      total: 3200,
-      new: 480,
-      returning: 2720,
-      averageSessionDuration: 342, // seconds
-    },
-    revenue: {
-      total: '4500000000000000000', // 4.5 MOLT
-      creatorEarnings: '3825000000000000000', // 85%
-      platformFees: '675000000000000000', // 15%
-      itemsSold: 890,
-    },
-    ratings: {
-      average: 4.3,
-      count: 287,
-      distribution: {
-        1: 8,
-        2: 12,
-        3: 35,
-        4: 98,
-        5: 134,
+    const game = await prisma.game.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        totalPlays: true,
+        uniquePlayers: true,
+        totalRevenue: true,
+        averageRating: true,
+        ratingCount: true,
       },
-    },
-  });
+    });
+
+    if (!game) {
+      res.status(404).json({ error: 'Not found', message: 'Game not found' });
+      return;
+    }
+
+    // Rating distribution from GameRating model
+    const [rating1, rating2, rating3, rating4, rating5] = await Promise.all([
+      prisma.gameRating.count({ where: { gameId: id, rating: 1 } }),
+      prisma.gameRating.count({ where: { gameId: id, rating: 2 } }),
+      prisma.gameRating.count({ where: { gameId: id, rating: 3 } }),
+      prisma.gameRating.count({ where: { gameId: id, rating: 4 } }),
+      prisma.gameRating.count({ where: { gameId: id, rating: 5 } }),
+    ]);
+
+    // Purchase/revenue aggregation
+    const purchaseStats = await prisma.purchase.aggregate({
+      where: { gameId: id },
+      _sum: {
+        price: true,
+        creatorAmount: true,
+        platformAmount: true,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    res.json({
+      gameId: game.id,
+      plays: {
+        total: game.totalPlays,
+      },
+      players: {
+        total: game.uniquePlayers,
+      },
+      revenue: {
+        total: game.totalRevenue.toString(),
+        creatorEarnings: (purchaseStats._sum.creatorAmount ?? BigInt(0)).toString(),
+        platformFees: (purchaseStats._sum.platformAmount ?? BigInt(0)).toString(),
+        itemsSold: purchaseStats._count.id,
+      },
+      ratings: {
+        average: game.averageRating,
+        count: game.ratingCount,
+        distribution: {
+          1: rating1,
+          2: rating2,
+          3: rating3,
+          4: rating4,
+          5: rating5,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /games/:id/rate - Rate a game (auth required)
+ */
+router.post('/:id/rate', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+    const { rating, review } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400).json({
+        error: 'Validation error',
+        message: 'Rating must be an integer between 1 and 5',
+      });
+      return;
+    }
+
+    // Check game exists
+    const game = await prisma.game.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: 'Not found', message: 'Game not found' });
+      return;
+    }
+
+    // Upsert the rating
+    await prisma.gameRating.upsert({
+      where: {
+        gameId_userId: {
+          gameId: id,
+          userId: user.id,
+        },
+      },
+      create: {
+        gameId: id,
+        userId: user.id,
+        rating,
+        review: review || null,
+      },
+      update: {
+        rating,
+        review: review || null,
+      },
+    });
+
+    // Recalculate averageRating and ratingCount on the game
+    const aggregation = await prisma.gameRating.aggregate({
+      where: { gameId: id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    const updatedGame = await prisma.game.update({
+      where: { id },
+      data: {
+        averageRating: aggregation._avg.rating ?? 0,
+        ratingCount: aggregation._count.rating,
+      },
+      select: {
+        averageRating: true,
+        ratingCount: true,
+      },
+    });
+
+    res.json({
+      gameId: id,
+      rating,
+      review: review || null,
+      averageRating: updatedGame.averageRating,
+      ratingCount: updatedGame.ratingCount,
+      message: 'Rating submitted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

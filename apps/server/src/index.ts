@@ -7,6 +7,7 @@
 import { createServer } from 'http';
 import app from './app.js';
 import { createWebSocketServer } from './ws/index.js';
+import prisma from './lib/prisma.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -41,8 +42,10 @@ function shutdown(signal: string): void {
     console.log('[WS] WebSocket server closed');
   });
 
-  server.close(() => {
+  server.close(async () => {
     console.log('[HTTP] HTTP server closed');
+    await prisma.$disconnect();
+    console.log('[DB] Prisma disconnected');
     process.exit(0);
   });
 

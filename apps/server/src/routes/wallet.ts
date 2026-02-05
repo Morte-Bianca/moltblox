@@ -1,10 +1,12 @@
 /**
  * Wallet routes for Moltblox API
  * MOLT token balance, transfers, and transaction history
+ * Uses Prisma for all database operations
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import prisma from '../lib/prisma.js';
 
 const router = Router();
 
@@ -12,145 +14,218 @@ const router = Router();
 router.use(requireAuth);
 
 /**
- * GET /wallet - Get wallet info
+ * GET /wallet - Get wallet overview
+ * Aggregates transactions by type to calculate earnings and spending.
  */
-router.get('/', (req: Request, res: Response) => {
-  const user = req.user!;
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
 
-  res.json({
-    playerId: user.id,
-    address: user.address,
-    balance: '125500000000000000000', // 125.5 MOLT
-    currency: 'MOLT',
-    network: 'base-sepolia',
-    connected: true,
-    earnings: {
-      total: '85000000000000000000', // 85 MOLT
-      gameRevenue: '45000000000000000000', // 45 MOLT
-      tournamentPrizes: '30000000000000000000', // 30 MOLT
-      other: '10000000000000000000', // 10 MOLT
-    },
-    spent: {
-      total: '34500000000000000000', // 34.5 MOLT
-      itemPurchases: '24500000000000000000', // 24.5 MOLT
-      tournamentEntries: '10000000000000000000', // 10 MOLT
-    },
-  });
-});
+    // Aggregate earnings: sale + tournament_prize
+    const [saleAggregate, tournamentPrizeAggregate, purchaseAggregate, tournamentEntryAggregate] =
+      await Promise.all([
+        prisma.transaction.aggregate({
+          where: { userId: user.id, type: 'sale' },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { userId: user.id, type: 'tournament_prize' },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { userId: user.id, type: 'purchase' },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { userId: user.id, type: 'tournament_entry' },
+          _sum: { amount: true },
+        }),
+      ]);
 
-/**
- * GET /wallet/balance - Get MOLT balance
- */
-router.get('/balance', (req: Request, res: Response) => {
-  const user = req.user!;
+    const saleEarnings = saleAggregate._sum.amount ?? 0n;
+    const tournamentPrizes = tournamentPrizeAggregate._sum.amount ?? 0n;
+    const totalEarnings = BigInt(saleEarnings) + BigInt(tournamentPrizes);
 
-  res.json({
-    playerId: user.id,
-    address: user.address,
-    balance: '125500000000000000000', // 125.5 MOLT
-    formattedBalance: '125.5',
-    currency: 'MOLT',
-    decimals: 18,
-    lastUpdated: new Date().toISOString(),
-  });
-});
+    const purchaseSpending = purchaseAggregate._sum.amount ?? 0n;
+    const tournamentEntries = tournamentEntryAggregate._sum.amount ?? 0n;
+    const totalSpending = BigInt(purchaseSpending) + BigInt(tournamentEntries);
 
-/**
- * POST /wallet/transfer - Transfer MOLT (auth required)
- */
-router.post('/transfer', (req: Request, res: Response) => {
-  const user = req.user!;
-
-  const amount = req.body.amount || '1000000000000000000'; // 1 MOLT default
-  const to = req.body.to || '0x0000000000000000000000000000000000000000';
-
-  res.json({
-    transfer: {
-      id: 'transfer-001',
-      from: user.address,
-      to,
-      amount,
-      formattedAmount: '1.0',
+    res.json({
+      playerId: user.id,
+      address: user.address,
       currency: 'MOLT',
-      txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      blockNumber: 12345679,
-      status: 'confirmed',
-      timestamp: new Date().toISOString(),
-    },
-    newBalance: '124500000000000000000', // 124.5 MOLT
-    message: 'Transfer successful',
-  });
+      network: 'base-sepolia',
+      balanceNote: 'On-chain balance is read from the MOLT token contract. This endpoint provides transaction-based summaries only.',
+      earnings: {
+        total: totalEarnings.toString(),
+        sales: saleEarnings.toString(),
+        tournamentPrizes: tournamentPrizes.toString(),
+      },
+      spending: {
+        total: totalSpending.toString(),
+        purchases: purchaseSpending.toString(),
+        tournamentEntries: tournamentEntries.toString(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /wallet/balance - Get MOLT balance info
+ * Real balance comes from on-chain query; this returns the user address
+ * and last known transaction timestamp.
+ */
+router.get('/balance', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+
+    const lastTransaction = await prisma.transaction.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+
+    res.json({
+      playerId: user.id,
+      address: user.address,
+      currency: 'MOLT',
+      decimals: 18,
+      balanceNote: 'Query the MOLT token contract on-chain for the real-time balance. This endpoint provides metadata only.',
+      lastTransactionAt: lastTransaction?.createdAt ?? null,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /wallet/transfer - Record a MOLT transfer
+ * Creates transaction records for sender (transfer_out) and receiver (transfer_in).
+ * Required body: to (address), amount (string, wei)
+ */
+router.post('/transfer', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const { to, amount } = req.body;
+
+    if (!to) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Missing required field: to (recipient address)',
+      });
+      return;
+    }
+
+    if (!amount) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Missing required field: amount',
+      });
+      return;
+    }
+
+    const transferAmount = BigInt(amount);
+
+    // Record outgoing transaction for sender
+    const outgoingTx = await prisma.transaction.create({
+      data: {
+        userId: user.id,
+        type: 'transfer_out',
+        amount: transferAmount,
+        counterparty: to,
+        description: `Transfer to ${to}`,
+      },
+    });
+
+    // If the recipient exists in the database, record an incoming transaction for them
+    const recipient = await prisma.user.findUnique({
+      where: { walletAddress: to },
+      select: { id: true },
+    });
+
+    if (recipient) {
+      await prisma.transaction.create({
+        data: {
+          userId: recipient.id,
+          type: 'transfer_in',
+          amount: transferAmount,
+          counterparty: user.address,
+          description: `Transfer from ${user.address}`,
+        },
+      });
+    }
+
+    res.json({
+      transfer: {
+        id: outgoingTx.id,
+        from: user.address,
+        to,
+        amount: transferAmount.toString(),
+        currency: 'MOLT',
+        status: 'recorded',
+        recipientFound: !!recipient,
+        createdAt: outgoingTx.createdAt,
+      },
+      message: 'Transfer recorded successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
  * GET /wallet/transactions - Get transaction history
+ * Query params: limit (default 20), offset (default 0)
+ * Ordered by createdAt desc. Amounts serialized as strings.
  */
-router.get('/transactions', (req: Request, res: Response) => {
-  const user = req.user!;
+router.get('/transactions', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
 
-  res.json({
-    playerId: user.id,
-    transactions: [
-      {
-        id: 'tx-001',
-        type: 'earning',
-        subtype: 'game_revenue',
-        amount: '1700000000000000000', // 1.7 MOLT (85% of 2 MOLT sale)
-        formattedAmount: '+1.7',
-        currency: 'MOLT',
-        description: 'Item sale: Golden Block Skin',
-        gameId: 'game-002',
-        txHash: '0xaaa111bbb222ccc333ddd444eee555fff666aaa777bbb888ccc999ddd000eee1',
-        blockNumber: 12345670,
-        timestamp: '2025-03-02T12:00:00Z',
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 100);
+    const offset = parseInt(req.query.offset as string, 10) || 0;
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.transaction.count({
+        where: { userId: user.id },
+      }),
+    ]);
+
+    const serializedTransactions = transactions.map((tx) => ({
+      id: tx.id,
+      type: tx.type,
+      amount: tx.amount.toString(),
+      currency: 'MOLT',
+      description: tx.description,
+      txHash: tx.txHash,
+      blockNumber: tx.blockNumber,
+      itemId: tx.itemId,
+      tournamentId: tx.tournamentId,
+      counterparty: tx.counterparty,
+      createdAt: tx.createdAt,
+    }));
+
+    res.json({
+      playerId: user.id,
+      transactions: serializedTransactions,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
       },
-      {
-        id: 'tx-002',
-        type: 'spending',
-        subtype: 'item_purchase',
-        amount: '300000000000000000', // 0.3 MOLT
-        formattedAmount: '-0.3',
-        currency: 'MOLT',
-        description: 'Purchased: Speed Boost Pack x5',
-        gameId: 'game-001',
-        txHash: '0xbbb222ccc333ddd444eee555fff666aaa777bbb888ccc999ddd000eee111fff2',
-        blockNumber: 12345665,
-        timestamp: '2025-03-01T09:00:00Z',
-      },
-      {
-        id: 'tx-003',
-        type: 'earning',
-        subtype: 'tournament_prize',
-        amount: '12500000000000000000', // 12.5 MOLT
-        formattedAmount: '+12.5',
-        currency: 'MOLT',
-        description: 'Tournament prize: 1st place - Molt Runner Speed Tournament',
-        tournamentId: 'tourney-003',
-        txHash: '0xccc333ddd444eee555fff666aaa777bbb888ccc999ddd000eee111fff222aaa3',
-        blockNumber: 12345660,
-        timestamp: '2025-02-15T18:30:00Z',
-      },
-      {
-        id: 'tx-004',
-        type: 'spending',
-        subtype: 'tournament_entry',
-        amount: '500000000000000000', // 0.5 MOLT
-        formattedAmount: '-0.5',
-        currency: 'MOLT',
-        description: 'Tournament entry fee: Molt Runner Speed Tournament',
-        tournamentId: 'tourney-003',
-        txHash: '0xddd444eee555fff666aaa777bbb888ccc999ddd000eee111fff222aaa333bbb4',
-        blockNumber: 12345650,
-        timestamp: '2025-02-14T08:00:00Z',
-      },
-    ],
-    pagination: {
-      total: 4,
-      limit: 20,
-      offset: 0,
-      hasMore: false,
-    },
-  });
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

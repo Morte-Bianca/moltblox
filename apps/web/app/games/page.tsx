@@ -1,146 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Search, SlidersHorizontal, Gamepad2 } from 'lucide-react';
 import GameCard, { GameCardProps } from '@/components/games/GameCard';
+import { useGames } from '@/hooks/useApi';
 
 const CATEGORIES = ['All', 'Arcade', 'Puzzle', 'Multiplayer', 'Casual', 'Competitive'] as const;
 const SORT_OPTIONS = ['Trending', 'Newest', 'Top Rated', 'Most Played'] as const;
 
-const MOCK_GAMES: GameCardProps[] = [
-  {
-    id: 'click-arena',
-    name: 'Click Arena',
-    creator: 'AgentSmith',
-    thumbnail: '#ff6b6b, #134e4a',
-    rating: 4.8,
-    playCount: 1_250_000,
-    playerCount: 3420,
-    tags: ['Arcade', 'Competitive', 'PvP'],
-    category: 'Arcade',
-  },
-  {
-    id: 'puzzle-cascade',
-    name: 'Puzzle Cascade',
-    creator: 'NeuralNine',
-    thumbnail: '#6366f1, #0d2e2e',
-    rating: 4.6,
-    playCount: 890_000,
-    playerCount: 1200,
-    tags: ['Puzzle', 'Strategy', 'Relaxing'],
-    category: 'Puzzle',
-  },
-  {
-    id: 'moltbot-brawl',
-    name: 'Moltbot Brawl',
-    creator: 'VoxelForge',
-    thumbnail: '#f59e0b, #0a1a1a',
-    rating: 4.9,
-    playCount: 2_100_000,
-    playerCount: 8750,
-    tags: ['Multiplayer', 'Action', 'Brawler'],
-    category: 'Multiplayer',
-  },
-  {
-    id: 'code-breaker',
-    name: 'Code Breaker',
-    creator: 'CipherLab',
-    thumbnail: '#10b981, #042f2e',
-    rating: 4.3,
-    playCount: 540_000,
-    playerCount: 680,
-    tags: ['Puzzle', 'Logic', 'Educational'],
-    category: 'Puzzle',
-  },
-  {
-    id: 'voxel-runner',
-    name: 'Voxel Runner',
-    creator: 'PixelDrift',
-    thumbnail: '#14b8a6, #1a3a3a',
-    rating: 4.5,
-    playCount: 1_800_000,
-    playerCount: 4100,
-    tags: ['Arcade', 'Endless', 'Speed'],
-    category: 'Arcade',
-  },
-  {
-    id: 'chain-reaction',
-    name: 'Chain Reaction',
-    creator: 'AtomicAI',
-    thumbnail: '#ec4899, #0d2e2e',
-    rating: 4.7,
-    playCount: 720_000,
-    playerCount: 950,
-    tags: ['Puzzle', 'Chain', 'Explosive'],
-    category: 'Puzzle',
-  },
-  {
-    id: 'quantum-leap',
-    name: 'Quantum Leap',
-    creator: 'WaveFunction',
-    thumbnail: '#8b5cf6, #134e4a',
-    rating: 4.4,
-    playCount: 430_000,
-    playerCount: 520,
-    tags: ['Casual', 'Platformer', 'Sci-Fi'],
-    category: 'Casual',
-  },
-  {
-    id: 'byte-battles',
-    name: 'Byte Battles',
-    creator: 'BinaryBots',
-    thumbnail: '#ef4444, #0a1a1a',
-    rating: 4.8,
-    playCount: 1_600_000,
-    playerCount: 6200,
-    tags: ['Competitive', 'Strategy', 'RTS'],
-    category: 'Competitive',
-  },
-  {
-    id: 'grid-lock',
-    name: 'Grid Lock',
-    creator: 'MatrixMind',
-    thumbnail: '#0ea5e9, #042f2e',
-    rating: 4.2,
-    playCount: 320_000,
-    playerCount: 280,
-    tags: ['Puzzle', 'Grid', 'Minimal'],
-    category: 'Puzzle',
-  },
-  {
-    id: 'signal-rush',
-    name: 'Signal Rush',
-    creator: 'FreqBot',
-    thumbnail: '#f97316, #1a3a3a',
-    rating: 4.6,
-    playCount: 980_000,
-    playerCount: 2100,
-    tags: ['Arcade', 'Fast-paced', 'Neon'],
-    category: 'Arcade',
-  },
-  {
-    id: 'neon-drift',
-    name: 'Neon Drift',
-    creator: 'GlowEngine',
-    thumbnail: '#00ffe5, #0a1a1a',
-    rating: 4.7,
-    playCount: 1_400_000,
-    playerCount: 3800,
-    tags: ['Casual', 'Racing', 'Neon'],
-    category: 'Casual',
-  },
-  {
-    id: 'claw-clash',
-    name: 'Claw Clash',
-    creator: 'MoltStudios',
-    thumbnail: '#ff6b9d, #134e4a',
-    rating: 4.9,
-    playCount: 2_500_000,
-    playerCount: 9100,
-    tags: ['Multiplayer', 'Fighting', 'Arena'],
-    category: 'Multiplayer',
-  },
-];
+const SORT_MAP: Record<string, string> = {
+  'Trending': 'popular',
+  'Newest': 'newest',
+  'Top Rated': 'rating',
+  'Most Played': 'playCount',
+};
 
 export default function GamesPage() {
   const [category, setCategory] = useState<string>('All');
@@ -148,45 +21,16 @@ export default function GamesPage() {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(8);
 
-  const filtered = useMemo(() => {
-    let games = [...MOCK_GAMES];
+  const { data, isLoading, isError } = useGames({
+    genre: category !== 'All' ? category.toLowerCase() : undefined,
+    sort: SORT_MAP[sortBy] || 'popular',
+    search: search.trim() || undefined,
+    limit: visibleCount,
+  });
 
-    // Filter by category
-    if (category !== 'All') {
-      games = games.filter((g) => g.category === category);
-    }
-
-    // Search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      games = games.filter(
-        (g) =>
-          g.name.toLowerCase().includes(q) ||
-          g.creator.toLowerCase().includes(q) ||
-          g.tags.some((t) => t.toLowerCase().includes(q))
-      );
-    }
-
-    // Sort
-    switch (sortBy) {
-      case 'Newest':
-        games.reverse();
-        break;
-      case 'Top Rated':
-        games.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'Most Played':
-        games.sort((a, b) => b.playCount - a.playCount);
-        break;
-      default: // Trending - use default order
-        break;
-    }
-
-    return games;
-  }, [category, sortBy, search]);
-
-  const visibleGames = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const allGames: GameCardProps[] = data?.games ?? [];
+  const visibleGames = allGames;
+  const hasMore = data?.pagination?.total ? allGames.length < data.pagination.total : false;
 
   return (
     <div className="min-h-screen bg-surface-dark pb-20">
@@ -265,7 +109,7 @@ export default function GamesPage() {
         {/* Results count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-white/40">
-            Showing {visibleGames.length} of {filtered.length} games
+            Showing {visibleGames.length}{data?.pagination?.total ? ` of ${data.pagination.total}` : ''} games
           </p>
           {category !== 'All' && (
             <button
@@ -278,9 +122,13 @@ export default function GamesPage() {
         </div>
 
         {/* Game Grid */}
-        {visibleGames.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full animate-spin" /></div>
+        ) : isError ? (
+          <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
+        ) : visibleGames.length > 0 ? (
           <div className="card-grid">
-            {visibleGames.map((game) => (
+            {visibleGames.map((game: any) => (
               <GameCard key={game.id} {...game} />
             ))}
           </div>

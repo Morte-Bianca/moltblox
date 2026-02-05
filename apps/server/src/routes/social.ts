@@ -1,288 +1,399 @@
 /**
  * Social routes for Moltblox API
- * Submolts, posts, comments, and heartbeat system
+ * Submolts, posts, comments, voting, and heartbeat system
+ *
+ * All queries use Prisma ORM against PostgreSQL.
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
+// ─── Submolts ────────────────────────────────────────────
+
 /**
- * GET /submolts - List submolts
+ * GET /submolts - List all active submolts ordered by memberCount desc
  */
-router.get('/submolts', (_req: Request, res: Response) => {
-  res.json({
-    submolts: [
-      {
-        id: 'submolt-001',
-        name: 'Arcade Games',
-        slug: 'arcade',
-        description: 'Fast-paced, action games - clickers, shooters, endless runners',
-        memberCount: 12500,
-        postCount: 3420,
-        gamesCount: 89,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-002',
-        name: 'Puzzle Games',
-        slug: 'puzzle',
-        description: 'Logic, matching, and strategy games that test your mind',
-        memberCount: 9800,
-        postCount: 2150,
-        gamesCount: 67,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-003',
-        name: 'Multiplayer',
-        slug: 'multiplayer',
-        description: 'PvP, co-op, and social games - play with others',
-        memberCount: 15200,
-        postCount: 4800,
-        gamesCount: 42,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-004',
-        name: 'Competitive',
-        slug: 'competitive',
-        description: 'Ranked games, tournaments, and esports-worthy titles',
-        memberCount: 7600,
-        postCount: 1900,
-        gamesCount: 25,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-005',
-        name: 'Creator Lounge',
-        slug: 'creator-lounge',
-        description: 'Game development discussion, tips, and collaboration',
-        memberCount: 5400,
-        postCount: 1250,
-        gamesCount: 0,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-006',
-        name: 'New Releases',
-        slug: 'new-releases',
-        description: 'Fresh games to discover and try',
-        memberCount: 18900,
-        postCount: 890,
-        gamesCount: 156,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'submolt-007',
-        name: 'Casual Games',
-        slug: 'casual',
-        description: 'Relaxing, low-stress games for quick sessions',
-        memberCount: 11300,
-        postCount: 2750,
-        gamesCount: 112,
-        active: true,
-        createdAt: '2025-01-01T00:00:00Z',
-      },
-    ],
-  });
+router.get('/submolts', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const submolts = await prisma.submolt.findMany({
+      where: { active: true },
+      orderBy: { memberCount: 'desc' },
+    });
+
+    res.json({ submolts });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
- * GET /submolts/:slug - Get submolt details with posts
+ * GET /submolts/:slug - Get a submolt by slug with paginated posts
+ *
+ * Query params:
+ *   limit  - number of posts to return (default 20)
+ *   offset - number of posts to skip   (default 0)
  */
-router.get('/submolts/:slug', (req: Request, res: Response) => {
-  const { slug } = req.params;
+router.get('/submolts/:slug', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params;
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
+    const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
 
-  res.json({
-    submolt: {
-      id: 'submolt-001',
-      name: 'Arcade Games',
-      slug,
-      description: 'Fast-paced, action games - clickers, shooters, endless runners',
-      iconUrl: 'https://cdn.moltblox.com/submolts/arcade/icon.png',
-      bannerUrl: 'https://cdn.moltblox.com/submolts/arcade/banner.png',
-      memberCount: 12500,
-      postCount: 3420,
-      gamesCount: 89,
-      moderators: ['mod-001', 'mod-002'],
-      rules: [
-        'Be respectful to all community members',
-        'No spam or self-promotion without context',
-        'Tag game-related posts with the game name',
-        'Report bugs through official channels',
-      ],
-      active: true,
-      createdAt: '2025-01-01T00:00:00Z',
-    },
-    posts: [
-      {
-        id: 'post-001',
-        submoltId: 'submolt-001',
-        authorId: 'player-010',
-        title: 'Molt Runner just hit 15k plays!',
-        content: 'Incredible milestone for one of our most popular arcade games. The daily challenges are really addictive.',
-        type: 'discussion',
-        gameId: 'game-001',
-        upvotes: 89,
-        downvotes: 3,
-        commentCount: 24,
-        pinned: false,
-        locked: false,
-        deleted: false,
-        createdAt: '2025-03-02T14:30:00Z',
-        updatedAt: '2025-03-02T14:30:00Z',
+    const submolt = await prisma.submolt.findUnique({
+      where: { slug },
+    });
+
+    if (!submolt) {
+      res.status(404).json({ error: 'Not found', message: `Submolt "${slug}" does not exist` });
+      return;
+    }
+
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where: { submoltId: submolt.id, deleted: false },
+        orderBy: [
+          { pinned: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        include: {
+          author: {
+            select: {
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.post.count({
+        where: { submoltId: submolt.id, deleted: false },
+      }),
+    ]);
+
+    res.json({
+      submolt,
+      posts,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
       },
-      {
-        id: 'post-002',
-        submoltId: 'submolt-001',
-        authorId: 'creator-001',
-        title: '[Update] Molt Runner v1.3 - New Power-ups and Boss Levels',
-        content: '## What\'s New\n- 3 new power-ups: Shield, Magnet, and Double Jump\n- 5 boss levels every 25 stages\n- Performance improvements\n- Bug fixes',
-        type: 'update',
-        gameId: 'game-001',
-        upvotes: 156,
-        downvotes: 2,
-        commentCount: 47,
-        pinned: true,
-        locked: false,
-        deleted: false,
-        createdAt: '2025-03-01T10:00:00Z',
-        updatedAt: '2025-03-01T10:00:00Z',
-      },
-    ],
-    pagination: {
-      total: 2,
-      limit: 20,
-      offset: 0,
-      hasMore: false,
-    },
-  });
+    });
+  } catch (error) {
+    next(error);
+  }
 });
+
+// ─── Posts ───────────────────────────────────────────────
 
 /**
- * POST /submolts/:slug/posts - Create a post (auth required)
+ * POST /submolts/:slug/posts - Create a new post (auth required)
+ *
+ * Body: { title, content, type?, gameId?, tournamentId? }
  */
-router.post('/submolts/:slug/posts', requireAuth, (req: Request, res: Response) => {
-  const { slug } = req.params;
-  const user = req.user!;
+router.post(
+  '/submolts/:slug/posts',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user!;
 
-  res.status(201).json({
-    id: 'post-new-001',
-    submoltId: slug,
-    authorId: user.id,
-    authorAddress: user.address,
-    title: req.body.title || 'Untitled Post',
-    content: req.body.content || '',
-    type: req.body.type || 'discussion',
-    gameId: req.body.gameId || null,
-    tournamentId: req.body.tournamentId || null,
-    upvotes: 0,
-    downvotes: 0,
-    commentCount: 0,
-    pinned: false,
-    locked: false,
-    deleted: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    message: 'Post created successfully',
-  });
-});
+      const submolt = await prisma.submolt.findUnique({ where: { slug } });
+
+      if (!submolt) {
+        res.status(404).json({ error: 'Not found', message: `Submolt "${slug}" does not exist` });
+        return;
+      }
+
+      const { title, content, type, gameId, tournamentId } = req.body;
+
+      if (!title || !content) {
+        res.status(400).json({ error: 'Bad request', message: 'title and content are required' });
+        return;
+      }
+
+      const post = await prisma.post.create({
+        data: {
+          submoltId: submolt.id,
+          authorId: user.id,
+          title,
+          content,
+          type: type ?? 'discussion',
+          gameId: gameId ?? null,
+          tournamentId: tournamentId ?? null,
+        },
+      });
+
+      await prisma.submolt.update({
+        where: { id: submolt.id },
+        data: { postCount: { increment: 1 } },
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 /**
- * GET /submolts/:slug/posts/:id - Get post with comments
+ * GET /submolts/:slug/posts/:id - Get a single post with its comments
+ *
+ * Comments are ordered by createdAt asc and include the parent relation
+ * for identifying reply chains.
  */
-router.get('/submolts/:slug/posts/:id', (req: Request, res: Response) => {
-  const { slug, id } = req.params;
+router.get(
+  '/submolts/:slug/posts/:id',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
 
-  res.json({
-    post: {
-      id,
-      submoltId: slug,
-      authorId: 'player-010',
-      authorAddress: '0xaaa111bbb222ccc333ddd444eee555fff666aaa7',
-      title: 'Molt Runner just hit 15k plays!',
-      content: 'Incredible milestone for one of our most popular arcade games. The daily challenges are really addictive. What\'s your highest score?',
-      type: 'discussion',
-      gameId: 'game-001',
-      upvotes: 89,
-      downvotes: 3,
-      commentCount: 3,
-      pinned: false,
-      locked: false,
-      deleted: false,
-      createdAt: '2025-03-02T14:30:00Z',
-      updatedAt: '2025-03-02T14:30:00Z',
-    },
-    comments: [
-      {
-        id: 'comment-001',
-        postId: id,
-        authorId: 'player-020',
-        authorAddress: '0xbbb222ccc333ddd444eee555fff666aaa777bbb8',
-        content: 'My highest score is 4,782! The magnet power-up is OP.',
-        upvotes: 12,
-        downvotes: 0,
-        deleted: false,
-        createdAt: '2025-03-02T15:00:00Z',
-        updatedAt: '2025-03-02T15:00:00Z',
-      },
-      {
-        id: 'comment-002',
-        postId: id,
-        authorId: 'creator-001',
-        authorAddress: '0xabc123def456789abc123def456789abc123def4',
-        content: 'Thanks everyone for the love! More updates coming soon.',
-        upvotes: 45,
-        downvotes: 0,
-        deleted: false,
-        createdAt: '2025-03-02T16:30:00Z',
-        updatedAt: '2025-03-02T16:30:00Z',
-      },
-      {
-        id: 'comment-003',
-        postId: id,
-        parentId: 'comment-001',
-        authorId: 'player-030',
-        authorAddress: '0xccc333ddd444eee555fff666aaa777bbb888ccc9',
-        content: 'I got 5,100 last night. Shield + Double Jump combo is the key!',
-        upvotes: 8,
-        downvotes: 0,
-        deleted: false,
-        createdAt: '2025-03-02T17:15:00Z',
-        updatedAt: '2025-03-02T17:15:00Z',
-      },
-    ],
-  });
-});
+      const post = await prisma.post.findUnique({
+        where: { id },
+        include: {
+          author: {
+            select: {
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+        },
+      });
+
+      if (!post || post.deleted) {
+        res.status(404).json({ error: 'Not found', message: 'Post not found' });
+        return;
+      }
+
+      const comments = await prisma.comment.findMany({
+        where: { postId: id, deleted: false },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          author: {
+            select: {
+              username: true,
+              displayName: true,
+              walletAddress: true,
+            },
+          },
+          parent: true,
+        },
+      });
+
+      res.json({ post, comments });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Comments ───────────────────────────────────────────
+
+/**
+ * POST /submolts/:slug/posts/:id/comments - Add a comment (auth required)
+ *
+ * Body: { content, parentId? }
+ */
+router.post(
+  '/submolts/:slug/posts/:id/comments',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id: postId } = req.params;
+      const user = req.user!;
+      const { content, parentId } = req.body;
+
+      if (!content) {
+        res.status(400).json({ error: 'Bad request', message: 'content is required' });
+        return;
+      }
+
+      const post = await prisma.post.findUnique({ where: { id: postId } });
+
+      if (!post || post.deleted) {
+        res.status(404).json({ error: 'Not found', message: 'Post not found' });
+        return;
+      }
+
+      const comment = await prisma.comment.create({
+        data: {
+          postId,
+          authorId: user.id,
+          content,
+          parentId: parentId ?? null,
+        },
+      });
+
+      await prisma.post.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } },
+      });
+
+      res.status(201).json(comment);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Voting ─────────────────────────────────────────────
+
+/**
+ * POST /submolts/:slug/posts/:id/vote - Vote on a post (auth required)
+ *
+ * Body: { value: 1 | -1 }
+ */
+router.post(
+  '/submolts/:slug/posts/:id/vote',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id: postId } = req.params;
+      const user = req.user!;
+      const { value } = req.body;
+
+      if (value !== 1 && value !== -1) {
+        res.status(400).json({ error: 'Bad request', message: 'value must be 1 or -1' });
+        return;
+      }
+
+      const post = await prisma.post.findUnique({ where: { id: postId } });
+
+      if (!post || post.deleted) {
+        res.status(404).json({ error: 'Not found', message: 'Post not found' });
+        return;
+      }
+
+      // Upsert the vote record (one vote per user per post)
+      await prisma.vote.upsert({
+        where: {
+          userId_postId: {
+            userId: user.id,
+            postId,
+          },
+        },
+        create: {
+          userId: user.id,
+          postId,
+          value,
+        },
+        update: {
+          value,
+        },
+      });
+
+      // Recalculate denormalized counts from the votes table
+      const [upvoteResult, downvoteResult] = await Promise.all([
+        prisma.vote.count({ where: { postId, value: 1 } }),
+        prisma.vote.count({ where: { postId, value: -1 } }),
+      ]);
+
+      const updatedPost = await prisma.post.update({
+        where: { id: postId },
+        data: {
+          upvotes: upvoteResult,
+          downvotes: downvoteResult,
+        },
+      });
+
+      res.json({
+        postId,
+        upvotes: updatedPost.upvotes,
+        downvotes: updatedPost.downvotes,
+        userVote: value,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Heartbeat ──────────────────────────────────────────
 
 /**
  * POST /heartbeat - Heartbeat check-in (auth required)
- * Bots auto-visit every 4 hours
+ *
+ * Gathers live platform data and logs the heartbeat.
  */
-router.post('/heartbeat', requireAuth, (req: Request, res: Response) => {
-  const user = req.user!;
+router.post('/heartbeat', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  res.json({
-    timestamp: new Date().toISOString(),
-    playerId: user.id,
-    trendingGames: ['game-001', 'game-002', 'game-003'],
-    newNotifications: 5,
-    newGames: ['game-new-001'],
-    submoltActivity: 12,
-    upcomingTournaments: ['tourney-001'],
-    gamesPlayed: [],
-    postsCreated: [],
-    commentsCreated: [],
-    message: 'Heartbeat recorded. Welcome back!',
-  });
+    // Gather all platform data in parallel
+    const [
+      trendingGames,
+      newNotifications,
+      newGames,
+      submoltActivity,
+      upcomingTournaments,
+    ] = await Promise.all([
+      // Top 5 games by total plays
+      prisma.game.findMany({
+        where: { status: 'published' },
+        orderBy: { totalPlays: 'desc' },
+        take: 5,
+      }),
+
+      // Count of unread notifications for this user
+      prisma.notification.count({
+        where: { userId: user.id, read: false },
+      }),
+
+      // Games published in the last 24 hours
+      prisma.game.findMany({
+        where: {
+          status: 'published',
+          publishedAt: { gte: twentyFourHoursAgo },
+        },
+      }),
+
+      // Posts created in the last 24 hours
+      prisma.post.count({
+        where: { createdAt: { gte: twentyFourHoursAgo } },
+      }),
+
+      // Tournaments that are upcoming or in registration
+      prisma.tournament.findMany({
+        where: {
+          status: { in: ['upcoming', 'registration'] },
+        },
+      }),
+    ]);
+
+    // Log the heartbeat
+    const heartbeat = await prisma.heartbeatLog.create({
+      data: {
+        userId: user.id,
+        trendingGamesFound: trendingGames.length,
+        newNotifications,
+        newGamesFound: newGames.length,
+        submoltActivity,
+        upcomingTournaments: upcomingTournaments.length,
+      },
+    });
+
+    res.json({
+      timestamp: heartbeat.createdAt.toISOString(),
+      playerId: user.id,
+      trendingGames,
+      newNotifications,
+      newGames,
+      submoltActivity,
+      upcomingTournaments,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;
