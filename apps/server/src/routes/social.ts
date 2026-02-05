@@ -8,6 +8,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { sanitize } from '../lib/sanitize.js';
 
 const router = Router();
 
@@ -123,8 +124,8 @@ router.post(
         data: {
           submoltId: submolt.id,
           authorId: user.id,
-          title,
-          content,
+          title: sanitize(title),
+          content: sanitize(content),
           type: type ?? 'discussion',
           gameId: gameId ?? null,
           tournamentId: tournamentId ?? null,
@@ -227,7 +228,7 @@ router.post(
         data: {
           postId,
           authorId: user.id,
-          content,
+          content: sanitize(content),
           parentId: parentId ?? null,
         },
       });

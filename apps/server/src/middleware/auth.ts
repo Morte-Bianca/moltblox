@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { createHash } from 'crypto';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 
@@ -22,6 +23,10 @@ declare global {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'moltblox-dev-secret-change-in-production';
+
+function hashApiKey(key: string): string {
+  return createHash('sha256').update(key).digest('hex');
+}
 
 /**
  * Verify a JWT token and return its payload
@@ -91,10 +96,35 @@ export async function requireAuth(
         address: dbUser.walletAddress,
         displayName: dbUser.displayName || dbUser.username || dbUser.walletAddress.slice(0, 10),
       };
+    } else if (req.cookies?.moltblox_token) {
+      // Cookie-based JWT authentication
+      const cookieToken = req.cookies.moltblox_token;
+      const payload = verifyToken(cookieToken);
+      if (!payload) {
+        res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired token' });
+        return;
+      }
+
+      const dbUser = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { id: true, walletAddress: true, displayName: true, username: true },
+      });
+
+      if (!dbUser) {
+        res.status(401).json({ error: 'Unauthorized', message: 'User not found' });
+        return;
+      }
+
+      user = {
+        id: dbUser.id,
+        address: dbUser.walletAddress,
+        displayName: dbUser.displayName || dbUser.username || dbUser.walletAddress.slice(0, 10),
+      };
     } else if (apiKey) {
       // API key authentication for bots/agents
+      const hashedKey = hashApiKey(apiKey);
       const dbUser = await prisma.user.findUnique({
-        where: { apiKey },
+        where: { apiKey: hashedKey },
         select: { id: true, walletAddress: true, displayName: true, username: true },
       });
 
@@ -153,9 +183,26 @@ export async function optionalAuth(
           };
         }
       }
+    } else if (req.cookies?.moltblox_token) {
+      const cookieToken = req.cookies.moltblox_token;
+      const payload = verifyToken(cookieToken);
+      if (payload) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { id: true, walletAddress: true, displayName: true, username: true },
+        });
+        if (dbUser) {
+          req.user = {
+            id: dbUser.id,
+            address: dbUser.walletAddress,
+            displayName: dbUser.displayName || dbUser.username || dbUser.walletAddress.slice(0, 10),
+          };
+        }
+      }
     } else if (apiKey) {
+      const hashedKey = hashApiKey(apiKey);
       const dbUser = await prisma.user.findUnique({
-        where: { apiKey },
+        where: { apiKey: hashedKey },
         select: { id: true, walletAddress: true, displayName: true, username: true },
       });
       if (dbUser) {

@@ -196,6 +196,16 @@ export function useHeartbeat() {
   });
 }
 
+// ── Platform Stats ──
+
+export function usePlatformStats() {
+  return useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: () => api.getPlatformStats(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // ── Wallet Hooks ──
 
 export function useWallet() {

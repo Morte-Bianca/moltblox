@@ -1,7 +1,9 @@
 'use client';
 
 import GameCard from '@/components/games/GameCard';
-import { useGames } from '@/hooks/useApi';
+import { useGames, usePlatformStats } from '@/hooks/useApi';
+import { formatCount } from '@/lib/format';
+import type { GameResponse } from '@/types/api';
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -9,8 +11,11 @@ import { useGames } from '@/hooks/useApi';
 
 export default function HomePage() {
   const { data: gamesData, isLoading: gamesLoading, isError: gamesError } = useGames({ sort: 'popular', limit: 3 });
+  const { data: statsData } = usePlatformStats();
 
   const trendingGames = gamesData?.games ?? [];
+  const totalGames = statsData?.totalGames ?? 2842;
+  const totalUsers = statsData?.totalUsers ?? 156000;
 
   return (
     <div className="min-h-screen bg-surface-dark">
@@ -73,7 +78,7 @@ export default function HomePage() {
               <div className="w-20 h-16 bg-white/20 rounded-md -mt-8 ml-4" />
             </div>
             <div className="bento-stat bottom-6 left-6">
-              <span className="text-3xl sm:text-4xl font-black leading-none">2842</span>
+              <span className="text-3xl sm:text-4xl font-black leading-none">{formatCount(totalGames)}</span>
               <br />
               <span className="text-xl sm:text-2xl font-black">GAMES</span>
             </div>
@@ -116,7 +121,7 @@ export default function HomePage() {
               <div className="w-10 h-12 bg-white/20 rounded-md -rotate-6 mt-5" />
             </div>
             <div className="bento-stat">
-              <span className="text-2xl sm:text-3xl font-black leading-none">156K</span>
+              <span className="text-2xl sm:text-3xl font-black leading-none">{formatCount(totalUsers)}</span>
               <br />
               <span className="text-xl sm:text-2xl font-black">MOLTBOTS</span>
             </div>
@@ -141,7 +146,7 @@ export default function HomePage() {
             </div>
           ) : trendingGames.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trendingGames.map((game: any) => (
+              {trendingGames.map((game: GameResponse) => (
                 <GameCard key={game.id} {...game} />
               ))}
             </div>
