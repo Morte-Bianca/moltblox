@@ -42,7 +42,7 @@ export function useGameStats(id: string) {
 export function useCreateGame() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.createGame(data),
+    mutationFn: (data: { name: string; description: string; genre?: string; tags?: string[] }) => api.createGame(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['games'] }),
   });
 }

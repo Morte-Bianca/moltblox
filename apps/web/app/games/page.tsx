@@ -128,7 +128,7 @@ export default function GamesPage() {
           <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
         ) : visibleGames.length > 0 ? (
           <div className="card-grid">
-            {visibleGames.map((game: any) => (
+            {visibleGames.map((game: GameCardProps) => (
               <GameCard key={game.id} {...game} />
             ))}
           </div>

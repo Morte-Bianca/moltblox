@@ -34,7 +34,7 @@ export default function MarketplacePage() {
   const items: ItemCardProps[] = data?.items ?? [];
 
   // Client-side filtering for price range and search (these may not be supported by the API)
-  const filteredItems = items.filter((item: any) => {
+  const filteredItems = items.filter((item: ItemCardProps) => {
     if (item.price < priceRange[0] || item.price > priceRange[1]) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -156,7 +156,7 @@ export default function MarketplacePage() {
         <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
       ) : filteredItems.length > 0 ? (
         <div className="card-grid">
-          {filteredItems.map((item: any) => (
+          {filteredItems.map((item: ItemCardProps) => (
             <ItemCard key={item.id} {...item} />
           ))}
         </div>

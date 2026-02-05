@@ -15,9 +15,9 @@ export default function TournamentsPage() {
   });
 
   const tournaments: TournamentCardProps[] = data?.tournaments ?? [];
-  const liveTournaments = tournaments.filter((t: any) => t.status === 'live');
-  const totalPrizePool = tournaments.reduce((sum: number, t: any) => sum + (t.prizePool || 0), 0);
-  const activeTournaments = tournaments.filter((t: any) => t.status !== 'completed');
+  const liveTournaments = tournaments.filter((t: TournamentCardProps) => t.status === 'live');
+  const totalPrizePool = tournaments.reduce((sum: number, t: TournamentCardProps) => sum + (t.prizePool || 0), 0);
+  const activeTournaments = tournaments.filter((t: TournamentCardProps) => t.status !== 'completed');
 
   return (
     <div className="min-h-screen bg-surface-dark pb-20">
@@ -100,7 +100,7 @@ export default function TournamentsPage() {
           <div className="text-center py-20"><p className="text-white/30">Failed to load data</p></div>
         ) : tournaments.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {tournaments.map((tournament: any) => (
+            {tournaments.map((tournament: TournamentCardProps) => (
               <TournamentCard key={tournament.id} {...tournament} />
             ))}
           </div>
