@@ -2,118 +2,95 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Menu,
-  X,
-  Gamepad2,
-  Trophy,
-  ShoppingBag,
-  Users,
-  Wallet,
-} from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { MoltLogo } from '@/components/shared/MoltLogo';
-import { useMoltBalance } from '@/hooks/useMoltBalance';
 
-interface NavLink {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-const navLinks: NavLink[] = [
-  { label: 'Games', href: '/games', icon: <Gamepad2 className="w-4 h-4" /> },
-  { label: 'Tournaments', href: '/tournaments', icon: <Trophy className="w-4 h-4" /> },
-  { label: 'Marketplace', href: '/marketplace', icon: <ShoppingBag className="w-4 h-4" /> },
-  { label: 'Submolts', href: '/submolts', icon: <Users className="w-4 h-4" /> },
+const navLinks = [
+  { label: 'GAMES', href: '/games' },
+  { label: 'TOURNAMENTS', href: '/tournaments' },
+  { label: 'MARKETPLACE', href: '/marketplace' },
+  { label: 'SUBMOLTS', href: '/submolts' },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { formatted, isConnected } = useMoltBalance();
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-white/10">
-      <nav className="page-container">
-        <div className="flex items-center justify-between h-16">
-          {/* ---- Left: Logo ---- */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <span className="drop-shadow-[0_0_10px_rgba(0,255,229,0.45)] transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(0,255,229,0.7)]">
-              <MoltLogo size={28} />
-            </span>
-            <span className="font-display font-bold text-lg tracking-wide text-white">
-              MOLTBLOX
-            </span>
-          </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
+      <nav className="flex items-center gap-1 bg-black/90 backdrop-blur-md rounded-full border border-white/10 px-2 py-1.5 max-w-3xl w-full">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 pl-3 pr-4 shrink-0">
+          <MoltLogo size={22} />
+        </Link>
 
-          {/* ---- Center: Desktop Nav Links ---- */}
-          <ul className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white/70 rounded-lg
-                             transition-all duration-200
-                             hover:text-white hover:bg-white/5"
-                >
-                  {link.icon}
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {/* ---- Right: Balance + Connect ---- */}
-          <div className="hidden md:flex items-center gap-3">
-            {isConnected && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                <Wallet className="w-4 h-4 text-molt-400" />
-                <span className="text-sm font-mono text-white/80">{formatted}</span>
-                <span className="text-xs font-mono text-molt-400">MOLT</span>
-              </div>
-            )}
-            <ConnectButton chainStatus="icon" showBalance={false} accountStatus="avatar" />
-          </div>
-
-          {/* ---- Mobile: Hamburger ---- */}
-          <button
-            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex items-center gap-0.5 flex-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="px-4 py-2 text-xs font-semibold tracking-wider text-white/80
+                         rounded-full transition-all duration-200
+                         hover:text-white hover:bg-white/10"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* ---- Mobile Menu ---- */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-white/10 py-4 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white/70 rounded-lg
-                           transition-colors hover:text-white hover:bg-white/5"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.icon}
-                {link.label}
-              </Link>
-            ))}
-
-            <div className="border-t border-white/10 mt-3 pt-3 px-4 flex flex-col gap-3">
-              {isConnected && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 w-fit">
-                  <Wallet className="w-4 h-4 text-molt-400" />
-                  <span className="text-sm font-mono text-white/80">{formatted}</span>
-                  <span className="text-xs font-mono text-molt-400">MOLT</span>
-                </div>
-              )}
-              <ConnectButton chainStatus="icon" showBalance={false} />
-            </div>
+        {/* Connect Button */}
+        <div className="hidden md:block ml-auto shrink-0">
+          <div className="bg-white text-black text-xs font-bold tracking-wider uppercase px-5 py-2 rounded-full cursor-pointer hover:bg-white/90 transition-colors">
+            <ConnectButton.Custom>
+              {({ account, chain, openConnectModal, mounted }) => {
+                const connected = mounted && account && chain;
+                return (
+                  <button
+                    onClick={connected ? undefined : openConnectModal}
+                    type="button"
+                  >
+                    {connected ? (
+                      <span>{account.displayName}</span>
+                    ) : (
+                      'CONNECT'
+                    )}
+                  </button>
+                );
+              }}
+            </ConnectButton.Custom>
           </div>
-        )}
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          className="md:hidden ml-auto flex items-center justify-center w-9 h-9 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors mr-1"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </nav>
+
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div className="md:hidden fixed top-16 left-4 right-4 bg-black/95 backdrop-blur-md rounded-2xl border border-white/10 p-4 space-y-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block px-4 py-3 text-sm font-semibold tracking-wider text-white/80
+                         rounded-lg transition-colors hover:text-white hover:bg-white/10"
+              onClick={() => setMobileOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="border-t border-white/10 mt-2 pt-3 px-4">
+            <ConnectButton chainStatus="icon" showBalance={false} />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

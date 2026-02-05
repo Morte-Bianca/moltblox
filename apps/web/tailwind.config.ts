@@ -27,11 +27,11 @@ const config: Config = {
           orange: '#ff8a65',
         },
         surface: {
-          dark: '#0a1a1a',
-          mid: '#122828',
-          light: '#1a3a3a',
-          card: '#1e3e3e',
-          hover: '#245050',
+          dark: '#0a0a0a',
+          mid: '#111111',
+          light: '#1a1a1a',
+          card: '#141414',
+          hover: '#1e1e1e',
         },
         accent: {
           coral: '#ff6b6b',
@@ -40,10 +40,11 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        'gradient-moltblox': 'linear-gradient(135deg, #0a1a1a 0%, #0d2e2e 50%, #1a3a3a 100%)',
-        'gradient-hero': 'linear-gradient(180deg, #134e4a 0%, #0d9488 40%, #e8d5b7 100%)',
-        'gradient-card': 'linear-gradient(145deg, #1e3e3e 0%, #122828 100%)',
+        'gradient-moltblox': 'linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #1a1a1a 100%)',
+        'gradient-hero': 'linear-gradient(180deg, #0d4a4a 0%, #0d9488 30%, #14b8a6 50%, #8ecfc5 70%, #d4ebe7 100%)',
+        'gradient-card': 'linear-gradient(145deg, #141414 0%, #0a0a0a 100%)',
         'glow-teal': 'radial-gradient(circle, rgba(20,184,166,0.15) 0%, transparent 70%)',
+        'gradient-chrome': 'linear-gradient(180deg, #2a2a2a 0%, #4a4a4a 20%, #1a1a1a 40%, #3a3a3a 60%, #0a0a0a 100%)',
       },
       boxShadow: {
         'neon': '0 0 20px rgba(0,255,229,0.3), 0 0 60px rgba(0,255,229,0.1)',
