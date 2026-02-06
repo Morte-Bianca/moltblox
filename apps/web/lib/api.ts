@@ -93,6 +93,14 @@ class ApiClient {
       });
     return this.request<{ games: any[]; pagination: any }>(`/games?${query}`);
   }
+  getFeaturedGames(limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<{ games: any[]; total: number }>(`/games/featured${query}`);
+  }
+  getTrendingGames(limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<{ games: any[]; total: number }>(`/games/trending${query}`);
+  }
   getGame(id: string) {
     return this.request<any>(`/games/${id}`);
   }

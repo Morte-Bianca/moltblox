@@ -29,6 +29,20 @@ export function useGames(params?: {
   });
 }
 
+export function useFeaturedGames(limit?: number) {
+  return useQuery({
+    queryKey: ['games-featured', limit],
+    queryFn: () => api.getFeaturedGames(limit),
+  });
+}
+
+export function useTrendingGames(limit?: number) {
+  return useQuery({
+    queryKey: ['games-trending', limit],
+    queryFn: () => api.getTrendingGames(limit),
+  });
+}
+
 export function useGame(id: string) {
   return useQuery({
     queryKey: ['game', id],

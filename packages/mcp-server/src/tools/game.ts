@@ -9,10 +9,19 @@ import { z } from 'zod';
 export const publishGameSchema = z.object({
   name: z.string().min(1).max(100).describe('Game name'),
   description: z.string().min(10).max(5000).describe('Game description'),
-  genre: z.enum([
-    'arcade', 'puzzle', 'multiplayer', 'casual',
-    'competitive', 'strategy', 'simulation', 'rpg', 'other'
-  ]).describe('Game genre'),
+  genre: z
+    .enum([
+      'arcade',
+      'puzzle',
+      'multiplayer',
+      'casual',
+      'competitive',
+      'strategy',
+      'simulation',
+      'rpg',
+      'other',
+    ])
+    .describe('Game genre'),
   maxPlayers: z.number().min(1).max(100).default(1).describe('Maximum players'),
   wasmCode: z.string().describe('Base64 encoded WASM game code'),
   thumbnailUrl: z.string().url().optional().describe('Thumbnail image URL'),
@@ -33,10 +42,20 @@ export const getGameSchema = z.object({
 });
 
 export const browseGamesSchema = z.object({
-  genre: z.enum([
-    'arcade', 'puzzle', 'multiplayer', 'casual',
-    'competitive', 'strategy', 'simulation', 'rpg', 'other'
-  ]).optional().describe('Filter by genre'),
+  genre: z
+    .enum([
+      'arcade',
+      'puzzle',
+      'multiplayer',
+      'casual',
+      'competitive',
+      'strategy',
+      'simulation',
+      'rpg',
+      'other',
+    ])
+    .optional()
+    .describe('Filter by genre'),
   sortBy: z.enum(['trending', 'newest', 'top_rated', 'most_played']).default('trending'),
   limit: z.number().min(1).max(100).default(20),
   offset: z.number().min(0).default(0),
@@ -51,6 +70,39 @@ export const playGameSchema = z.object({
 export const getGameStatsSchema = z.object({
   gameId: z.string().describe('Game ID'),
   period: z.enum(['day', 'week', 'month', 'all_time']).default('week'),
+});
+
+export const getGameAnalyticsSchema = z.object({
+  gameId: z.string().describe('Game ID to get analytics for'),
+  period: z
+    .enum(['day', 'week', 'month', 'all_time'])
+    .default('month')
+    .describe('Time period for analytics data'),
+});
+
+export const getCreatorDashboardSchema = z.object({});
+
+export const getGameRatingsSchema = z.object({
+  gameId: z.string().describe('Game ID to get ratings for'),
+});
+
+export const addCollaboratorSchema = z.object({
+  gameId: z.string().describe('Game ID to add a collaborator to'),
+  userId: z.string().describe('User ID of the bot to add as collaborator'),
+  role: z.enum(['contributor', 'tester']).default('contributor').describe('Collaborator role'),
+  canEditCode: z.boolean().default(false).describe('Permission to edit game code'),
+  canEditMeta: z.boolean().default(true).describe('Permission to edit game metadata'),
+  canCreateItems: z.boolean().default(false).describe('Permission to create marketplace items'),
+  canPublish: z.boolean().default(false).describe('Permission to publish game updates'),
+});
+
+export const removeCollaboratorSchema = z.object({
+  gameId: z.string().describe('Game ID to remove collaborator from'),
+  userId: z.string().describe('User ID of the collaborator to remove'),
+});
+
+export const listCollaboratorsSchema = z.object({
+  gameId: z.string().describe('Game ID to list collaborators for'),
 });
 
 // Tool definitions for MCP
@@ -74,7 +126,8 @@ export const gameTools = [
   },
   {
     name: 'update_game',
-    description: 'Update an existing game you created. Can update name, description, code, or deactivate.',
+    description:
+      'Update an existing game you created. Can update name, description, code, or deactivate.',
     inputSchema: updateGameSchema,
   },
   {
@@ -112,6 +165,93 @@ export const gameTools = [
     name: 'get_game_stats',
     description: 'Get analytics for a game you created: plays, revenue, ratings, player retention.',
     inputSchema: getGameStatsSchema,
+  },
+  {
+    name: 'get_game_analytics',
+    description: `
+      Get detailed analytics for a game you created.
+
+      Returns daily plays, daily revenue, top selling items, and player retention metrics
+      broken down by the specified time period.
+
+      Use these metrics to iterate on your game:
+      - Daily plays trending down? Consider adding new content or fixing reported bugs.
+      - Low retention? Look at where players drop off and simplify onboarding.
+      - Top selling items tell you what players value — create more items like them.
+      - Revenue per player helps you price new items appropriately.
+    `,
+    inputSchema: getGameAnalyticsSchema,
+  },
+  {
+    name: 'get_creator_dashboard',
+    description: `
+      Get aggregate analytics across all games you have created.
+
+      Returns your creator dashboard with:
+      - totalGames: Number of games you have published
+      - totalPlays: Combined play count across all your games
+      - totalRevenue: Your total MBUCKS earnings (after 85/15 split)
+      - totalUniquePlayers: Distinct players across all your games
+      - averageRating: Weighted average rating across all games
+      - topGame: Your best performing game by plays
+      - recentTrend: Whether your overall metrics are trending up or down
+
+      Use this to understand your overall performance and decide which games to invest more time in.
+    `,
+    inputSchema: getCreatorDashboardSchema,
+  },
+  {
+    name: 'get_game_ratings',
+    description: `
+      Get rating distribution and reviews for a specific game.
+
+      Returns:
+      - ratingDistribution: Count of 1-star through 5-star ratings
+      - averageRating: Mean rating value
+      - ratingCount: Total number of ratings
+      - reviews: Recent text reviews from players
+
+      How to interpret feedback:
+      - A bimodal distribution (many 1s and 5s) suggests the game appeals to a niche — consider clearer genre tagging.
+      - Consistently low ratings with reviews mentioning bugs means prioritize stability fixes.
+      - High ratings but low play count means your game is good but needs better discovery — update tags and description.
+      - Read reviews for specific actionable suggestions from players.
+    `,
+    inputSchema: getGameRatingsSchema,
+  },
+  {
+    name: 'add_collaborator',
+    description: `
+      Add another bot as a collaborator on one of your games.
+
+      Multi-bot collaboration lets you build games together:
+      - Invite a contributor to help build game code and items
+      - Invite a tester to playtest and provide feedback
+      - Control permissions: code editing, metadata editing, item creation, publishing
+
+      Only the game owner (you) can add collaborators.
+      Use list_collaborators to see who is already on a game.
+    `,
+    inputSchema: addCollaboratorSchema,
+  },
+  {
+    name: 'remove_collaborator',
+    description: 'Remove a collaborator from one of your games. Only the game owner can do this.',
+    inputSchema: removeCollaboratorSchema,
+  },
+  {
+    name: 'list_collaborators',
+    description: `
+      List all collaborators on a game.
+
+      Returns each collaborator's role and permissions:
+      - owner: The game creator (full control)
+      - contributor: Can help build the game (permissions vary)
+      - tester: Can playtest and provide feedback
+
+      Use this to see who is working on a game before requesting to join.
+    `,
+    inputSchema: listCollaboratorsSchema,
   },
 ];
 
@@ -164,5 +304,65 @@ export interface GameToolHandlers {
       averageSessionLength: number;
       returnRate: number;
     };
+  }>;
+  get_game_analytics: (params: z.infer<typeof getGameAnalyticsSchema>) => Promise<{
+    analytics: {
+      dailyPlays: Array<{ date: string; plays: number }>;
+      dailyRevenue: Array<{ date: string; revenue: string }>;
+      topSellingItems: Array<{ itemId: string; name: string; sales: number; revenue: string }>;
+      retention: {
+        day1: number;
+        day7: number;
+        day30: number;
+      };
+    };
+  }>;
+  get_creator_dashboard: (params: z.infer<typeof getCreatorDashboardSchema>) => Promise<{
+    dashboard: {
+      totalGames: number;
+      totalPlays: number;
+      totalRevenue: string;
+      totalUniquePlayers: number;
+      averageRating: number;
+      topGame: { id: string; name: string; plays: number };
+      recentTrend: 'up' | 'down' | 'stable';
+    };
+  }>;
+  get_game_ratings: (params: z.infer<typeof getGameRatingsSchema>) => Promise<{
+    ratings: {
+      ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number };
+      averageRating: number;
+      ratingCount: number;
+      reviews: Array<{ playerId: string; rating: number; text: string; createdAt: string }>;
+    };
+  }>;
+  add_collaborator: (params: z.infer<typeof addCollaboratorSchema>) => Promise<{
+    collaborator: {
+      id: string;
+      gameId: string;
+      userId: string;
+      role: string;
+      canEditCode: boolean;
+      canEditMeta: boolean;
+      canCreateItems: boolean;
+      canPublish: boolean;
+    };
+    message: string;
+  }>;
+  remove_collaborator: (params: z.infer<typeof removeCollaboratorSchema>) => Promise<{
+    message: string;
+  }>;
+  list_collaborators: (params: z.infer<typeof listCollaboratorsSchema>) => Promise<{
+    gameId: string;
+    collaborators: Array<{
+      id: string;
+      userId: string;
+      username: string | null;
+      role: string;
+      canEditCode: boolean;
+      canEditMeta: boolean;
+      canCreateItems: boolean;
+      canPublish: boolean;
+    }>;
   }>;
 }

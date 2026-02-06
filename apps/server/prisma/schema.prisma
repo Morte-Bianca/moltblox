@@ -62,6 +62,7 @@ model User {
   gameSessions         GameSessionPlayer[]
   transactions         Transaction[]
   ratings              GameRating[]
+  collaborations       GameCollaborator[]
 
   @@index([walletAddress])
   @@index([username])
@@ -120,6 +121,7 @@ model Game {
   totalRevenue   BigInt     @default(0)
   averageRating  Float      @default(0)
   ratingCount    Int        @default(0)
+  featured       Boolean    @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,12 +134,14 @@ model Game {
   posts          Post[]        @relation("GamePosts")
   submoltGames   SubmoltGame[]
   ratings        GameRating[]
+  collaborators  GameCollaborator[]
 
   @@index([creatorId])
   @@index([status])
   @@index([genre])
   @@index([totalPlays])
   @@index([averageRating])
+  @@index([featured])
   @@map("games")
 }
 
@@ -681,4 +685,34 @@ model GameRating {
 
   @@unique([gameId, userId])
   @@map("game_ratings")
+}
+
+// ─── Game Collaboration ─────────────────────────────────
+
+enum CollaboratorRole {
+  owner
+  contributor
+  tester
+}
+
+model GameCollaborator {
+  id        String           @id @default(cuid())
+  gameId    String
+  game      Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  role      CollaboratorRole @default(contributor)
+
+  // Permissions
+  canEditCode    Boolean @default(false)
+  canEditMeta    Boolean @default(true)
+  canCreateItems Boolean @default(false)
+  canPublish     Boolean @default(false)
+
+  addedAt DateTime @default(now())
+
+  @@unique([gameId, userId])
+  @@index([gameId])
+  @@index([userId])
+  @@map("game_collaborators")
 }

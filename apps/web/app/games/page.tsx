@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, SlidersHorizontal, Gamepad2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Gamepad2, Star, TrendingUp } from 'lucide-react';
 import GameCard from '@/components/games/GameCard';
-import { useGames } from '@/hooks/useApi';
+import { useGames, useFeaturedGames, useTrendingGames } from '@/hooks/useApi';
 import type { GameResponse } from '@/types/api';
 
 const CATEGORIES = ['All', 'Arcade', 'Puzzle', 'Multiplayer', 'Casual', 'Competitive'] as const;
@@ -22,6 +22,9 @@ export default function GamesPage() {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(8);
 
+  const { data: featuredData } = useFeaturedGames(6);
+  const { data: trendingData } = useTrendingGames(6);
+
   const { data, isLoading, isError } = useGames({
     genre: category !== 'All' ? category.toLowerCase() : undefined,
     sort: SORT_MAP[sortBy] || 'popular',
@@ -29,6 +32,8 @@ export default function GamesPage() {
     limit: visibleCount,
   });
 
+  const featuredGames: GameResponse[] = featuredData?.games ?? [];
+  const trendingGames: GameResponse[] = trendingData?.games ?? [];
   const allGames: GameResponse[] = data?.games ?? [];
   const visibleGames = allGames;
   const hasMore = data?.pagination?.total ? allGames.length < data.pagination.total : false;
@@ -53,6 +58,57 @@ export default function GamesPage() {
             puzzles, find your next obsession.
           </p>
         </div>
+
+        {/* Featured Games */}
+        {featuredGames.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-5 h-5 text-teal-400" />
+              <h2 className="text-xl font-display font-bold text-white">Featured</h2>
+            </div>
+            <div className="card-grid">
+              {featuredGames.map((game: GameResponse) => (
+                <GameCard
+                  key={game.id}
+                  id={game.id}
+                  name={game.name}
+                  creator={game.creator?.displayName ?? game.creator?.walletAddress ?? 'Unknown'}
+                  creatorUsername={game.creator?.username ?? undefined}
+                  thumbnail={game.thumbnailUrl ?? '#1a1a2e'}
+                  rating={game.averageRating ?? 0}
+                  playCount={game.totalPlays}
+                  tags={game.tags}
+                  featured
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trending Games */}
+        {trendingGames.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 text-pink-400" />
+              <h2 className="text-xl font-display font-bold text-white">Trending Now</h2>
+            </div>
+            <div className="card-grid">
+              {trendingGames.map((game: GameResponse) => (
+                <GameCard
+                  key={game.id}
+                  id={game.id}
+                  name={game.name}
+                  creator={game.creator?.displayName ?? game.creator?.walletAddress ?? 'Unknown'}
+                  creatorUsername={game.creator?.username ?? undefined}
+                  thumbnail={game.thumbnailUrl ?? '#1a1a2e'}
+                  rating={game.averageRating ?? 0}
+                  playCount={game.totalPlays}
+                  tags={game.tags}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filter Bar */}
         <div className="glass rounded-2xl p-4 mb-8">

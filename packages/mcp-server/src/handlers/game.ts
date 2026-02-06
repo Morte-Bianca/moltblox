@@ -66,10 +66,71 @@ export function createGameHandlers(config: MoltbloxMCPConfig): GameToolHandlers 
 
     async get_game_stats(params) {
       const response = await fetch(
-        `${apiUrl}/api/games/${params.gameId}/stats?period=${params.period}`
+        `${apiUrl}/api/games/${params.gameId}/stats?period=${params.period}`,
       );
       const data: any = await response.json();
       return { stats: data };
+    },
+
+    async get_game_analytics(params) {
+      const response = await fetch(
+        `${apiUrl}/api/games/${params.gameId}/analytics?period=${params.period}`,
+      );
+      const data: any = await response.json();
+      return { analytics: data };
+    },
+
+    async get_creator_dashboard() {
+      const response = await fetch(`${apiUrl}/api/creator/analytics`);
+      const data: any = await response.json();
+      return { dashboard: data };
+    },
+
+    async get_game_ratings(params) {
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/stats`);
+      const data: any = await response.json();
+      return { ratings: data };
+    },
+
+    async add_collaborator(params) {
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/collaborators`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: params.userId,
+          role: params.role,
+          canEditCode: params.canEditCode,
+          canEditMeta: params.canEditMeta,
+          canCreateItems: params.canCreateItems,
+          canPublish: params.canPublish,
+        }),
+      });
+      const data: any = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add collaborator');
+      }
+      return { collaborator: data, message: data.message };
+    },
+
+    async remove_collaborator(params) {
+      const response = await fetch(
+        `${apiUrl}/api/games/${params.gameId}/collaborators/${params.userId}`,
+        { method: 'DELETE' },
+      );
+      const data: any = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to remove collaborator');
+      }
+      return { message: data.message };
+    },
+
+    async list_collaborators(params) {
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/collaborators`);
+      const data: any = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to list collaborators');
+      }
+      return data;
     },
   };
 }

@@ -131,6 +131,57 @@ router.get(
 );
 
 /**
+ * GET /games/featured - Staff-picked featured games
+ */
+router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 50);
+    const games = await prisma.game.findMany({
+      where: { status: 'published', featured: true },
+      take: limit,
+      orderBy: { averageRating: 'desc' },
+      include: {
+        creator: { select: { id: true, displayName: true, username: true, walletAddress: true } },
+      },
+    });
+    res.json({ games: games.map(serializeGame), total: games.length });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /games/trending - Hot games by recent play velocity
+ */
+router.get('/trending', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 50);
+    // Trending = most plays in last 24 hours (via recent sessions)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const trendingGames = await prisma.gameSession.groupBy({
+      by: ['gameId'],
+      where: { startedAt: { gte: oneDayAgo } },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: limit,
+    });
+    const gameIds = trendingGames.map((g) => g.gameId);
+    const games = await prisma.game.findMany({
+      where: { id: { in: gameIds }, status: 'published' },
+      include: {
+        creator: { select: { id: true, displayName: true, username: true, walletAddress: true } },
+      },
+    });
+    // Maintain trending order
+    const gameMap = new Map(games.map((g) => [g.id, g]));
+    const orderedGames = gameIds.map((id) => gameMap.get(id)).filter(Boolean);
+    res.json({ games: orderedGames.map((g) => serializeGame(g)), total: orderedGames.length });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /games/:id - Get game details
  */
 router.get(

@@ -20,6 +20,7 @@ import walletRouter from './routes/wallet.js';
 import statsRouter from './routes/stats.js';
 import usersRouter from './routes/users.js';
 import analyticsRouter from './routes/analytics.js';
+import collaboratorRoutes from './routes/collaborators.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { csrfTokenSetter, csrfProtection } from './middleware/csrf.js';
 
@@ -127,6 +128,7 @@ app.use('/api/v1/wallet', writeLimiter, walletRouter);
 app.use('/api/v1/stats', statsRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/creator/analytics', analyticsRouter);
+app.use('/api/v1/games', collaboratorRoutes);
 
 // ---------------------
 // 404 Handler

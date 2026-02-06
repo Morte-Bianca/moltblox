@@ -13,6 +13,7 @@ export interface GameCardProps {
   playerCount?: number;
   tags: string[];
   category?: string;
+  featured?: boolean;
 }
 
 function formatNumber(n: number): string {
@@ -29,15 +30,23 @@ export default function GameCard({
   thumbnail,
   playCount,
   tags,
+  featured,
 }: GameCardProps) {
   return (
     <Link href={`/games/${id}`} className="group block">
       <div className="game-card-bordered overflow-hidden">
         {/* Header: Title + Creator */}
         <div className="p-4 pb-2">
-          <h3 className="font-display font-black text-lg uppercase tracking-tight text-molt-400 leading-tight group-hover:text-molt-300 transition-colors">
-            {name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-display font-black text-lg uppercase tracking-tight text-molt-400 leading-tight group-hover:text-molt-300 transition-colors">
+              {name}
+            </h3>
+            {featured && (
+              <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-400 border border-teal-500/25">
+                Featured
+              </span>
+            )}
+          </div>
           <p className="text-sm text-white/50 mt-0.5 flex items-center gap-1.5">
             By{' '}
             {creatorUsername ? (
