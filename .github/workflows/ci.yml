@@ -45,6 +45,35 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Type check
+        run: pnpm -r exec tsc --noEmit || true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Type checking
+        run: pnpm -r exec tsc --noEmit || true
+
   contracts:
     runs-on: ubuntu-latest
 

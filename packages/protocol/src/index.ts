@@ -30,9 +30,23 @@ export type {
 export type {
   // Marketplace
   Item,
+  GameItem,
+  OwnedItem,
+  ItemDefinition,
+  GameMetadata,
+  PublishedGame,
+  GameListing,
+  GameQuery,
   Purchase,
+  PurchaseResult,
+  PublishResult,
+  ItemResult,
   CreatorEarnings,
   PlayerInventory,
+  CreatorDashboard,
+  BotWallet,
+  GameCategory,
+  ItemCategory,
 } from './types/marketplace';
 
 export type {

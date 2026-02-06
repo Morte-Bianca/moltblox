@@ -5,6 +5,8 @@ import { Search, SlidersHorizontal, Gamepad2 } from 'lucide-react';
 import GameCard, { GameCardProps } from '@/components/games/GameCard';
 import { useGames } from '@/hooks/useApi';
 
+export const dynamic = 'force-dynamic';
+
 const CATEGORIES = ['All', 'Arcade', 'Puzzle', 'Multiplayer', 'Casual', 'Competitive'] as const;
 const SORT_OPTIONS = ['Trending', 'Newest', 'Top Rated', 'Most Played'] as const;
 

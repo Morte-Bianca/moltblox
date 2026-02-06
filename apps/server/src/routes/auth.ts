@@ -12,7 +12,18 @@ import { validate } from '../middleware/validate.js';
 import { verifySchema, updateProfileSchema } from '../schemas/auth.js';
 import { sanitizeObject } from '../lib/sanitize.js';
 
-const router = Router();
+const router: Router = Router();
+
+// In-memory nonce store with TTL (replace with Redis in production)
+const nonceStore = new Map<string, number>(); // nonce -> expiry timestamp
+
+// Clean expired nonces every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [nonce, expiry] of nonceStore) {
+    if (now > expiry) nonceStore.delete(nonce);
+  }
+}, 5 * 60 * 1000).unref();
 
 function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
@@ -25,9 +36,8 @@ function hashApiKey(key: string): string {
 router.get('/nonce', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nonce = randomUUID();
+    nonceStore.set(nonce, Date.now() + 5 * 60 * 1000); // 5 minute TTL
 
-    // Store nonce temporarily - in production use Redis with TTL
-    // For now we store it and it gets consumed on verify
     res.json({
       nonce,
       expiresIn: 300, // 5 minutes
@@ -55,6 +65,19 @@ router.post('/verify', validate(verifySchema), async (req: Request, res: Respons
 
     // Parse and verify the SIWE message
     const siweMessage = new SiweMessage(message);
+
+    // Validate nonce
+    const siweNonce = siweMessage.nonce;
+    if (!siweNonce || !nonceStore.has(siweNonce)) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid or expired nonce. Request a new one.',
+      });
+      return;
+    }
+    // Consume nonce (one-time use)
+    nonceStore.delete(siweNonce);
+
     const { data: verified } = await siweMessage.verify({ signature });
 
     const address = verified.address.toLowerCase();

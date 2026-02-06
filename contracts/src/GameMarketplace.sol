@@ -5,13 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title GameMarketplace
  * @notice Marketplace for Moltblox games with 85/15 revenue split
  * @dev 85% to creator, 15% to platform (funds tournaments, infrastructure)
  */
-contract GameMarketplace is Ownable, ReentrancyGuard {
+contract GameMarketplace is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     // Revenue split constants
@@ -195,13 +196,14 @@ contract GameMarketplace is Ownable, ReentrancyGuard {
      * @dev 85% goes to creator, 15% goes to platform treasury
      * @param itemId The item to purchase
      */
-    function purchaseItem(string calldata itemId) external nonReentrant {
+    function purchaseItem(string calldata itemId) external nonReentrant whenNotPaused {
         Item storage item = items[itemId];
         require(item.active, "Item not active");
         require(item.maxSupply == 0 || item.currentSupply < item.maxSupply, "Sold out");
 
         Game storage game = games[item.gameId];
         require(game.active, "Game not active");
+        require(msg.sender != item.creator, "Cannot purchase own item");
 
         // For non-consumables, check if already owned
         if (item.category != ItemCategory.Consumable) {
@@ -244,7 +246,7 @@ contract GameMarketplace is Ownable, ReentrancyGuard {
      * @notice Purchase multiple items at once
      * @param itemIds Array of item IDs to purchase
      */
-    function purchaseItems(string[] calldata itemIds) external nonReentrant {
+    function purchaseItems(string[] calldata itemIds) external nonReentrant whenNotPaused {
         for (uint256 i = 0; i < itemIds.length; i++) {
             _purchaseItemInternal(itemIds[i]);
         }
@@ -257,6 +259,7 @@ contract GameMarketplace is Ownable, ReentrancyGuard {
 
         Game storage game = games[item.gameId];
         require(game.active, "Game not active");
+        require(msg.sender != item.creator, "Cannot purchase own item");
 
         if (item.category != ItemCategory.Consumable) {
             require(!playerOwnsItem[msg.sender][itemId], "Already owned");
@@ -328,5 +331,13 @@ contract GameMarketplace is Ownable, ReentrancyGuard {
     function setTreasury(address _treasury) external onlyOwner {
         require(_treasury != address(0), "Invalid treasury address");
         treasury = _treasury;
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 }

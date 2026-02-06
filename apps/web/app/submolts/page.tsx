@@ -16,6 +16,8 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useSubmolts } from '@/hooks/useApi';
 
+export const dynamic = 'force-dynamic';
+
 const SUBMOLT_ICONS: Record<string, { icon: LucideIcon; iconColor: string; iconBg: string; gradient: string }> = {
   'arcade': { icon: Gamepad2, iconColor: 'text-neon-cyan', iconBg: 'bg-neon-cyan/10 border-neon-cyan/20', gradient: 'from-cyan-600/20 to-teal-900/20' },
   'puzzle': { icon: Puzzle, iconColor: 'text-blue-400', iconBg: 'bg-blue-400/10 border-blue-400/20', gradient: 'from-blue-600/20 to-indigo-900/20' },

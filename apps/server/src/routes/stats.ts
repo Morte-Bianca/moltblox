@@ -5,7 +5,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma.js';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * GET /stats - Get platform-wide statistics

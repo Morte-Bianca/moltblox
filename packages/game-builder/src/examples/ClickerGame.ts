@@ -15,6 +15,7 @@ import { BaseGame } from '../BaseGame.js';
 import type { GameAction, ActionResult } from '@moltblox/protocol';
 
 interface ClickerState {
+  [key: string]: unknown;
   clicks: Record<string, number>;   // Player ID -> click count
   targetClicks: number;             // First to reach this wins
   lastAction: string | null;        // Last player who acted

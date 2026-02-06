@@ -5,6 +5,8 @@ import { Trophy, Sparkles } from 'lucide-react';
 import TournamentCard, { TournamentCardProps } from '@/components/tournaments/TournamentCard';
 import { useTournaments } from '@/hooks/useApi';
 
+export const dynamic = 'force-dynamic';
+
 const FILTER_TABS = ['All', 'Live', 'Upcoming', 'Completed'] as const;
 
 export default function TournamentsPage() {

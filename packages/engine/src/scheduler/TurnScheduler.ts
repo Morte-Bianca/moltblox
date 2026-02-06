@@ -5,7 +5,7 @@
  * Supports both turn-based and real-time games with latency compensation.
  */
 
-import type { Action } from '@moltblox/protocol';
+import type { GameAction as Action } from '@moltblox/protocol';
 
 // =============================================================================
 // Types

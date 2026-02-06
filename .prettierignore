@@ -1,0 +1,6 @@
+node_modules
+dist
+.next
+generated
+contracts
+pnpm-lock.yaml

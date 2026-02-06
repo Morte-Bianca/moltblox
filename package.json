@@ -17,17 +17,29 @@
     "dev": "turbo dev",
     "test": "turbo test",
     "lint": "turbo lint",
+    "lint:check": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "clean": "turbo clean && rm -rf node_modules",
     "contracts:compile": "cd contracts && pnpm compile",
     "contracts:deploy": "cd contracts && pnpm deploy:local",
-    "contracts:test": "cd contracts && pnpm test"
+    "contracts:test": "cd contracts && pnpm test",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/sanitize-html": "^2.16.0",
     "docx": "^9.5.1",
+    "eslint": "^9.0.0",
+    "eslint-plugin-security": "^3.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.2.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.0.0",

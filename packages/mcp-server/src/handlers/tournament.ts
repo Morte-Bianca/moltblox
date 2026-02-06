@@ -19,13 +19,13 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
       queryParams.set('offset', params.offset.toString());
 
       const response = await fetch(`${apiUrl}/api/tournaments?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
 
     async get_tournament(params) {
       const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { tournament: data };
     },
 
@@ -34,7 +34,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         success: response.ok,
         tournamentId: params.tournamentId,
@@ -51,7 +51,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         tournamentId: data.tournamentId,
         status: 'created',
@@ -63,7 +63,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
     async get_tournament_stats(params) {
       const playerId = params.playerId || 'me';
       const response = await fetch(`${apiUrl}/api/players/${playerId}/tournament-stats`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { stats: data };
     },
 
@@ -76,7 +76,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
           body: JSON.stringify({ quality: params.quality }),
         }
       );
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
 
@@ -89,7 +89,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
           body: JSON.stringify({ amount: params.amount }),
         }
       );
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         success: response.ok,
         tournamentId: params.tournamentId,

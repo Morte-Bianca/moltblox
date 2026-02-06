@@ -9,8 +9,10 @@ import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sanitize } from '../lib/sanitize.js';
+import { validate } from '../middleware/validate.js';
+import { submoltSlugParamSchema, submoltPostsQuerySchema, createPostSchema, getPostSchema, createCommentSchema, voteSchema } from '../schemas/social.js';
 
-const router = Router();
+const router: Router = Router();
 
 // ─── Submolts ────────────────────────────────────────────
 
@@ -37,7 +39,7 @@ router.get('/submolts', async (req: Request, res: Response, next: NextFunction) 
  *   limit  - number of posts to return (default 20)
  *   offset - number of posts to skip   (default 0)
  */
-router.get('/submolts/:slug', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/submolts/:slug', validate(submoltPostsQuerySchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params;
     const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
@@ -101,6 +103,7 @@ router.get('/submolts/:slug', async (req: Request, res: Response, next: NextFunc
 router.post(
   '/submolts/:slug/posts',
   requireAuth,
+  validate(createPostSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { slug } = req.params;
@@ -152,6 +155,7 @@ router.post(
  */
 router.get(
   '/submolts/:slug/posts/:id',
+  validate(getPostSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
@@ -206,6 +210,7 @@ router.get(
 router.post(
   '/submolts/:slug/posts/:id/comments',
   requireAuth,
+  validate(createCommentSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: postId } = req.params;
@@ -255,6 +260,7 @@ router.post(
 router.post(
   '/submolts/:slug/posts/:id/vote',
   requireAuth,
+  validate(voteSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: postId } = req.params;

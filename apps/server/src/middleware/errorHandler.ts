@@ -64,7 +64,7 @@ export function errorHandler(
   }
 
   // Handle JSON parse errors (Express body-parser sets a `type` property)
-  if ((err as Record<string, unknown>).type === 'entity.parse.failed') {
+  if ((err as unknown as Record<string, unknown>).type === 'entity.parse.failed') {
     res.status(400).json({
       error: 'BadRequest',
       message: 'Invalid JSON in request body',

@@ -13,6 +13,7 @@ import { BaseGame } from '../BaseGame.js';
 import type { GameAction, ActionResult } from '@moltblox/protocol';
 
 interface PuzzleState {
+  [key: string]: unknown;
   grid: number[];           // Flattened grid of values (pairs of 1-8)
   revealed: boolean[];      // Which cells are revealed
   matched: boolean[];       // Which cells are matched

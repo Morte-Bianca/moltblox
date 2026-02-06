@@ -5,6 +5,8 @@ import { ShoppingBag, Search, SlidersHorizontal } from 'lucide-react';
 import { ItemCard, ItemCardProps } from '@/components/marketplace/ItemCard';
 import { useItems } from '@/hooks/useApi';
 
+export const dynamic = 'force-dynamic';
+
 const CATEGORIES = ['All', 'Cosmetics', 'Power-ups', 'Consumables', 'Subscriptions'] as const;
 
 const GAMES = [

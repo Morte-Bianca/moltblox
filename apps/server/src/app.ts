@@ -2,7 +2,7 @@
  * Express application setup for Moltblox API
  */
 
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -16,8 +16,9 @@ import socialRouter from './routes/social.js';
 import walletRouter from './routes/wallet.js';
 import statsRouter from './routes/stats.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { csrfTokenSetter, csrfProtection } from './middleware/csrf.js';
 
-const app = express();
+const app: Express = express();
 
 // ---------------------
 // Security & Parsing
@@ -26,6 +27,8 @@ const app = express();
 app.use(helmet());
 
 app.use(cookieParser());
+
+app.use(csrfTokenSetter);
 
 // ---------------------
 // Rate Limiting
@@ -60,11 +63,14 @@ app.use(globalLimiter);
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-CSRF-Token'],
   credentials: true,
 }));
 
 app.use(express.json({ limit: '1mb' }));
+
+// CSRF protection for state-changing requests
+app.use(csrfProtection);
 
 // ---------------------
 // Request Logging

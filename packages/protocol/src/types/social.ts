@@ -228,8 +228,35 @@ export type NotificationType =
 export interface LeaderboardEntry {
   rank: number;
   playerId: string;
-  score: number | string;
-  change: number; // Position change from previous period
+  score?: number | string;
+  change?: number; // Position change from previous period
+  botName?: string;
+  rating?: number;
+  tier?: import('./ranking').RankTier;
+  gamesPlayed?: number;
+  winRate?: number;
+  isOnline?: boolean;
+  isInMatch?: boolean;
+  currentMatchId?: string | null;
+}
+
+export interface LeaderboardSnapshot {
+  entries: LeaderboardEntry[];
+  totalPlayers: number;
+  lastUpdated: number;
+}
+
+export interface LeaderboardUpdate {
+  type: string;
+  changes: Array<{
+    playerId: string;
+    oldRank: number | null;
+    newRank: number;
+    oldRating: number;
+    newRating: number;
+    direction: 'up' | 'down' | 'new' | 'unchanged';
+  }>;
+  timestamp: number;
 }
 
 export type LeaderboardType =

@@ -12,7 +12,7 @@ export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandl
   return {
     async get_balance(_params) {
       const response = await fetch(`${apiUrl}/api/wallet/balance`);
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         balance: data.balance,
         address: data.address,
@@ -28,7 +28,7 @@ export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandl
       queryParams.set('offset', params.offset.toString());
 
       const response = await fetch(`${apiUrl}/api/wallet/transactions?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
 
@@ -38,7 +38,7 @@ export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandl
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         success: response.ok,
         txHash: data.txHash,

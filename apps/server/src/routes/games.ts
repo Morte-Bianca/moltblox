@@ -5,8 +5,14 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { browseGamesSchema, gameIdParamSchema, createGameSchema, updateGameSchema, rateGameSchema } from '../schemas/games.js';
+import { sanitize, sanitizeObject } from '../lib/sanitize.js';
+import rateLimit from 'express-rate-limit';
 
-const router = Router();
+const writeLimiter = rateLimit({ windowMs: 60_000, max: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'TooManyRequests', message: 'Write rate limit exceeded.' } });
+
+const router: Router = Router();
 
 /**
  * Generate a URL-friendly slug from a game name.
@@ -32,7 +38,7 @@ function serializeGame(game: any) {
  * GET /games - Browse games
  * Query params: genre, sort, limit, offset, search
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', validate(browseGamesSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
       genre,
@@ -117,7 +123,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 /**
  * GET /games/:id - Get game details
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', validate(gameIdParamSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -148,7 +154,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 /**
  * POST /games - Publish a new game (auth required)
  */
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', writeLimiter, requireAuth, validate(createGameSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
     const { name, description, genre, tags, maxPlayers, wasmUrl, thumbnailUrl, screenshots } = req.body;
@@ -161,13 +167,15 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    const sanitized = sanitizeObject({ name, description } as Record<string, unknown>, ['name', 'description']);
+
     const slug = slugify(name);
 
     const game = await prisma.game.create({
       data: {
-        name,
+        name: sanitized.name as string,
         slug,
-        description,
+        description: sanitized.description as string,
         creatorId: user.id,
         genre: genre || 'other',
         tags: tags || [],
@@ -200,7 +208,7 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 /**
  * PUT /games/:id - Update a game (auth required)
  */
-router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', writeLimiter, requireAuth, validate(updateGameSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const user = req.user!;
@@ -223,12 +231,25 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 
     const { name, description, genre, tags, maxPlayers, status, wasmUrl, thumbnailUrl, screenshots } = req.body;
 
+    // Sanitize name and description if provided
+    const fieldsToSanitize: Record<string, unknown> = {};
+    const keys: string[] = [];
+    if (name !== undefined) {
+      fieldsToSanitize.name = name;
+      keys.push('name');
+    }
+    if (description !== undefined) {
+      fieldsToSanitize.description = description;
+      keys.push('description');
+    }
+    const sanitized = keys.length > 0 ? sanitizeObject(fieldsToSanitize, keys) : {};
+
     const data: any = {};
     if (name !== undefined) {
-      data.name = name;
+      data.name = sanitized.name;
       data.slug = slugify(name);
     }
-    if (description !== undefined) data.description = description;
+    if (description !== undefined) data.description = sanitized.description;
     if (genre !== undefined) data.genre = genre;
     if (tags !== undefined) data.tags = tags;
     if (maxPlayers !== undefined) data.maxPlayers = maxPlayers;
@@ -268,7 +289,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 /**
  * GET /games/:id/stats - Get game statistics
  */
-router.get('/:id/stats', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id/stats', validate(gameIdParamSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -345,11 +366,13 @@ router.get('/:id/stats', async (req: Request, res: Response, next: NextFunction)
 /**
  * POST /games/:id/rate - Rate a game (auth required)
  */
-router.post('/:id/rate', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/rate', writeLimiter, requireAuth, validate(rateGameSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const user = req.user!;
     const { rating, review } = req.body;
+
+    const sanitizedReview = review ? sanitize(review) : null;
 
     if (!rating || rating < 1 || rating > 5) {
       res.status(400).json({
@@ -382,11 +405,11 @@ router.post('/:id/rate', requireAuth, async (req: Request, res: Response, next: 
         gameId: id,
         userId: user.id,
         rating,
-        review: review || null,
+        review: sanitizedReview,
       },
       update: {
         rating,
-        review: review || null,
+        review: sanitizedReview,
       },
     });
 
@@ -412,7 +435,7 @@ router.post('/:id/rate', requireAuth, async (req: Request, res: Response, next: 
     res.json({
       gameId: id,
       rating,
-      review: review || null,
+      review: sanitizedReview,
       averageRating: updatedGame.averageRating,
       ratingCount: updatedGame.ratingCount,
       message: 'Rating submitted successfully',

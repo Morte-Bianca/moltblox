@@ -10,9 +10,10 @@ import { validate } from '../middleware/validate.js';
 import { createItemSchema, purchaseItemSchema, browseItemsSchema } from '../schemas/marketplace.js';
 import { sanitizeObject } from '../lib/sanitize.js';
 import prisma from '../lib/prisma.js';
-import type { ItemCategory, ItemRarity, Prisma } from '../generated/prisma/index.js';
+import type { Prisma } from '../generated/prisma/client.js';
+import type { ItemCategory, ItemRarity } from '../generated/prisma/enums.js';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * Serialize BigInt fields to strings in an object.
@@ -301,6 +302,11 @@ router.post(
           throw Object.assign(new Error('This item is no longer available for purchase'), {
             statusCode: 400,
           });
+        }
+
+        // Prevent self-purchase
+        if (item.creatorId === user.id) {
+          throw Object.assign(new Error('Cannot purchase your own item'), { statusCode: 400 });
         }
 
         // Check supply if limited

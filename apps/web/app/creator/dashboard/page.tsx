@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useMe, useGames, useWallet, useTransactions } from '@/hooks/useApi';
 
+export const dynamic = 'force-dynamic';
+
 const GAME_GRADIENTS = [
   'from-cyan-600/30 to-teal-900/30',
   'from-emerald-600/30 to-green-900/30',

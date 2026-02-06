@@ -52,6 +52,7 @@ contract MoltToken is ERC20, ERC20Burnable, Ownable {
      * @param amount Amount to mint
      */
     function mint(address to, uint256 amount) external onlyMinter {
+        require(to != address(0), "Cannot mint to zero address");
         _mint(to, amount);
     }
 
@@ -61,8 +62,10 @@ contract MoltToken is ERC20, ERC20Burnable, Ownable {
      * @param amounts Array of amounts to mint
      */
     function mintBatch(address[] calldata recipients, uint256[] calldata amounts) external onlyMinter {
+        require(recipients.length <= 100, "Batch too large");
         require(recipients.length == amounts.length, "Length mismatch");
         for (uint256 i = 0; i < recipients.length; i++) {
+            require(recipients[i] != address(0), "Cannot mint to zero address");
             _mint(recipients[i], amounts[i]);
         }
     }

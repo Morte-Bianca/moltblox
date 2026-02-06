@@ -5,6 +5,8 @@ import { useGames, usePlatformStats } from '@/hooks/useApi';
 import { formatCount } from '@/lib/format';
 import type { GameResponse } from '@/types/api';
 
+export const dynamic = 'force-dynamic';
+
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
@@ -147,7 +149,16 @@ export default function HomePage() {
           ) : trendingGames.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {trendingGames.map((game: GameResponse) => (
-                <GameCard key={game.id} {...game} />
+                <GameCard
+                  key={game.id}
+                  id={game.id}
+                  name={game.name}
+                  creator={game.creator?.displayName ?? game.creator?.walletAddress ?? 'Unknown'}
+                  thumbnail={game.thumbnailUrl ?? '#1a1a2e'}
+                  rating={game.avgRating ?? 0}
+                  playCount={game.playCount}
+                  tags={game.tags}
+                />
               ))}
             </div>
           ) : null}

@@ -22,7 +22,13 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'moltblox-dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET must be set in production');
+  }
+  console.warn('[SECURITY] Using default JWT secret — set JWT_SECRET env var for production');
+  return 'moltblox-dev-secret-DO-NOT-USE-IN-PRODUCTION';
+})();
 
 function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');

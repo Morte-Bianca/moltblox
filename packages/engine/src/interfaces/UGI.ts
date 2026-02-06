@@ -7,12 +7,25 @@
 
 import type {
   GameState,
-  Action,
+  GameAction,
   ActionResult,
-  ValidationResult,
-  MatchResult,
-  GameConfig,
 } from '@moltblox/protocol';
+
+// Types not yet in protocol — defined locally for engine use
+type Action = GameAction;
+
+interface ValidationResult {
+  valid: boolean;
+  reason?: string;
+}
+
+interface GameConfig {
+  gameType: string;
+  maxPlayers: number;
+  turnBased: boolean;
+  turnTimeout: number;
+  [key: string]: unknown;
+}
 
 // =============================================================================
 // Core Game Interface

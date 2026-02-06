@@ -5,13 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title TournamentManager
  * @notice Manages Moltblox tournaments with auto-payout to winner wallets
  * @dev Supports platform-sponsored, creator-sponsored, and community tournaments
  */
-contract TournamentManager is Ownable, ReentrancyGuard {
+contract TournamentManager is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     // MOLT token
@@ -328,7 +329,7 @@ contract TournamentManager is Ownable, ReentrancyGuard {
      * @notice Register for a tournament
      * @param tournamentId The tournament to join
      */
-    function register(string calldata tournamentId) external nonReentrant {
+    function register(string calldata tournamentId) external nonReentrant whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
 
         require(t.status == TournamentStatus.Registration, "Not in registration");
@@ -361,7 +362,7 @@ contract TournamentManager is Ownable, ReentrancyGuard {
      * @notice Start a tournament (auto-called or admin)
      * @param tournamentId The tournament to start
      */
-    function startTournament(string calldata tournamentId) external {
+    function startTournament(string calldata tournamentId) external whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
         require(
             t.sponsor == msg.sender || owner() == msg.sender,
@@ -389,7 +390,7 @@ contract TournamentManager is Ownable, ReentrancyGuard {
         address first,
         address second,
         address third
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
         require(
             t.sponsor == msg.sender || owner() == msg.sender,
@@ -438,6 +439,12 @@ contract TournamentManager is Ownable, ReentrancyGuard {
                     emit ParticipationRewardDistributed(tournamentId, participant, participationReward);
                 }
             }
+
+            // Send any remaining dust to the first winner
+            uint256 remaining = participationPool - (participationReward * nonWinnerCount);
+            if (remaining > 0) {
+                moltToken.safeTransfer(first, remaining);
+            }
         }
 
         t.prizesDistributed = true;
@@ -450,7 +457,7 @@ contract TournamentManager is Ownable, ReentrancyGuard {
      * @param tournamentId The tournament to cancel
      * @param reason Reason for cancellation
      */
-    function cancelTournament(string calldata tournamentId, string calldata reason) external {
+    function cancelTournament(string calldata tournamentId, string calldata reason) external nonReentrant {
         Tournament storage t = tournaments[tournamentId];
         require(
             t.sponsor == msg.sender || owner() == msg.sender,
@@ -472,20 +479,9 @@ contract TournamentManager is Ownable, ReentrancyGuard {
             }
         }
 
-        // Return prize pool to sponsor
-        if (t.prizePool > 0) {
-            // For community tournaments, return to contract (already has the funds)
-            // For creator/platform, return to sponsor
-            if (t.tournamentType != TournamentType.CommunitySponsored) {
-                uint256 returnAmount = t.prizePool;
-                // Subtract entry fees that were added to pool for community tournaments
-                if (t.tournamentType == TournamentType.CommunitySponsored) {
-                    returnAmount = t.prizePool - participantEntryFees[tournamentId];
-                }
-                if (returnAmount > 0) {
-                    moltToken.safeTransfer(t.sponsor, returnAmount);
-                }
-            }
+        // Return prize pool to sponsor (not for community tournaments)
+        if (t.prizePool > 0 && t.tournamentType != TournamentType.CommunitySponsored) {
+            moltToken.safeTransfer(t.sponsor, t.prizePool);
         }
 
         emit TournamentCancelled(tournamentId, reason);
@@ -543,12 +539,20 @@ contract TournamentManager is Ownable, ReentrancyGuard {
         treasury = _treasury;
     }
 
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     /**
      * @notice Add to prize pool (for community sponsorship)
      * @param tournamentId The tournament to sponsor
      * @param amount Amount of MOLT to add
      */
-    function addToPrizePool(string calldata tournamentId, uint256 amount) external {
+    function addToPrizePool(string calldata tournamentId, uint256 amount) external whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
         require(t.status == TournamentStatus.Registration, "Cannot add to pool");
         require(amount > 0, "Amount must be positive");

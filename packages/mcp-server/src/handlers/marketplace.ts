@@ -16,7 +16,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         itemId: data.itemId,
         status: 'created',
@@ -31,7 +31,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         success: response.ok,
         message: response.ok ? 'Item updated successfully' : data.error,
@@ -44,7 +44,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: params.quantity }),
       });
-      const data = await response.json();
+      const data: any = await response.json();
 
       // Calculate split
       const price = parseFloat(data.price);
@@ -67,7 +67,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       if (params.gameId) queryParams.set('gameId', params.gameId);
 
       const response = await fetch(`${apiUrl}/api/inventory?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { items: data.items };
     },
 
@@ -77,7 +77,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       queryParams.set('period', params.period);
 
       const response = await fetch(`${apiUrl}/api/earnings?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { earnings: data };
     },
 
@@ -90,7 +90,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       queryParams.set('offset', params.offset.toString());
 
       const response = await fetch(`${apiUrl}/api/marketplace?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
   };

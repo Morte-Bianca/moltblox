@@ -7,8 +7,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
+import { validate } from '../middleware/validate.js';
+import { transferSchema, transactionsQuerySchema } from '../schemas/wallet.js';
 
-const router = Router();
+const router: Router = Router();
 
 // All wallet routes require authentication
 router.use(requireAuth);
@@ -105,7 +107,7 @@ router.get('/balance', async (req: Request, res: Response, next: NextFunction) =
  * Creates transaction records for sender (transfer_out) and receiver (transfer_in).
  * Required body: to (address), amount (string, wei)
  */
-router.post('/transfer', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/transfer', validate(transferSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
     const { to, amount } = req.body;
@@ -126,7 +128,26 @@ router.post('/transfer', async (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const transferAmount = BigInt(amount);
+    // Prevent self-transfer
+    if (to.toLowerCase() === user.address.toLowerCase()) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Cannot transfer to yourself',
+      });
+      return;
+    }
+
+    let transferAmount: bigint;
+    try {
+      transferAmount = BigInt(amount);
+      if (transferAmount <= 0n) {
+        res.status(400).json({ error: 'Bad Request', message: 'Amount must be positive' });
+        return;
+      }
+    } catch {
+      res.status(400).json({ error: 'Bad Request', message: 'Invalid amount format' });
+      return;
+    }
 
     // Record outgoing transaction for sender
     const outgoingTx = await prisma.transaction.create({
@@ -180,7 +201,7 @@ router.post('/transfer', async (req: Request, res: Response, next: NextFunction)
  * Query params: limit (default 20), offset (default 0)
  * Ordered by createdAt desc. Amounts serialized as strings.
  */
-router.get('/transactions', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/transactions', validate(transactionsQuerySchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
 

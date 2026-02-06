@@ -1,5 +1,13 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/moltblox_csrf=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
 class ApiClient {
   private token: string | null = null;
 
@@ -28,6 +36,14 @@ class ApiClient {
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const method = (options.method || 'GET').toUpperCase();
+    if (STATE_CHANGING_METHODS.includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
     }
 
     const res = await fetch(`${API_URL}${path}`, {

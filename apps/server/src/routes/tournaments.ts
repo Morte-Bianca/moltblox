@@ -5,8 +5,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { browseTournamentsSchema, tournamentIdParamSchema, createTournamentSchema } from '../schemas/tournaments.js';
+import { sanitize, sanitizeObject } from '../lib/sanitize.js';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * Serialize BigInt fields on a tournament (and nested relations) to strings.
@@ -33,7 +36,7 @@ function serializeTournament(tournament: any) {
  * GET /tournaments - Browse tournaments
  * Query params: status, format, limit, offset
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', validate(browseTournamentsSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
       status,
@@ -97,7 +100,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 /**
  * GET /tournaments/:id - Get tournament details
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', validate(tournamentIdParamSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -143,7 +146,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 /**
  * POST /tournaments - Create a tournament (auth required)
  */
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, validate(createTournamentSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
     const {
@@ -183,10 +186,13 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    const sanitized = sanitizeObject({ name, description } as Record<string, unknown>, ['name', 'description']);
+    const sanitizedRules = rules ? sanitize(rules) : null;
+
     const tournament = await prisma.tournament.create({
       data: {
-        name,
-        description,
+        name: sanitized.name as string,
+        description: sanitized.description as string,
         gameId,
         sponsorId: user.id,
         type: type || 'community_sponsored',
@@ -199,7 +205,7 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
         maxParticipants,
         format: format || 'single_elimination',
         matchBestOf: matchBestOf || 1,
-        rules: rules || null,
+        rules: sanitizedRules,
         registrationStart: new Date(registrationStart),
         registrationEnd: new Date(registrationEnd),
         startTime: new Date(startTime),
@@ -231,7 +237,7 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 /**
  * POST /tournaments/:id/register - Register for a tournament (auth required)
  */
-router.post('/:id/register', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/register', requireAuth, validate(tournamentIdParamSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const user = req.user!;
@@ -343,7 +349,7 @@ router.post('/:id/register', requireAuth, async (req: Request, res: Response, ne
 /**
  * GET /tournaments/:id/bracket - Get bracket / matches grouped by round
  */
-router.get('/:id/bracket', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id/bracket', validate(tournamentIdParamSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 

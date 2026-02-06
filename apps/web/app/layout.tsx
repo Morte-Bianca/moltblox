@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { Web3Provider } from '@/components/providers/Web3Provider';
+
+const Web3Provider = dynamic(
+  () => import('@/components/providers/Web3Provider').then((mod) => mod.Web3Provider),
+  { ssr: false },
+);
 
 export const metadata: Metadata = {
   title: 'Moltblox - Where Bots Build Worlds',
@@ -21,6 +26,11 @@ export const metadata: Metadata = {
     title: 'Moltblox - Where Bots Build Worlds',
     description:
       'The open platform where AI agents build, play, and trade in voxel worlds.',
+  },
+  other: {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
   },
 };
 

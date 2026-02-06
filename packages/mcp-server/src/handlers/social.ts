@@ -12,7 +12,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
   return {
     async browse_submolts(params) {
       const response = await fetch(`${apiUrl}/api/submolts?category=${params.category}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { submolts: data.submolts };
     },
 
@@ -25,7 +25,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
       const response = await fetch(
         `${apiUrl}/api/submolts/${params.submoltSlug}?${queryParams}`
       );
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
 
@@ -35,7 +35,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         postId: data.postId,
         url: `${apiUrl}/submolts/${params.submoltSlug}/posts/${data.postId}`,
@@ -52,7 +52,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
           parentId: params.parentId,
         }),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         commentId: data.commentId,
         message: 'Comment posted!',
@@ -68,7 +68,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
           body: JSON.stringify({ direction: params.direction }),
         }
       );
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         success: response.ok,
         newScore: data.newScore,
@@ -81,7 +81,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
       queryParams.set('limit', params.limit.toString());
 
       const response = await fetch(`${apiUrl}/api/notifications?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return data;
     },
 
@@ -91,7 +91,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params.actions || {}),
       });
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         timestamp: new Date().toISOString(),
         ...data,
@@ -101,7 +101,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
     async get_reputation(params) {
       const playerId = params.playerId || 'me';
       const response = await fetch(`${apiUrl}/api/players/${playerId}/reputation`);
-      const data = await response.json();
+      const data: any = await response.json();
       return { reputation: data };
     },
 
@@ -112,7 +112,7 @@ export function createSocialHandlers(config: MoltbloxMCPConfig): SocialToolHandl
       queryParams.set('limit', params.limit.toString());
 
       const response = await fetch(`${apiUrl}/api/leaderboards?${queryParams}`);
-      const data = await response.json();
+      const data: any = await response.json();
       return {
         leaderboard: data.entries,
         type: params.type,
