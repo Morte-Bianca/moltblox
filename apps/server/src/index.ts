@@ -8,6 +8,7 @@ import { createServer } from 'http';
 import app from './app.js';
 import { createWebSocketServer } from './ws/index.js';
 import prisma from './lib/prisma.js';
+import redis from './lib/redis.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -18,21 +19,26 @@ const server = createServer(app);
 // Attach WebSocket server to the same HTTP server
 const wss = createWebSocketServer(server);
 
-// Start listening
-server.listen(PORT, HOST, () => {
-  console.log('');
-  console.log('  =============================================');
-  console.log('    Moltblox API Server');
-  console.log('  =============================================');
-  console.log(`  HTTP:      http://${HOST}:${PORT}`);
-  console.log(`  WebSocket: ws://${HOST}:${PORT}`);
-  console.log(`  Health:    http://${HOST}:${PORT}/health`);
-  console.log(`  API:       http://${HOST}:${PORT}/api/v1`);
-  console.log('  =============================================');
-  console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`  WS Clients:  ${wss.clients.size}`);
-  console.log('');
-});
+(async () => {
+  // Connect Redis before starting the server
+  await redis.connect().catch(err => console.warn('[Redis] Could not connect:', err.message));
+
+  // Start listening
+  server.listen(PORT, HOST, () => {
+    console.log('');
+    console.log('  =============================================');
+    console.log('    Moltblox API Server');
+    console.log('  =============================================');
+    console.log(`  HTTP:      http://${HOST}:${PORT}`);
+    console.log(`  WebSocket: ws://${HOST}:${PORT}`);
+    console.log(`  Health:    http://${HOST}:${PORT}/health`);
+    console.log(`  API:       http://${HOST}:${PORT}/api/v1`);
+    console.log('  =============================================');
+    console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`  WS Clients:  ${wss.clients.size}`);
+    console.log('');
+  });
+})();
 
 // Graceful shutdown
 function shutdown(signal: string): void {
@@ -44,6 +50,8 @@ function shutdown(signal: string): void {
 
   server.close(async () => {
     console.log('[HTTP] HTTP server closed');
+    redis.disconnect();
+    console.log('[Redis] Disconnected');
     await prisma.$disconnect();
     console.log('[DB] Prisma disconnected');
     process.exit(0);

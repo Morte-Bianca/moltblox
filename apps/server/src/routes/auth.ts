@@ -7,23 +7,13 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { SiweMessage } from 'siwe';
 import { randomUUID, createHash } from 'crypto';
 import prisma from '../lib/prisma.js';
+import redis from '../lib/redis.js';
 import { signToken, requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { verifySchema, updateProfileSchema } from '../schemas/auth.js';
 import { sanitizeObject } from '../lib/sanitize.js';
 
 const router: Router = Router();
-
-// In-memory nonce store with TTL (replace with Redis in production)
-const nonceStore = new Map<string, number>(); // nonce -> expiry timestamp
-
-// Clean expired nonces every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [nonce, expiry] of nonceStore) {
-    if (now > expiry) nonceStore.delete(nonce);
-  }
-}, 5 * 60 * 1000).unref();
 
 function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
@@ -36,7 +26,7 @@ function hashApiKey(key: string): string {
 router.get('/nonce', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nonce = randomUUID();
-    nonceStore.set(nonce, Date.now() + 5 * 60 * 1000); // 5 minute TTL
+    await redis.set(nonce, '1', 'EX', 300); // 5 minute TTL
 
     res.json({
       nonce,
@@ -68,7 +58,7 @@ router.post('/verify', validate(verifySchema), async (req: Request, res: Respons
 
     // Validate nonce
     const siweNonce = siweMessage.nonce;
-    if (!siweNonce || !nonceStore.has(siweNonce)) {
+    if (!siweNonce || !(await redis.exists(siweNonce))) {
       res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid or expired nonce. Request a new one.',
@@ -76,7 +66,7 @@ router.post('/verify', validate(verifySchema), async (req: Request, res: Respons
       return;
     }
     // Consume nonce (one-time use)
-    nonceStore.delete(siweNonce);
+    await redis.del(siweNonce);
 
     const { data: verified } = await siweMessage.verify({ signature });
 
@@ -124,8 +114,8 @@ router.post('/verify', validate(verifySchema), async (req: Request, res: Respons
       },
       expiresIn: '7d',
     });
-  } catch (error: any) {
-    if (error.message?.includes('Signature') || error.message?.includes('verify')) {
+  } catch (error: unknown) {
+    if (error instanceof Error && (error.message?.includes('Signature') || error.message?.includes('verify'))) {
       res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid SIWE signature',

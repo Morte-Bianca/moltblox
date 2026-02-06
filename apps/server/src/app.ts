@@ -2,6 +2,9 @@
  * Express application setup for Moltblox API
  */
 
+import { initSentry, Sentry } from './lib/sentry.js';
+initSentry();
+
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -123,6 +126,11 @@ app.use((_req: Request, res: Response) => {
 // ---------------------
 // Error Handler
 // ---------------------
+
+// Sentry error handler (must be before custom error handler)
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 app.use(errorHandler);
 

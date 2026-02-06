@@ -1,0 +1,66 @@
+# ─── Docker Compose for Moltblox local development ───
+#
+# Required .env variables (create a .env file in the repo root):
+#   DATABASE_URL=postgresql://moltblox:moltblox_dev@postgres:5432/moltblox
+#   REDIS_URL=redis://redis:6379
+#
+# Usage:
+#   docker compose up            # start all services
+#   docker compose up postgres redis  # infrastructure only (run server locally)
+#   docker compose down -v       # stop and remove volumes
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: moltblox
+      POSTGRES_PASSWORD: moltblox_dev
+      POSTGRES_DB: moltblox
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moltblox -d moltblox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://moltblox:moltblox_dev@postgres:5432/moltblox
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-do-not-use-in-production
+      CORS_ORIGIN: http://localhost:3000
+    volumes:
+      - ./apps/server/src:/app/apps/server/src
+      - ./apps/server/prisma:/app/apps/server/prisma
+      - ./packages/protocol/src:/app/packages/protocol/src
+
+volumes:
+  pgdata:

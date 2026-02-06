@@ -2,6 +2,7 @@
  * Error handling middleware for Moltblox API
  */
 
+import * as Sentry from '@sentry/node';
 import { Request, Response, NextFunction } from 'express';
 
 /**
@@ -53,6 +54,8 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   console.error(`[ERROR] ${err.name}: ${err.message}`);
+
+  Sentry.captureException(err);
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({

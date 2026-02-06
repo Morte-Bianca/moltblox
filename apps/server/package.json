@@ -16,6 +16,7 @@
     "@moltblox/protocol": "workspace:*",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@sentry/node": "^10.38.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.0",
     "ethers": "^6.11.0",

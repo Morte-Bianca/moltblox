@@ -1,7 +1,24 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@moltblox/protocol'],
+  poweredByHeader: false,
+
+  // Enable standalone output for Docker/self-hosted deployments.
+  // Set STANDALONE=true when building outside Vercel.
+  ...(process.env.STANDALONE === 'true' && { output: 'standalone' }),
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
+
   async headers() {
     return [
       {
@@ -18,4 +35,9 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG || '',
+  project: process.env.SENTRY_PROJECT || '',
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+});
