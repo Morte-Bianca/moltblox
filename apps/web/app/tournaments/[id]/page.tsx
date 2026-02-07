@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -85,8 +85,8 @@ function formatDate(dateStr: string): string {
   }
 }
 
-export default function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function TournamentDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { data: tournament, isLoading, isError } = useTournament(id);
   const { data: bracketData } = useTournamentBracket(id);
   const registerMutation = useRegisterForTournament();

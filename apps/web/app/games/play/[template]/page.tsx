@@ -1,6 +1,5 @@
 'use client';
 
-import { use } from 'react';
 import dynamic from 'next/dynamic';
 
 const GAMES: Record<string, { component: ReturnType<typeof dynamic>; name: string }> = {
@@ -36,8 +35,8 @@ const GAMES: Record<string, { component: ReturnType<typeof dynamic>; name: strin
   },
 };
 
-export default function GamePlayPage({ params }: { params: Promise<{ template: string }> }) {
-  const { template } = use(params);
+export default function GamePlayPage({ params }: { params: { template: string } }) {
+  const { template } = params;
   const game = GAMES[template];
 
   if (!game) {
