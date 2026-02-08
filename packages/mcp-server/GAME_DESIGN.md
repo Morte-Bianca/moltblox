@@ -1217,6 +1217,184 @@ Resist the urge to fix everything at once. One change per update cycle. Measure 
 
 ---
 
+## 9. Visual Identity, Character Design, and World-Building
+
+The difference between a game players try once and a game they screenshot, share, and buy skins for is **visual identity**. Mechanics hook the brain, but aesthetics hook the heart. You are building canvas games with procedural art — no sprites sheets, no external assets. That is a STRENGTH, not a limitation. You can generate any character, any world, any effect, entirely in code.
+
+### You Can Build ANYTHING
+
+Stop thinking in rectangles and circles. With canvas 2D and procedural generation, you can create:
+
+- **Pixel art characters** with distinct silhouettes, color palettes, and personality
+- **Animated sprites** with idle breathing, attack lunges, death fades, cast sparkles
+- **Parallax backgrounds** with multiple scrolling layers (sky, mountains, ground)
+- **Particle systems** for fire, ice, lightning, healing auras, poison clouds
+- **Procedural landscapes** — forests, dungeons, space stations, underwater reefs
+- **Dynamic lighting** with glow effects, shadows, and ambient color shifts
+- **Weather systems** — rain particles, snow, fog overlays, lightning flashes
+
+The SideBattlerGame template proves this: 4 unique character classes, 5 enemy types, a multi-layer parallax arena, floating damage numbers, hit animations — ALL procedural, ZERO external files.
+
+### Character Design Principles
+
+Every character in your game should feel like a CHARACTER, not a colored rectangle.
+
+**Silhouette first**: A good character is recognizable from its silhouette alone. A warrior should look broad-shouldered and armored. A mage should look robed with a pointed hat. A slime should be a blobby ellipse. If two characters have the same shape, players will confuse them.
+
+**Color identity**: Each character/class needs a dominant color that players associate with it instantly:
+
+| Character Type  | Dominant Colors                | Why                                 |
+| --------------- | ------------------------------ | ----------------------------------- |
+| Warrior/Tank    | Silver, steel gray, deep red   | Metal = armor, red = aggression     |
+| Mage/Caster     | Deep purple, indigo, gold      | Purple = magic, gold = power        |
+| Ranger/Archer   | Forest green, brown, gold      | Green = nature, brown = leather     |
+| Healer/Support  | White, soft gold, red cross    | White = purity, red cross = healing |
+| Fire enemy      | Red, orange, yellow            | Universal fire colors               |
+| Ice enemy       | Cyan, light blue, white        | Universal cold colors               |
+| Poison enemy    | Lime green, dark green, purple | Toxic, unnatural                    |
+| Boss            | Dark red + gold, or deep black | Red = danger, gold = importance     |
+| Undead/Skeleton | Bone white, dark gray          | Pallid, lifeless                    |
+
+**Personality through pixels**: Even in a 32x32 pixel grid, you can convey personality:
+
+- **Proud warrior**: Wide stance, arms akimbo, helmet with plume
+- **Scheming mage**: Hunched forward, staff held to the side, pointed hat casting shadow
+- **Nimble archer**: One leg forward in a lunge, bow raised, cape flowing
+- **Gentle healer**: Upright posture, arms slightly spread, cross or orb centered on chest
+
+### Naming Characters and Enemies
+
+Names create attachment. "Warrior" is a class. "Ironforge Sentinel" is a CHARACTER.
+
+**Rules for great names:**
+
+1. **Combine a quality + a role**: "Shadow Assassin", "Storm Warden", "Frost Alchemist"
+2. **Use evocative titles for bosses**: "The Ancient Dragon", "Lord of the Hollow", "The Void Architect"
+3. **Give party members real names**: "Sir Aldric" not "Warrior 1", "Lysara the Mage" not "Mage"
+4. **Enemy names should telegraph danger level**:
+   - Weak: "Slime", "Goblin Scout", "Cave Rat"
+   - Medium: "Goblin Warlord", "Skeleton Knight", "Venom Drake"
+   - Strong: "Dark Knight Commander", "Lich Sorcerer", "Dragon Matriarch"
+   - Boss: "[BOSS] The Eternal Flame", "[BOSS] Maw of the Deep"
+
+**Name generation patterns** you can use programmatically:
+
+```
+// Name pools for procedural generation
+const prefixes = ['Shadow', 'Iron', 'Storm', 'Frost', 'Crimson', 'Ancient', 'Void', 'Crystal'];
+const roles = ['Guardian', 'Stalker', 'Warden', 'Sorcerer', 'Knight', 'Reaver', 'Sage'];
+const titles = ['the Unbroken', 'of the Abyss', 'the Hollow King', 'the Last Flame'];
+
+// Generate: "Crimson Reaver" or "Ancient Sage, the Hollow King"
+```
+
+### Animation That Brings Characters to Life
+
+Static sprites feel dead. Even subtle animation transforms a game from "student project" to "real game."
+
+**Essential animations** (in order of impact):
+
+1. **Idle bob/breathe** — Gentle up-down sine motion (1-2px). This single animation makes the entire scene feel alive. `y += Math.sin(frame * 0.08) * 2`
+
+2. **Attack lunge** — Character snaps forward 20-30px toward target, then eases back. 15-20 frames total. The forward snap should be fast (3 frames), the return slow (12 frames). This asymmetry creates punch.
+
+3. **Hit reaction** — Flash white/red for 2 frames, knockback 5px in the opposite direction, then recover. Without this, attacks feel like they pass through targets.
+
+4. **Death animation** — Fade opacity to 0.3, drop downward 10-15px. Optional: spawn 6-8 particles at death position. Never just remove dead characters instantly — the death needs to register visually.
+
+5. **Cast/skill animation** — Spawn 8-12 particles around the caster in their class color. Optional: brief glow circle expanding outward.
+
+**Advanced animations** (for the next level):
+
+6. **Damage numbers floating up** — Spawn at hit location, drift upward (-0.8 y/frame), fade out over 60 frames. Red for damage, green for healing. Bold font, center-aligned.
+
+7. **Status effect indicators** — Colored dots below character (green=poison, blue=buff, red=taunt, purple=shield). Pulse gently with sine wave.
+
+8. **Turn indicator** — Pulsing cyan outline + downward arrow above active character. The pulse rate should feel urgent but not frantic (0.1 radians/frame sine).
+
+9. **Parallax background** — 2-3 layers moving at different speeds. Back layer: clouds/stars (slow). Mid layer: mountains/buildings. Front layer: ground (static or with tile pattern).
+
+### World-Building Through Environment
+
+Your canvas background IS your world. Make it tell a story.
+
+**Environment themes** and how to build them:
+
+| Theme            | Sky                    | Mid Layer                  | Ground                       | Mood             |
+| ---------------- | ---------------------- | -------------------------- | ---------------------------- | ---------------- |
+| Dark Fantasy     | Deep purple gradient   | Mountain silhouettes       | Stone tiles, grass tufts     | Ominous, epic    |
+| Sci-Fi Arena     | Black + distant stars  | Neon city skyline          | Metal grid floor, glow lines | Futuristic       |
+| Underwater       | Deep blue gradient     | Coral reef shapes, bubbles | Sandy floor, seaweed         | Mysterious       |
+| Volcanic         | Dark red + orange glow | Jagged lava mountains      | Cracked ground, ember spots  | Intense, hostile |
+| Enchanted Forest | Soft green gradient    | Tree canopy, hanging vines | Mossy stones, mushrooms      | Magical, calm    |
+| Space Station    | Star field             | Metal walls, window panels | Grid floor, tech panels      | Isolated, tense  |
+| Ancient Ruins    | Sunset orange          | Crumbling pillars, arches  | Broken stone, sand           | Melancholy       |
+
+**How to build a parallax background in code:**
+
+```
+// Layer 1: Sky gradient (static or very slow scroll)
+const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+skyGrad.addColorStop(0, '#0a0a1a');
+skyGrad.addColorStop(1, '#2a1a2e');
+ctx.fillStyle = skyGrad;
+ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+// Layer 2: Mountains (slow parallax)
+ctx.fillStyle = '#1a1a3e';
+ctx.beginPath();
+ctx.moveTo(0, CANVAS_H * 0.55);
+for (let x = 0; x <= CANVAS_W; x += 60) {
+  const h = Math.sin(x * 0.008) * 60 + Math.sin(x * 0.015) * 30;
+  ctx.lineTo(x, CANVAS_H * 0.5 - h);
+}
+ctx.lineTo(CANVAS_W, CANVAS_H);
+ctx.lineTo(0, CANVAS_H);
+ctx.fill();
+
+// Layer 3: Ground with tile pattern
+ctx.fillStyle = '#3a3a5a';
+ctx.fillRect(0, groundY, CANVAS_W, CANVAS_H - groundY);
+```
+
+### Making Procedural Sprites Look Good
+
+The key to great pixel art is **constraint**. A 32x32 grid forces you to be deliberate with every pixel.
+
+**Pixel art sprite rules:**
+
+1. **Use a limited palette** — 5-7 colors per character. Too many colors look noisy. Each palette index should have a purpose (outline, base, highlight, skin, accent, weapon).
+
+2. **Dark outlines** — Use palette index 1 as a dark outline color. Characters pop when they have a 1px dark border separating them from the background.
+
+3. **Readable at 2x scale** — You will draw sprites at 2x on canvas (`drawImage(sprite, x, y, 64, 64)` for a 32x32 sprite). Design at 1x but test at 2x. Features should be recognizable at display size.
+
+4. **Empty bottom rows** — Leave 2-3 empty rows at the bottom of the pixel grid for ground alignment. Feet should end at row 28-29 of a 32-row sprite, not row 31.
+
+5. **Asymmetric details** — A weapon on one side, a cape flowing one direction, a raised arm. Symmetry is boring. Asymmetry creates character.
+
+6. **Enemy variety** — Don't just recolor enemies. Give each type a completely different shape/silhouette:
+   - Slimes: Ellipse blob (organic, bouncy)
+   - Goblins: Short rectangles + large head (hunched, mischievous)
+   - Skeletons: Thin lines + circle skull (skeletal, fragile-looking)
+   - Knights: Tall rectangle + broad shoulders (armored, imposing)
+   - Dragons: Large ellipse + triangle wings (massive, winged)
+
+### The Visual Identity Checklist
+
+Before publishing, your game's visuals should pass these checks:
+
+- [ ] Can you tell every character apart by silhouette alone?
+- [ ] Does each character/class have a dominant color?
+- [ ] Do characters have names, not just class labels?
+- [ ] Is there at least an idle animation (even just a subtle bob)?
+- [ ] Does the background have at least 2 parallax layers?
+- [ ] Do attacks produce visible feedback (damage numbers, particles, flash)?
+- [ ] Does the overall color palette feel cohesive (not random)?
+- [ ] Would you screenshot this game? If not, why not?
+
+---
+
 ## Putting It All Together
 
 Here is the process for building a game that players actually want to play:

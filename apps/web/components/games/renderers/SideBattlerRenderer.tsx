@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { SideBattlerGame } from '@moltblox/game-builder';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import { GameShell } from '@/components/games/GameShell';
@@ -338,32 +338,115 @@ function createEnemySprite(name: string, isBoss: boolean): HTMLCanvasElement {
     ctx.fillRect(size * 0.35, size * 0.7, 5, size * 0.15);
     ctx.fillRect(size * 0.55, size * 0.7, 5, size * 0.15);
   } else if (n.includes('skeleton')) {
-    // Bone-white thin figure
+    // Bone-white skeletal figure
     ctx.fillStyle = '#E8E8E8';
-    // Skull
-    ctx.fillRect(size * 0.35, size * 0.1, size * 0.3, size * 0.2);
+    // Skull (larger, rounder)
+    ctx.fillRect(size * 0.33, size * 0.08, size * 0.34, size * 0.22);
+    ctx.fillStyle = '#D0D0D0';
+    ctx.fillRect(size * 0.35, size * 0.1, size * 0.3, size * 0.18);
+    // Eye sockets
     ctx.fillStyle = '#000';
-    ctx.fillRect(size * 0.4, size * 0.16, 3, 3);
-    ctx.fillRect(size * 0.55, size * 0.16, 3, 3);
-    ctx.fillRect(size * 0.45, size * 0.23, size * 0.1, 2);
+    ctx.fillRect(size * 0.38, size * 0.14, 4, 5);
+    ctx.fillRect(size * 0.56, size * 0.14, 4, 5);
+    // Eye glow
+    ctx.fillStyle = '#66ffff';
+    ctx.fillRect(size * 0.39, size * 0.15, 2, 3);
+    ctx.fillRect(size * 0.57, size * 0.15, 2, 3);
+    // Jaw
+    ctx.fillStyle = '#D0D0D0';
+    ctx.fillRect(size * 0.4, size * 0.24, size * 0.2, 3);
     // Spine
     ctx.fillStyle = '#E8E8E8';
-    ctx.fillRect(size * 0.47, size * 0.3, size * 0.06, size * 0.25);
-    // Ribs
-    ctx.fillRect(size * 0.35, size * 0.33, size * 0.3, 2);
-    ctx.fillRect(size * 0.37, size * 0.38, size * 0.26, 2);
-    ctx.fillRect(size * 0.39, size * 0.43, size * 0.22, 2);
-    // Arms
-    ctx.fillRect(size * 0.25, size * 0.33, size * 0.1, 3);
-    ctx.fillRect(size * 0.65, size * 0.33, size * 0.1, 3);
+    ctx.fillRect(size * 0.45, size * 0.3, size * 0.1, size * 0.25);
+    // Ribcage (thicker ribs)
+    ctx.fillRect(size * 0.32, size * 0.32, size * 0.36, 3);
+    ctx.fillRect(size * 0.34, size * 0.37, size * 0.32, 3);
+    ctx.fillRect(size * 0.36, size * 0.42, size * 0.28, 3);
+    // Arms (thicker bones)
+    ctx.fillRect(size * 0.2, size * 0.32, size * 0.12, 4);
+    ctx.fillRect(size * 0.68, size * 0.32, size * 0.12, 4);
+    // Forearms angled down
+    ctx.fillRect(size * 0.18, size * 0.36, 4, size * 0.12);
+    ctx.fillRect(size * 0.78, size * 0.36, 4, size * 0.12);
+    // Pelvis
+    ctx.fillRect(size * 0.38, size * 0.55, size * 0.24, 4);
+    // Legs (thicker)
+    ctx.fillRect(size * 0.38, size * 0.59, 5, size * 0.22);
+    ctx.fillRect(size * 0.57, size * 0.59, 5, size * 0.22);
+    // Feet
+    ctx.fillRect(size * 0.35, size * 0.79, 8, 3);
+    ctx.fillRect(size * 0.57, size * 0.79, 8, 3);
+    // Sword (if warrior type)
+    if (n.includes('warrior')) {
+      ctx.fillStyle = '#A0AEC0';
+      ctx.fillRect(size * 0.82, size * 0.15, 3, size * 0.35);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(size * 0.8, size * 0.12, 7, 4);
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(size * 0.79, size * 0.49, 9, 4);
+    }
+    // Staff (if mage type)
+    if (n.includes('mage')) {
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(size * 0.15, size * 0.1, 3, size * 0.7);
+      ctx.fillStyle = '#9333EA';
+      ctx.beginPath();
+      ctx.arc(size * 0.165, size * 0.1, 4, 0, Math.PI * 2);
+      ctx.fill();
+      // Magical glow
+      ctx.fillStyle = 'rgba(147, 51, 234, 0.25)';
+      ctx.beginPath();
+      ctx.arc(size * 0.165, size * 0.1, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (n.includes('shadow') || n.includes('assassin')) {
+    // Stealthy dark figure with daggers
+    ctx.fillStyle = '#1a1a1a';
+    // Hood
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.18, size * 0.14, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(size * 0.36, size * 0.18, size * 0.28, size * 0.08);
+    // Face (barely visible)
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(size * 0.4, size * 0.2, size * 0.2, size * 0.06);
+    // Eyes (red slits)
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(size * 0.42, size * 0.21, 3, 2);
+    ctx.fillRect(size * 0.55, size * 0.21, 3, 2);
+    // Body (slim)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(size * 0.38, size * 0.26, size * 0.24, size * 0.3);
+    // Cape (flowing)
+    ctx.fillStyle = '#2a0a2a';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.35, size * 0.28);
+    ctx.lineTo(size * 0.25, size * 0.6);
+    ctx.lineTo(size * 0.38, size * 0.56);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(size * 0.65, size * 0.28);
+    ctx.lineTo(size * 0.75, size * 0.6);
+    ctx.lineTo(size * 0.62, size * 0.56);
+    ctx.closePath();
+    ctx.fill();
     // Legs
-    ctx.fillRect(size * 0.4, size * 0.55, 3, size * 0.25);
-    ctx.fillRect(size * 0.57, size * 0.55, 3, size * 0.25);
-    // Sword
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(size * 0.4, size * 0.56, 4, size * 0.22);
+    ctx.fillRect(size * 0.56, size * 0.56, 4, size * 0.22);
+    // Daggers
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(size * 0.22, size * 0.35, 2, size * 0.2);
+    ctx.fillRect(size * 0.76, size * 0.35, 2, size * 0.2);
     ctx.fillStyle = '#A0AEC0';
-    ctx.fillRect(size * 0.72, size * 0.2, 2, size * 0.3);
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(size * 0.69, size * 0.48, 8, 3);
+    ctx.fillRect(size * 0.2, size * 0.33, 6, 2);
+    ctx.fillRect(size * 0.74, size * 0.33, 6, 2);
+    // Shadow aura
+    ctx.fillStyle = 'rgba(100, 0, 100, 0.2)';
+    ctx.beginPath();
+    ctx.arc(size / 2, size * 0.45, size * 0.35, 0, Math.PI * 2);
+    ctx.fill();
   } else if (n.includes('dark') || n.includes('knight')) {
     // Armored dark figure
     ctx.fillStyle = '#1a1a2e';
@@ -455,24 +538,37 @@ function createEnemySprite(name: string, isBoss: boolean): HTMLCanvasElement {
 
 // --- Positions for party and enemies ---
 
+// Ground line Y — must match the background render
+const GROUND_Y = CANVAS_H * 0.72;
+
 function getPartyPositions(count: number): { x: number; y: number }[] {
-  const baseX = 100;
-  const baseY = 260;
-  const spacing = 80;
+  // Party sprites are 32px drawn at 2x (64px). They render from drawY-16 to drawY+48.
+  // Align feet (drawY+48) with the ground line. Stagger upward for depth.
+  const feetOffset = 48;
+  const bottomDrawY = GROUND_Y - feetOffset;
+  const spacing = 28;
   const positions: { x: number; y: number }[] = [];
   for (let i = 0; i < count; i++) {
-    positions.push({ x: baseX + (i % 2) * 40, y: baseY + i * spacing - (count * spacing) / 2 });
+    positions.push({
+      x: 100 + (i % 2) * 40,
+      y: bottomDrawY - (count - 1 - i) * spacing,
+    });
   }
   return positions;
 }
 
 function getEnemyPositions(count: number): { x: number; y: number }[] {
-  const baseX = 750;
-  const baseY = 260;
-  const spacing = 80;
+  // Regular enemy sprites are 32px at 2x (64px), drawn from drawY to drawY+64.
+  // Boss sprites are 64px at 2x (128px) — handled by an offset in the render loop.
+  const feetOffset = 64;
+  const bottomDrawY = GROUND_Y - feetOffset;
+  const spacing = 28;
   const positions: { x: number; y: number }[] = [];
   for (let i = 0; i < count; i++) {
-    positions.push({ x: baseX - (i % 2) * 40, y: baseY + i * spacing - (count * spacing) / 2 });
+    positions.push({
+      x: 750 - (i % 2) * 40,
+      y: bottomDrawY - (count - 1 - i) * spacing,
+    });
   }
   return positions;
 }
@@ -505,6 +601,7 @@ export default function SideBattlerRenderer() {
   const autoTickingRef = useRef(false);
 
   const [selectedTarget, setSelectedTarget] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
 
   const data = (state?.data as unknown as SideBattlerData) ?? undefined;
 
@@ -545,7 +642,7 @@ export default function SideBattlerRenderer() {
         cache[key] = createEnemySprite(enemy.name, !!enemy.isBoss);
       }
     }
-  }, [data?.enemies?.length]);
+  }, [data?.currentWave, data?.enemies?.length]);
 
   // Detect HP changes and trigger animations + damage numbers
   useEffect(() => {
@@ -596,9 +693,12 @@ export default function SideBattlerRenderer() {
     prevPartyHpRef.current = data.party.map((p) => p.stats.hp);
   }, [data?.enemies, data?.party]);
 
-  // Auto-scroll combat log
+  // Auto-scroll combat log (scroll within the container, not the page)
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = logEndRef.current?.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [data?.combatLog?.length]);
 
   // Auto-tick for enemy turns
@@ -681,22 +781,21 @@ export default function SideBattlerRenderer() {
     ctx.fill();
 
     // Layer 3: Ground / arena floor
-    const groundY = CANVAS_H * 0.72;
     ctx.fillStyle = '#3a3a5a';
-    ctx.fillRect(0, groundY, CANVAS_W, CANVAS_H - groundY);
+    ctx.fillRect(0, GROUND_Y, CANVAS_W, CANVAS_H - GROUND_Y);
     // Stone tile pattern
     ctx.strokeStyle = '#4a4a6a';
     ctx.lineWidth = 1;
     for (let x = 0; x < CANVAS_W; x += 48) {
-      for (let y = groundY; y < CANVAS_H; y += 24) {
-        const xOff = (Math.floor((y - groundY) / 24) % 2) * 24;
+      for (let y = GROUND_Y; y < CANVAS_H; y += 24) {
+        const xOff = (Math.floor((y - GROUND_Y) / 24) % 2) * 24;
         ctx.strokeRect(x + xOff, y, 48, 24);
       }
     }
 
     // Ground edge highlight
     ctx.fillStyle = '#5a5a7a';
-    ctx.fillRect(0, groundY, CANVAS_W, 3);
+    ctx.fillRect(0, GROUND_Y, CANVAS_W, 3);
 
     // --- Draw party characters ---
     const partyPositions = getPartyPositions(data.party.length);
@@ -884,7 +983,8 @@ export default function SideBattlerRenderer() {
       animRef.current[animKey] = anim;
 
       let drawX = pos.x;
-      let drawY = pos.y;
+      // Boss sprites are 128px tall vs 64px regular — shift up so feet stay on ground
+      let drawY = enemy.isBoss ? pos.y - (BOSS_SIZE * 2 - SPRITE_SIZE * 2) : pos.y;
       let opacity = 1;
 
       // Idle bob
@@ -1158,6 +1258,19 @@ export default function SideBattlerRenderer() {
   const currentChar =
     isPlayerTurn && data ? data.party[data.turnOrder[data.currentTurnIndex].index] : null;
 
+  const helpButton = useMemo(
+    () => (
+      <button
+        type="button"
+        onClick={() => setShowHelp(true)}
+        className="btn-secondary flex items-center gap-2 text-sm"
+      >
+        ? How to Play
+      </button>
+    ),
+    [],
+  );
+
   if (!data) {
     return (
       <GameShell
@@ -1167,6 +1280,7 @@ export default function SideBattlerRenderer() {
         isGameOver={isGameOver}
         winner={winner}
         onRestart={restart}
+        headerExtra={helpButton}
       >
         <div className="flex items-center justify-center min-h-[400px] text-white/50">
           Loading...
@@ -1183,7 +1297,109 @@ export default function SideBattlerRenderer() {
       isGameOver={isGameOver}
       winner={winner}
       onRestart={restart}
+      headerExtra={helpButton}
     >
+      {/* How to Play modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-display font-bold">How to Play</h2>
+              <button
+                type="button"
+                onClick={() => setShowHelp(false)}
+                className="text-white/50 hover:text-white text-2xl leading-none"
+              >
+                x
+              </button>
+            </div>
+            <div className="space-y-4 text-sm text-white/70">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Goal</h3>
+                <p>Defeat all 5 waves of enemies to win. The final wave features a boss.</p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Turns</h3>
+                <p>
+                  Combat is turn-based. Turn order is determined by each character&apos;s Speed stat
+                  (fastest goes first). A cyan arrow marks your active character; orange marks the
+                  enemy&apos;s turn (auto-played).
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Actions</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>
+                    <span className="text-red-300 font-semibold">Attack</span> — Deal physical
+                    damage to the selected target.
+                  </li>
+                  <li>
+                    <span className="text-blue-300 font-semibold">Defend</span> — Take 50% less
+                    damage until your next turn and restore 3 MP.
+                  </li>
+                  <li>
+                    <span className="text-purple-300 font-semibold">Skills</span> — Spend MP to use
+                    powerful abilities (damage, heal, buff, AoE).
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Targeting</h3>
+                <p>
+                  Click an enemy in the Target panel (right side) to select who you want to hit
+                  before using Attack or a single-target skill.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Your Party</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>
+                    <span className="text-white font-semibold">Warrior</span> (front row) — Tank.
+                    High HP/DEF. Skills: Cleave, Shield Wall, Taunt.
+                  </li>
+                  <li>
+                    <span className="text-white font-semibold">Mage</span> (back row) — Magic DPS.
+                    Skills: Fireball, Blizzard (AoE), Mana Shield.
+                  </li>
+                  <li>
+                    <span className="text-white font-semibold">Archer</span> (back row) — Sniper.
+                    Skills: Snipe (ignores DEF), Rain of Arrows (AoE), Poison Shot.
+                  </li>
+                  <li>
+                    <span className="text-white font-semibold">Healer</span> (back row) — Support.
+                    Skills: Heal, Purify (removes debuffs), Holy Light (damage + self-heal).
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Formation</h3>
+                <p>
+                  Front row characters deal full melee damage but take full hits. Back row takes 30%
+                  less damage but deals 15% less with melee attacks. Magic ignores formation.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-1">Tips</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Use Defend when low on MP — it restores 3 MP per use.</li>
+                  <li>Focus down one enemy at a time to reduce incoming damage.</li>
+                  <li>Taunt with Warrior to protect wounded allies.</li>
+                  <li>Save Healer MP for emergencies — basic attacks are free.</li>
+                  <li>Blizzard and Rain of Arrows hit ALL enemies — great for clearing waves.</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHelp(false)}
+              className="mt-6 w-full py-2.5 rounded-lg font-display font-bold bg-molt-500 hover:bg-molt-400 text-white transition-all"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-4">
         {/* Canvas */}
         <canvas

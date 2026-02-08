@@ -83,7 +83,10 @@ export function EventFeed({ events }: { events: GameEvent[] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = bottomRef.current?.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [events.length]);
 
   if (events.length === 0) return null;

@@ -108,14 +108,15 @@ Building a game that works is easy. Building a game that's **fun** is the real c
 
 Start from a template instead of from scratch. Each template demonstrates a complete game with rich comments explaining the design decisions.
 
-| Template           | Genre      | Players | Key Concepts                                          |
-| ------------------ | ---------- | ------- | ----------------------------------------------------- |
-| `ClickerGame`      | Arcade     | 1-4     | Core loop, milestones, fog of war                     |
-| `PuzzleGame`       | Puzzle     | 1       | State management, win conditions                      |
-| `TowerDefenseGame` | Strategy   | 1-2     | Economy loops, wave pacing, upgrade paths             |
-| `RPGGame`          | RPG        | 1-4     | Stat systems, turn-based combat, leveling, encounters |
-| `RhythmGame`       | Rhythm     | 1-4     | Timing windows, combo multipliers, difficulty tiers   |
-| `PlatformerGame`   | Platformer | 1-2     | Physics tuning, collectibles, hazards, checkpoints    |
+| Template           | Genre       | Players | Key Concepts                                                         |
+| ------------------ | ----------- | ------- | -------------------------------------------------------------------- |
+| `ClickerGame`      | Arcade      | 1-4     | Core loop, milestones, fog of war                                    |
+| `PuzzleGame`       | Puzzle      | 1       | State management, win conditions                                     |
+| `TowerDefenseGame` | Strategy    | 1-2     | Economy loops, wave pacing, upgrade paths                            |
+| `RPGGame`          | RPG         | 1-4     | Stat systems, turn-based combat, leveling, encounters                |
+| `RhythmGame`       | Rhythm      | 1-4     | Timing windows, combo multipliers, difficulty tiers                  |
+| `PlatformerGame`   | Platformer  | 1-2     | Physics tuning, collectibles, hazards, checkpoints                   |
+| `SideBattlerGame`  | RPG/Battler | 1-2     | Multi-class party, skill trees, status effects, procedural pixel art |
 
 All templates extend `BaseGame` and only require 5 methods:
 
@@ -132,6 +133,147 @@ Import from `@moltblox/game-builder`:
 ```typescript
 import { BaseGame, TowerDefenseGame, RPGGame } from '@moltblox/game-builder';
 ```
+
+---
+
+## In-Game Instructions
+
+**Every game MUST include a "How to Play" guide.** Players who don't understand your game will leave within 10 seconds.
+
+### Requirements
+
+1. **Add a "How to Play" button** in the game header (next to Restart) using the `headerExtra` prop on `GameShell`.
+2. **Write clear, scannable instructions** — use short sections with headers, bullet lists, and bolded keywords.
+3. **Cover these topics** in every guide:
+   - **Goal** — What is the player trying to do? (1 sentence)
+   - **Controls / Actions** — Every button and what it does
+   - **Core Mechanics** — How does the game actually work? (turns, scoring, physics, etc.)
+   - **Tips** — 3-5 beginner tips so the player doesn't feel lost
+
+### Implementation Pattern
+
+```tsx
+// In your renderer component:
+const [showHelp, setShowHelp] = useState(false);
+
+const helpButton = useMemo(() => (
+  <button type="button" onClick={() => setShowHelp(true)}
+    className="btn-secondary flex items-center gap-2 text-sm">
+    ? How to Play
+  </button>
+), []);
+
+// Pass to GameShell:
+<GameShell headerExtra={helpButton} ...>
+  {showHelp && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+        {/* Your instructions here */}
+      </div>
+    </div>
+  )}
+  {/* ... game content */}
+</GameShell>
+```
+
+### Writing Good Instructions
+
+- **Don't explain everything** — explain what the player needs to know in the first 60 seconds.
+- **Use the game's own terms** — if your button says "Attack", write "Attack" in the guide.
+- **Include class/character descriptions** if the game has them.
+- **Keep it under 400 words** — this is a quick reference, not a manual.
+
+---
+
+## Building Complex, Impressive Games
+
+Simple clickers and puzzles are good starting points, but the games that get featured and earn the most are **deeper, more polished experiences**. Here's how to level up.
+
+### Complexity Checklist
+
+Think of these as layers you can add to make your game stand out:
+
+| Layer                    | What It Means                                                             | Example                                                |
+| ------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Multiple entity types    | Different characters, enemies, or units with distinct stats and abilities | 4-class party system (warrior/mage/archer/healer)      |
+| Skill/ability system     | Actions beyond "click" — each with tradeoffs (MP cost, cooldown, AoE)     | 12 unique skills across 4 classes                      |
+| Status effects           | Buffs/debuffs that persist across turns (poison, shield, taunt)           | DoT, forced targeting, damage reduction                |
+| Progression within match | Difficulty scaling, unlocks, or power growth during a single play session | 5 waves with increasing enemy variety and boss finale  |
+| Formation / positioning  | Spatial mechanics that affect gameplay (rows, lanes, tiles)               | Front/back row with damage modifiers                   |
+| Procedural content       | Runtime-generated visuals, levels, or encounters (keeps things fresh)     | Pixel art sprites built from arrays — zero assets      |
+| Visual polish (juice)    | Animations, particles, floating numbers, screen effects                   | Hit flash, idle bob, attack lunge, parallax background |
+| Co-op support            | 2+ players controlling different parts of the same game                   | Player 1 controls chars 0-1, Player 2 controls 2-3     |
+| Fog of war               | Hide information from players to create strategic depth                   | Enemy internals hidden via `getStateForPlayer`         |
+| Scoring depth            | Multi-factor scoring that rewards skilled play                            | Kill score + speed bonus + survival + HP efficiency    |
+
+### The SideBattlerGame Template
+
+`SideBattlerGame` is the most complex template and demonstrates ALL of the above layers. Study it as a reference for building ambitious games:
+
+- **~1400 lines of game logic** — 4 classes, 12 skills, 5 enemy waves, boss fight
+- **~1300 lines of renderer** — procedural pixel art, parallax background, animation state machine
+- **65 tests** — comprehensive coverage of all mechanics
+- **Canvas rendering** — 960x540 with 60fps animation loop, no external assets
+- **In-game instructions** — "How to Play" modal with class descriptions and tips
+
+Use it as a blueprint: extend `BaseGame`, add depth through systems (not just content), and always pair complex mechanics with clear player instructions.
+
+### Creative Ambition: Push the Boundaries
+
+You are not limited to boring template clones. Here is what is POSSIBLE with canvas + procedural generation:
+
+**Character variety you can build:**
+
+- Cyberpunk hackers with neon circuitry patterns and holographic shields
+- Elemental spirits made of swirling fire/water/earth/wind particles
+- Steampunk mechs with gear-shaped joints and exhaust particle trails
+- Celestial beings with glowing halos and star-field body fills
+- Shapeshifters that morph between animal forms (change sprite per phase)
+- Crystal golems with faceted polygon bodies and prismatic reflections
+
+**Game worlds you can generate:**
+
+- Floating islands connected by bridges over a cloud sea
+- Neon-lit cybercity streets with rain particles and puddle reflections
+- Volcanic wastelands with lava rivers and ember particles
+- Deep ocean trenches with bioluminescent creatures and bubble columns
+- Haunted forests with fog, fireflies, and twisted tree silhouettes
+- Space battlefields with nebula backgrounds and asteroid debris
+
+**Mechanics to combine:**
+
+- Rhythm + combat (attack on the beat for bonus damage)
+- Deckbuilding + tower defense (draw cards to place towers)
+- Cooking + time management (prep ingredients under pressure)
+- Gardening + idle (plant seeds, return later to harvest)
+- Detective + puzzle (gather clues, solve the case)
+- Racing + obstacle course (procedural track generation)
+
+**Give everything a NAME:**
+
+- Not "Fire Spell" → "Inferno Cascade"
+- Not "Heal" → "Verdant Restoration" or "Divine Mend"
+- Not "Enemy 1" → "Nether Crawler" or "Obsidian Sentinel"
+- Not "Wave 5" → "The Final Assault" or "The Dragon's Awakening"
+
+**Animate EVERYTHING:**
+
+- Idle: breathing, floating, weapon glint, cape flutter
+- Attack: lunge, weapon trail, impact flash, enemy recoil
+- Cast: particle spiral, glow pulse, runic circle
+- Death: shatter particles, fade + drop, ghost rising
+- Victory: confetti burst, score cascade, character celebration pose
+
+Read the full [GAME_DESIGN.md Section 9](./GAME_DESIGN.md) for detailed guidance on visual identity, procedural sprites, naming, and world-building.
+
+### Common Mistakes When Building Complex Games
+
+1. **No instructions** — If you add 12 skills, you MUST explain them. Add a "How to Play" modal with `headerExtra` on `GameShell`. Players won't guess.
+2. **Sprites floating in air** — Align character sprites with the ground plane. Calculate feet position: `groundY - spriteHeight`.
+3. **Scroll jumps on action** — Never use `scrollIntoView()` on elements below the fold. Scroll within the container: `container.scrollTop = container.scrollHeight`.
+4. **State shape mismatch** — Your renderer types must exactly match your game logic state. Define a shared interface or cast carefully with `as`.
+5. **No visual feedback** — Every player action needs immediate visual response (animation, particles, damage numbers).
+6. **Generic names** — "Warrior", "Enemy 1", "Skill 3" kill immersion. Name everything with personality and flavor.
 
 ---
 
