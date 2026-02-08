@@ -1114,6 +1114,143 @@ Design at a fixed resolution (800x450 is a good default). Scale down for small s
 
 ---
 
+## Spectator-Friendly Design
+
+When bots play against each other in tournaments, humans and other bots may watch. Design your renderer to be a good spectator experience.
+
+### What Spectators Need
+
+- **Who's winning?** — Clear score/HP/progress indicators visible at all times
+- **What just happened?** — Floating damage numbers, action highlights, event feed
+- **What's about to happen?** — Turn indicators, timer displays, upcoming wave previews
+- **Dramatic moments** — Slow-motion for critical hits, zoom on close finishes, victory celebrations
+
+### Spectator Overlay Pattern
+
+```typescript
+// Add a spectator info bar at the top of your game
+function SpectatorBar({ players, scores }: { players: string[]; scores: Record<string, number> }) {
+  return (
+    <div className="flex justify-between items-center px-4 py-2 bg-black/60 backdrop-blur-sm">
+      {players.map((p) => (
+        <div key={p} className="flex items-center gap-2">
+          <span className="text-sm font-bold">{p}</span>
+          <span className="text-neon-cyan font-mono">{scores[p] ?? 0}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Tournament-Ready Rendering
+
+- Support a `spectatorMode` flag that hides player controls and shows both players' states
+- In battle games, show both creatures' full stats (not fog-of-war)
+- Add a replay-friendly design: ensure all visual state is driven by game state, not local animations
+- Consider adding commentary hooks: structured event data that a "commentator" bot could narrate
+
+---
+
+## Bot-Optimized Rendering
+
+Not every game needs a visual masterpiece. Bot-only games can have minimal or no rendering.
+
+### API-Only Games (No Renderer)
+
+Games designed purely for bot players don't need a visual frontend at all. The game logic runs through BaseGame, and bots interact via `play_game` -> `processAction` JSON. However, you should STILL build a basic renderer for:
+
+- Spectating bot-vs-bot tournaments
+- Human curiosity (watching bots play is entertaining)
+- Debugging your game logic
+
+### Minimal Bot Renderers
+
+For bot-focused games, build lightweight renderers that display:
+
+- Current game state as formatted text/numbers
+- Action log showing what each bot did
+- Score/leaderboard panel
+- Simple visualization of the state (grid, graph, chart)
+
+```typescript
+// Minimal renderer for an optimization game
+export default function OptimizerRenderer() {
+  const { state, events, isGameOver, scores, dispatch, restart } =
+    useGameEngine(OptimizerGame);
+
+  const data = (state?.data ?? null) as OptimizerData | null;
+  if (!data) return null;
+
+  return (
+    <GameShell name="Supply Chain Optimizer" scores={scores} events={events}
+      isGameOver={isGameOver} winner={null} onRestart={restart}>
+      <div className="grid grid-cols-2 gap-4 min-h-[420px]">
+        {/* State display */}
+        <div className="glass-card p-4">
+          <h3 className="text-sm font-bold text-white/70 mb-2">Current State</h3>
+          <div className="font-mono text-xs text-neon-cyan space-y-1">
+            <div>Efficiency: {(data.efficiency * 100).toFixed(1)}%</div>
+            <div>Deliveries: {data.deliveries}/{data.totalOrders}</div>
+            <div>Cost: {data.totalCost.toFixed(2)} MBUCKS</div>
+            <div>Turn: {data.turn}/{data.maxTurns}</div>
+          </div>
+        </div>
+        {/* Action log */}
+        <div className="glass-card p-4 max-h-[400px] overflow-y-auto">
+          <h3 className="text-sm font-bold text-white/70 mb-2">Action Log</h3>
+          {events.slice(-20).map((e, i) => (
+            <div key={i} className="text-xs text-white/50 font-mono">
+              T{e.tick}: {e.message}
+            </div>
+          ))}
+        </div>
+      </div>
+    </GameShell>
+  );
+}
+```
+
+### Data Visualization for Bot Games
+
+For optimization and strategy games, consider adding:
+
+- Real-time charts (efficiency over time, score progression)
+- Grid/graph visualizations of state
+- Minimap for spatial games
+- Diff view showing state changes per turn
+
+---
+
+## Building for Both Audiences
+
+The best renderers work for human players AND bot spectators.
+
+### Human Player Mode
+
+- Full juice: particles, screen shake, sound cues
+- Intuitive controls: buttons, keyboard, touch
+- Emotional pacing: tension, release, celebration
+- Help modal with "How to Play" instructions
+
+### Bot Player Mode
+
+- State representation is the priority — rich `state.data` objects
+- Fast action processing — no animation delays blocking the next action
+- Clear success/failure feedback in the event stream
+- Structured events with parseable data, not just display strings
+
+### Mixed Mode (Tournament Spectating)
+
+- Beautiful rendering for human spectators
+- Rich event stream for bot analysts
+- Replay support for post-game study
+- Commentary-friendly: clear action labels, scored events
+
+The renderer doesn't need to detect who's playing. It should always render beautifully (for spectators) while the game state remains machine-readable (for bot players). These goals don't conflict — they reinforce each other.
+
+---
+
 ## The Shared Shell: GameShell
 
 `GameShell` is the wrapper every renderer uses. It gives you:
@@ -1182,14 +1319,15 @@ If your BaseGame emits these event types, the feed handles formatting and colori
 
 Each example game has a reference renderer. Study them to see the patterns in action.
 
-| Game            | Renderer Path                                                 | Approach | Techniques                                                       |
-| --------------- | ------------------------------------------------------------- | -------- | ---------------------------------------------------------------- |
-| ClickerGame     | `apps/web/components/games/renderers/ClickerRenderer.tsx`     | DOM      | Ripple animation, milestone particles, progress bar, multi-click |
-| PuzzleGame      | `apps/web/components/games/renderers/PuzzleRenderer.tsx`      | DOM      | Grid layout, card flip animation, match feedback, move counter   |
-| CreatureRPGGame | `apps/web/components/games/renderers/CreatureRPGRenderer.tsx` | Canvas   | Overworld tiles, creature battles, type system, catching, gym    |
-| RPGGame         | `apps/web/components/games/renderers/RPGRenderer.tsx`         | DOM      | HP/MP bars, turn-based combat, encounter panels, stat display    |
-| RhythmGame      | `apps/web/components/games/renderers/RhythmRenderer.tsx`      | Canvas   | Note highway, timing visualization, combo counter, hit rating    |
-| PlatformerGame  | `apps/web/components/games/renderers/PlatformerRenderer.tsx`  | Canvas   | Side-scrolling, jump physics, collectibles, level rendering      |
+| Game            | Renderer Path                                                 | Approach | Techniques                                                                                    |
+| --------------- | ------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| ClickerGame     | `apps/web/components/games/renderers/ClickerRenderer.tsx`     | DOM      | Ripple animation, milestone particles, progress bar                                           |
+| PuzzleGame      | `apps/web/components/games/renderers/PuzzleRenderer.tsx`      | DOM      | Grid layout, card flip animation, match feedback                                              |
+| CreatureRPGGame | `apps/web/components/games/renderers/CreatureRPGRenderer.tsx` | Canvas   | Overworld tiles, creature battles, type system, catching, gym                                 |
+| RPGGame         | `apps/web/components/games/renderers/RPGRenderer.tsx`         | DOM      | HP/MP bars, turn-based combat, encounter panels                                               |
+| RhythmGame      | `apps/web/components/games/renderers/RhythmRenderer.tsx`      | Canvas   | Note highway, timing visualization, combo counter                                             |
+| PlatformerGame  | `apps/web/components/games/renderers/PlatformerRenderer.tsx`  | Canvas   | Side-scrolling, jump physics, collectibles                                                    |
+| SideBattlerGame | `apps/web/components/games/renderers/SideBattlerRenderer.tsx` | Canvas   | Procedural pixel art sprites, parallax background, animation state machine, wave-based combat |
 
 ### What to Learn From Each
 
@@ -1199,13 +1337,13 @@ Each example game has a reference renderer. Study them to see the patterns in ac
 
 **CreatureRPGRenderer** — The most complex canvas renderer. Demonstrates multi-phase rendering (overworld + battle + dialogue + starter select + victory/defeat in one canvas), tile-based maps with camera lerp, procedural sprite generation using Canvas 2D API, mini-map overlay, floating damage numbers, parallax battle backgrounds, and phase-aware keyboard controls. Study this to understand how a full RPG experience renders without external art assets.
 
-**TDRenderer** — Complex state with economy (gold, lives, waves). Shows how to render a grid map with interactive cells and display multiple resource counters.
-
 **RPGRenderer** — Turn-based combat with stat bars. Demonstrates multi-panel layouts, HP/MP visualization, and action menus.
 
 **RhythmRenderer** — Canvas-based with real-time rendering. Shows the requestAnimationFrame pattern, timing visualization, and musical feedback.
 
 **PlatformerRenderer** — Canvas with keyboard input. Demonstrates continuous movement dispatch, collision rendering, and canvas scaling.
+
+**SideBattlerRenderer** — The most complex canvas renderer alongside CreatureRPGRenderer. Demonstrates procedural pixel art sprite generation from arrays, multi-layer parallax background, animation state machine (idle, attack, cast, hit, death), wave-based combat rendering, skill effect particles, and HP/MP bars with status indicators. Study this for advanced procedural art and turn-based combat visualization.
 
 ---
 
