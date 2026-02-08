@@ -10,7 +10,7 @@ import { validate } from '../middleware/validate.js';
 import { createItemSchema, purchaseItemSchema, browseItemsSchema } from '../schemas/marketplace.js';
 import { sanitizeObject } from '../lib/sanitize.js';
 import prisma from '../lib/prisma.js';
-import { parseBigInt, parseBigIntNonNegative, ParseBigIntError } from '../lib/parseBigInt.js';
+import { parseBigIntNonNegative, ParseBigIntError } from '../lib/parseBigInt.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import type { ItemCategory, ItemRarity } from '../generated/prisma/enums.js';
 
@@ -127,6 +127,129 @@ router.get(
 );
 
 /**
+ * GET /marketplace/items/featured - Rotating featured item
+ * Cycles through 5 strategies every 11 minutes (55-minute full cycle):
+ *   0 = Top Seller (most sold)
+ *   1 = Highest Priced
+ *   2 = Hot Right Now (most recent purchase)
+ *   3 = Rarest Find (legendary with fewest sales)
+ *   4 = Fresh Drop (newest listing)
+ */
+router.get('/items/featured', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const ROTATION_MINUTES = 11;
+    const STRATEGY_COUNT = 5;
+    const slot = Math.floor(Date.now() / (ROTATION_MINUTES * 60 * 1000)) % STRATEGY_COUNT;
+
+    const strategies: Array<{
+      label: string;
+      description: string;
+      query: () => Promise<any>;
+    }> = [
+      {
+        label: 'Top Seller',
+        description: 'Most units sold on the platform',
+        query: () =>
+          prisma.item.findFirst({
+            where: { active: true, soldCount: { gt: 0 } },
+            orderBy: { soldCount: 'desc' },
+            include: {
+              game: { select: { id: true, name: true, slug: true, thumbnailUrl: true } },
+              creator: { select: { id: true, displayName: true, walletAddress: true } },
+            },
+          }),
+      },
+      {
+        label: 'Highest Priced',
+        description: 'The most valuable asset listed',
+        query: () =>
+          prisma.item.findFirst({
+            where: { active: true },
+            orderBy: { price: 'desc' },
+            include: {
+              game: { select: { id: true, name: true, slug: true, thumbnailUrl: true } },
+              creator: { select: { id: true, displayName: true, walletAddress: true } },
+            },
+          }),
+      },
+      {
+        label: 'Hot Right Now',
+        description: 'Most recently purchased item',
+        query: async () => {
+          const recentPurchase = await prisma.purchase.findFirst({
+            orderBy: { createdAt: 'desc' },
+            select: { itemId: true },
+          });
+          if (!recentPurchase) return null;
+          return prisma.item.findUnique({
+            where: { id: recentPurchase.itemId },
+            include: {
+              game: { select: { id: true, name: true, slug: true, thumbnailUrl: true } },
+              creator: { select: { id: true, displayName: true, walletAddress: true } },
+            },
+          });
+        },
+      },
+      {
+        label: 'Rarest Find',
+        description: 'A legendary item with limited sales',
+        query: () =>
+          prisma.item.findFirst({
+            where: { active: true, rarity: 'legendary' },
+            orderBy: { soldCount: 'asc' },
+            include: {
+              game: { select: { id: true, name: true, slug: true, thumbnailUrl: true } },
+              creator: { select: { id: true, displayName: true, walletAddress: true } },
+            },
+          }),
+      },
+      {
+        label: 'Fresh Drop',
+        description: 'The newest item on the marketplace',
+        query: () =>
+          prisma.item.findFirst({
+            where: { active: true },
+            orderBy: { createdAt: 'desc' },
+            include: {
+              game: { select: { id: true, name: true, slug: true, thumbnailUrl: true } },
+              creator: { select: { id: true, displayName: true, walletAddress: true } },
+            },
+          }),
+      },
+    ];
+
+    const strategy = strategies[slot];
+    let item = await strategy.query();
+
+    // Fallback: if the chosen strategy returns nothing, try each strategy until one works
+    if (!item) {
+      for (const fallback of strategies) {
+        item = await fallback.query();
+        if (item) break;
+      }
+    }
+
+    if (!item) {
+      res.json({ item: null, strategy: strategy.label, description: strategy.description });
+      return;
+    }
+
+    // Calculate next rotation time
+    const currentSlotStart = Math.floor(Date.now() / (ROTATION_MINUTES * 60 * 1000));
+    const nextRotation = new Date((currentSlotStart + 1) * ROTATION_MINUTES * 60 * 1000);
+
+    res.json({
+      item: { ...item, price: item.price.toString() },
+      strategy: strategy.label,
+      description: strategy.description,
+      nextRotation: nextRotation.toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /marketplace/items/:id - Get item details
  */
 router.get('/items/:id', async (req: Request, res: Response, next: NextFunction) => {
@@ -202,14 +325,6 @@ router.post(
         'description',
       ]);
 
-      if (!gameId || !name || !description || !price) {
-        res.status(400).json({
-          error: 'Bad Request',
-          message: 'Missing required fields: gameId, name, description, price',
-        });
-        return;
-      }
-
       // Verify the user owns the game
       const game = await prisma.game.findUnique({
         where: { id: gameId },
@@ -234,7 +349,7 @@ router.post(
 
       let parsedPrice: bigint;
       try {
-        parsedPrice = parseBigInt(price, 'price');
+        parsedPrice = parseBigIntNonNegative(price, 'price');
       } catch (err) {
         if (err instanceof ParseBigIntError) {
           res.status(400).json({ error: 'Bad Request', message: err.message });

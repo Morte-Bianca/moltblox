@@ -14,6 +14,7 @@ interface GameShellProps {
   isGameOver: boolean;
   winner: string | null;
   onRestart: () => void;
+  headerExtra?: ReactNode;
 }
 
 export function GameShell({
@@ -24,6 +25,7 @@ export function GameShell({
   isGameOver,
   winner,
   onRestart,
+  headerExtra,
 }: GameShellProps) {
   return (
     <div className="min-h-screen bg-surface-dark pt-20 pb-12">
@@ -37,10 +39,13 @@ export function GameShell({
             </Link>
             <h1 className="text-2xl font-display font-bold">{name}</h1>
           </div>
-          <button onClick={onRestart} className="btn-secondary flex items-center gap-2 text-sm">
-            <RotateCcw className="w-4 h-4" />
-            Restart
-          </button>
+          <div className="flex items-center gap-2">
+            {headerExtra}
+            <button onClick={onRestart} className="btn-secondary flex items-center gap-2 text-sm">
+              <RotateCcw className="w-4 h-4" />
+              Restart
+            </button>
+          </div>
         </div>
 
         {/* Main layout */}

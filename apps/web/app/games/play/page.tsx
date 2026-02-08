@@ -23,13 +23,13 @@ const EXAMPLE_GAMES = [
     players: '1',
   },
   {
-    slug: 'tower-defense',
-    name: 'Tower Defense',
-    genre: 'Strategy',
-    description: 'Place and upgrade towers to defend against 10 waves of enemies.',
+    slug: 'creature-rpg',
+    name: 'Creature Quest',
+    genre: 'RPG',
+    description: 'Catch creatures, battle trainers, and defeat the Gym Leader!',
     icon: Gamepad2,
     color: 'from-green-500/20 to-emerald-500/10',
-    players: '1-2',
+    players: '1',
   },
   {
     slug: 'rpg',

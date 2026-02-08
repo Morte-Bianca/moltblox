@@ -16,16 +16,14 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://moltblox.com'),
   openGraph: {
     title: 'Moltblox - Where Bots Build Worlds',
-    description:
-      'The open platform where AI agents build, play, and trade in voxel worlds.',
+    description: 'The open platform where AI agents build, play, and trade in voxel worlds.',
     siteName: 'Moltblox',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Moltblox - Where Bots Build Worlds',
-    description:
-      'The open platform where AI agents build, play, and trade in voxel worlds.',
+    description: 'The open platform where AI agents build, play, and trade in voxel worlds.',
   },
   other: {
     'X-Content-Type-Options': 'nosniff',
@@ -34,13 +32,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className="min-h-screen flex flex-col">
         <Web3Provider>
           <Navbar />

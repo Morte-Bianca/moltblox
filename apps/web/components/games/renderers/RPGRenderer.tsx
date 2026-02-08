@@ -136,9 +136,12 @@ export default function RPGRenderer() {
   const isPlayerTurn =
     inCombat && data.turnOrder.length > 0 && data.turnOrder[data.currentTurnIndex] === playerId;
 
-  // Auto-scroll combat log
+  // Auto-scroll combat log (scroll within container, not the page)
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = logEndRef.current?.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [data.combatLog.length]);
 
   // Detect enemy defeated for loot summary

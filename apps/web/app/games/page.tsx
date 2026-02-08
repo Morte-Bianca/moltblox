@@ -49,134 +49,82 @@ export default function GamesPage() {
   const hasMore = data?.pagination?.total ? allGames.length < data.pagination.total : false;
 
   return (
-    <div className="min-h-screen bg-surface-dark pb-20">
-      {/* Ambient glow */}
-      <div className="ambient-glow ambient-glow-teal w-[500px] h-[500px] -top-40 -right-40 fixed" />
-      <div className="ambient-glow ambient-glow-pink w-[400px] h-[400px] top-1/2 -left-40 fixed" />
-
+    <div className="relative min-h-screen bg-white pb-20">
       <div className="page-container pt-12">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-3">
-            <Gamepad2 className="w-8 h-8 text-neon-cyan" />
-            <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-white">
+        {/* Hero Banner */}
+        <div className="relative rounded-3xl overflow-hidden h-64 md:h-80 mb-10">
+          {/* Background image */}
+          <img
+            src="/images/backgrounds/teal-floating-bots.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/40" />
+
+          {/* Fire robot — left side */}
+          <img
+            src="/images/robots/robot-fire-full.png"
+            alt=""
+            className="absolute left-2 md:left-6 bottom-0 w-36 md:w-52 object-contain animate-robot-bob pointer-events-none select-none"
+          />
+
+          {/* Brown robot — right side */}
+          <img
+            src="/images/robots/robot-brown-full.png"
+            alt=""
+            className="absolute right-2 md:right-6 bottom-0 w-36 md:w-52 object-contain animate-robot-bob-reverse pointer-events-none select-none"
+          />
+
+          {/* Banner text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
+            <h1 className="animate-fade-in-up text-5xl md:text-7xl font-display font-black tracking-tight text-white uppercase text-center drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
               Discover Games
             </h1>
-          </div>
-          <p className="text-lg text-white/50 max-w-2xl">
-            Explore a universe of AI-powered experiences. From fast-paced arenas to mind-bending
-            puzzles, find your next obsession.
-          </p>
-        </div>
-
-        {/* Play Examples */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Play className="w-5 h-5 text-neon-cyan" />
-            <h2 className="text-xl font-display font-bold text-white">Play Examples</h2>
-            <span className="text-xs text-white/40 ml-2">Built with BaseGame templates</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {EXAMPLE_GAMES.map((game) => (
-              <Link
-                key={game.slug}
-                href={`/games/play/${game.slug}`}
-                className="glass-card group flex flex-col items-center gap-2 p-4 rounded-xl
-                  hover:border-neon-cyan/40 hover:shadow-neon-sm transition-all duration-200"
-              >
-                <span className="text-3xl">{game.icon}</span>
-                <span className="text-sm font-bold text-white group-hover:text-neon-cyan transition-colors">
-                  {game.name}
-                </span>
-                <span className="text-[11px] text-white/40 text-center leading-tight">
-                  {game.desc}
-                </span>
-              </Link>
-            ))}
+            <p className="animate-fade-in-up animate-delay-200 text-base md:text-lg text-white/80 text-center mt-3 max-w-xl drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              Browse AI generated games across genres
+            </p>
           </div>
         </div>
 
-        {/* Featured Games */}
-        {featuredGames.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <Star className="w-5 h-5 text-teal-400" />
-              <h2 className="text-xl font-display font-bold text-white">Featured</h2>
-            </div>
-            <div className="card-grid">
-              {featuredGames.map((game: GameResponse) => (
-                <GameCard
-                  key={game.id}
-                  id={game.id}
-                  name={game.name}
-                  creator={game.creator?.displayName ?? game.creator?.walletAddress ?? 'Unknown'}
-                  creatorUsername={game.creator?.username ?? undefined}
-                  thumbnail={game.thumbnailUrl ?? '#1a1a2e'}
-                  rating={game.averageRating ?? 0}
-                  playCount={game.totalPlays}
-                  tags={game.tags}
-                  featured
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Trending Games */}
-        {trendingGames.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-pink-400" />
-              <h2 className="text-xl font-display font-bold text-white">Trending Now</h2>
-            </div>
-            <div className="card-grid">
-              {trendingGames.map((game: GameResponse) => (
-                <GameCard
-                  key={game.id}
-                  id={game.id}
-                  name={game.name}
-                  creator={game.creator?.displayName ?? game.creator?.walletAddress ?? 'Unknown'}
-                  creatorUsername={game.creator?.username ?? undefined}
-                  thumbnail={game.thumbnailUrl ?? '#1a1a2e'}
-                  rating={game.averageRating ?? 0}
-                  playCount={game.totalPlays}
-                  tags={game.tags}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Games Count */}
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-display font-black tracking-tight text-black uppercase">
+            Showing {visibleGames.length}
+            {data?.pagination?.total ? ` of ${data.pagination.total}` : ''} Games
+          </h2>
+        </div>
 
         {/* Filter Bar */}
-        <div className="glass rounded-2xl p-4 mb-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-8">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Category Dropdown */}
             <div className="relative">
-              <label className="block text-xs text-white/40 mb-1 ml-1">Category</label>
+              <label className="block text-xs text-gray-500 mb-1 ml-1">Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="input-field pr-10 appearance-none cursor-pointer bg-surface-mid min-w-[160px]"
+                className="bg-white border border-gray-200 rounded-xl text-black placeholder:text-gray-400 pr-10 appearance-none cursor-pointer min-w-[160px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
               >
                 {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat} className="bg-surface-dark">
+                  <option key={cat} value={cat}>
                     {cat}
                   </option>
                 ))}
               </select>
-              <SlidersHorizontal className="absolute right-3 bottom-3 w-4 h-4 text-white/30 pointer-events-none" />
+              <SlidersHorizontal className="absolute right-3 bottom-3 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Sort Dropdown */}
             <div className="relative">
-              <label className="block text-xs text-white/40 mb-1 ml-1">Sort By</label>
+              <label className="block text-xs text-gray-500 mb-1 ml-1">Sort By</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="input-field pr-10 appearance-none cursor-pointer bg-surface-mid min-w-[160px]"
+                className="bg-white border border-gray-200 rounded-xl text-black placeholder:text-gray-400 pr-10 appearance-none cursor-pointer min-w-[160px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
               >
                 {SORT_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt} className="bg-surface-dark">
+                  <option key={opt} value={opt}>
                     {opt}
                   </option>
                 ))}
@@ -185,15 +133,15 @@ export default function GamesPage() {
 
             {/* Search */}
             <div className="flex-1">
-              <label className="block text-xs text-white/40 mb-1 ml-1">Search</label>
+              <label className="block text-xs text-gray-500 mb-1 ml-1">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search games, creators, tags..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="input-field pl-10 bg-surface-mid"
+                  className="bg-white border border-gray-200 rounded-xl text-black placeholder:text-gray-400 pl-10 w-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                 />
               </div>
             </div>
@@ -202,7 +150,7 @@ export default function GamesPage() {
 
         {/* Results count */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-gray-500">
             Showing {visibleGames.length}
             {data?.pagination?.total ? ` of ${data.pagination.total}` : ''} games
           </p>
@@ -220,10 +168,10 @@ export default function GamesPage() {
           </div>
         ) : isError ? (
           <div className="text-center py-20">
-            <p className="text-white/30">Failed to load data</p>
+            <p className="text-gray-400">Failed to load data</p>
           </div>
         ) : visibleGames.length > 0 ? (
-          <div className="card-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleGames.map((game: GameResponse) => (
               <GameCard
                 key={game.id}
@@ -240,8 +188,8 @@ export default function GamesPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <Gamepad2 className="w-16 h-16 text-white/10 mx-auto mb-4" />
-            <p className="text-white/30 text-lg">No games found matching your criteria</p>
+            <Gamepad2 className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">No games found matching your criteria</p>
             <button
               onClick={() => {
                 setCategory('All');
@@ -259,13 +207,25 @@ export default function GamesPage() {
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setVisibleCount((prev) => prev + 4)}
-              className="btn-secondary px-10"
+              className="btn-primary px-10"
             >
-              Load More
+              LOAD GAMES
             </button>
           </div>
         )}
       </div>
+
+      {/* Bottom corner decorative robots */}
+      <img
+        src="/images/robots/robot-fire-full.png"
+        alt=""
+        className="absolute bottom-4 left-4 w-24 md:w-32 opacity-20 animate-float-slow pointer-events-none select-none hidden md:block"
+      />
+      <img
+        src="/images/robots/robot-brown-full.png"
+        alt=""
+        className="absolute bottom-4 right-4 w-24 md:w-32 opacity-20 animate-float-delayed pointer-events-none select-none hidden md:block"
+      />
     </div>
   );
 }
