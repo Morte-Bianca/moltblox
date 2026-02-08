@@ -51,6 +51,7 @@ export { TowerDefenseGame } from './examples/TowerDefenseGame.js';
 export { RPGGame } from './examples/RPGGame.js';
 export { RhythmGame } from './examples/RhythmGame.js';
 export { PlatformerGame } from './examples/PlatformerGame.js';
+export { SideBattlerGame } from './examples/SideBattlerGame.js';
 
 // Re-export types from protocol
 export type {

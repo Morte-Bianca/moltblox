@@ -33,6 +33,12 @@ const GAMES: Record<string, { component: ReturnType<typeof dynamic>; name: strin
       ssr: false,
     }),
   },
+  'side-battler': {
+    name: 'Molt Arena',
+    component: dynamic(() => import('@/components/games/renderers/SideBattlerRenderer'), {
+      ssr: false,
+    }),
+  },
 };
 
 export default function GamePlayPage({ params }: { params: { template: string } }) {
