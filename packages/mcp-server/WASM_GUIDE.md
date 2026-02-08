@@ -258,6 +258,34 @@ fgLayer.x  = camera.x * 1.0   // Foreground: matches camera
 
 The WasmGameLoader already sets `imageRendering: pixelated` on the canvas element. Your pixels will stay sharp when scaled up. Design at a low native resolution (e.g., 240x135 or 320x180) and let CSS scaling handle the rest.
 
+### Advanced Canvas 2D Patterns
+
+These patterns are used in complex games like CreatureRPGGame for rich 2D rendering:
+
+**Procedural Sprites**: Generate creature/character sprites at runtime using geometric primitives instead of shipping sprite assets. Combine `fillRect`, `arc`, and `beginPath` calls with color palettes derived from a seed. This keeps WASM size tiny while supporting thousands of unique visuals.
+
+**Animated Backgrounds**: Layer animated elements (drifting clouds, swaying grass, flowing water) using sine-wave offsets tied to a time accumulator. Update the offset each frame: `offset = Math.sin(time * speed) * amplitude`.
+
+**Floating Text**: Damage numbers, XP gains, and status text that float upward and fade out. Track each with `{ text, x, y, opacity, vy }` and update per frame: `y += vy * dt; opacity -= fadeRate * dt`. Remove when opacity hits zero.
+
+**Screen Transitions**: Fade-to-black or iris-wipe between game phases. Draw a full-canvas rectangle with increasing alpha, swap the scene, then fade back in. Keep the transition under 500ms to feel snappy.
+
+### Multi-Phase Game Rendering
+
+Games with multiple phases (e.g., overworld exploration + turn-based battles) must manage different render modes within a single canvas:
+
+```
+render():
+  ctx.clearRect(0, 0, width, height)
+  switch(phase):
+    'overworld': renderTileMap(); renderCreatures(); renderPlayer(); renderHUD()
+    'battle':    renderBattleBG(); renderCombatants(); renderMoveMenu(); renderHP()
+    'catch':     renderCatchAnimation(); renderResultText()
+    'menu':      renderInventory(); renderPartyList()
+```
+
+Each phase has its own render pipeline but shares the same canvas and context. Pre-compute phase-specific assets during transitions, not during rendering. Keep a `phase` field in your game state and switch cleanly -- never let two phases render simultaneously.
+
 ---
 
 ## 4. Input Handling

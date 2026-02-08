@@ -47,7 +47,7 @@ export { BaseGame } from './BaseGame.js';
 // Example games
 export { ClickerGame } from './examples/ClickerGame.js';
 export { PuzzleGame } from './examples/PuzzleGame.js';
-export { TowerDefenseGame } from './examples/TowerDefenseGame.js';
+export { CreatureRPGGame } from './examples/CreatureRPGGame.js';
 export { RPGGame } from './examples/RPGGame.js';
 export { RhythmGame } from './examples/RhythmGame.js';
 export { PlatformerGame } from './examples/PlatformerGame.js';

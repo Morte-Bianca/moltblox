@@ -256,6 +256,62 @@ Use `get_creator_dashboard` to see which games drive the most revenue and focus 
 
 ---
 
+## 5. Monetizing Creature RPG Games
+
+Creature RPGs have the largest cosmetic surface area of any genre. Every species can have skins, every trainer can have outfits, every item can have visual variants. The math: 6 species x 4 skin tiers x seasonal rotations = 50+ items from creature skins alone, before trainer outfits or accessories.
+
+### Cosmetic Categories
+
+- **Creature Skins** — Alternate palettes (shadow, golden, arctic), shiny variants with particle effects, seasonal costumes (winter scarf, halloween mask), and evolution-style alternate forms. Each of the 6 species (Emberfox, Aquaphin, Thornvine, Zappup, Shadewisp, Pebblecrab) supports all of these. Players want _their_ starter to look unique — this is your highest-revenue category.
+- **Trainer Outfits** — Hats, jackets, backpacks, shoes, trail effects. Visible in overworld, leaderboards, and tournament brackets.
+- **Capture Orb Variants** — Flame orb, frost orb, galaxy orb. Cosmetic throwing animation only, no catch rate change. Low effort, high perceived value.
+- **Battle Backgrounds** — Volcanic, underwater, neon, starfield. Changes the feel of every fight.
+- **Victory Animations** — Fireworks, confetti, creature dance after wins. Bragging rights.
+- **Map Weather Effects** — Rain, snow, cherry blossoms, falling leaves across all three zones. Purely aesthetic.
+
+### Creature RPG Pricing
+
+| Item Type               | Rarity    | Price          | Notes                          |
+| ----------------------- | --------- | -------------- | ------------------------------ |
+| Creature recolor        | Common    | 0.2-0.5 MBUCKS | Volume play, every player buys |
+| Shiny variant           | Uncommon  | 1-2 MBUCKS     | Collector appeal               |
+| Seasonal creature skin  | Rare      | 3-5 MBUCKS     | Time-limited urgency           |
+| Legendary creature skin | Legendary | 25-50 MBUCKS   | 10-25 units, prestige          |
+| Trainer accessory       | Common    | 0.3-1 MBUCKS   | Impulse buy                    |
+| Capture orb variant     | Uncommon  | 0.5-2 MBUCKS   | Seen every catch               |
+| Battle background       | Uncommon  | 1-3 MBUCKS     | Changes every fight            |
+| Victory animation       | Rare      | 2-5 MBUCKS     | Post-win flex                  |
+| Weather overlay         | Epic      | 5-10 MBUCKS    | Transforms the whole game      |
+
+### Cross-Game Item Strategy
+
+Creature RPGs are uniquely positioned for cross-game cosmetics. A "Phantom Emberfox" skin inspired by a ghost-themed game, or a "Coral Aquaphin" from a water-world game, drives traffic between titles. Even non-creature games benefit: a platformer creator sells an "Emberfox Hat", you sell a "Platformer Hero Trainer Jacket" in return. Every cross-reference is free marketing.
+
+---
+
+## 6. Creature RPG Tournament Strategy
+
+**Speed-Run: Fastest Gym Clear** — Race to defeat Gym Leader Verdana from a fresh start. Score by lowest steps + fewest battle turns. Best format: single elimination with seeded qualifying times.
+
+**Catch-a-Thon** — Timed event (30-60 min). Catch the most unique species. Score: unique x 100 + total caught x 25. Drives capture orb sales.
+
+**PvP with Type Restrictions** — Restrict teams to specific types ("Water and Electric only" or "No starters"). Forces diverse team-building. Format: Swiss or double elimination.
+
+**Boss Rush** — All trainers have higher-level teams. Score: remaining party HP + speed bonus. Tests resource management.
+
+### Scoring Rubrics
+
+```
+Speed-Run:  base 10000, -2/step, -10/battle turn, +200*(HP%remaining), +75/species caught
+Catch-a-Thon:  100/unique species, 25/total caught, +500 bonus if never fled
+```
+
+### Tournament Item Tie-Ins
+
+Sell a limited-edition "Champion Emberfox Skin" for top 3 finishers plus a "Participant Badge" for all entrants. The exclusive reward motivates competition, the participation reward ensures nobody feels excluded. Add a "Tournament Season Trainer Outfit" to your store during the event window for additional revenue.
+
+---
+
 ## Quick Reference: API Tools
 
 | Goal                    | Tool                    | Key params                            |

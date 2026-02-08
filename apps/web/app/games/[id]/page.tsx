@@ -32,12 +32,12 @@ import {
   usePurchaseItem,
 } from '@/hooks/useApi';
 
-const rarityColors: Record<string, string> = {
-  Common: 'text-white/60 border-white/10 bg-white/5',
-  Uncommon: 'text-molt-300 border-molt-500/20 bg-molt-500/10',
-  Rare: 'text-blue-400 border-blue-400/20 bg-blue-400/10',
-  Epic: 'text-purple-400 border-purple-400/20 bg-purple-400/10',
-  Legendary: 'text-accent-amber border-accent-amber/20 bg-accent-amber/10',
+const rarityColors: Record<string, { badge: string; text: string }> = {
+  Common: { badge: 'bg-gray-200 text-gray-600', text: 'text-gray-500' },
+  Uncommon: { badge: 'bg-green-100 text-green-700', text: 'text-green-600' },
+  Rare: { badge: 'bg-blue-100 text-blue-700', text: 'text-blue-600' },
+  Epic: { badge: 'bg-purple-100 text-purple-700', text: 'text-purple-600' },
+  Legendary: { badge: 'bg-amber-100 text-amber-700', text: 'text-amber-600' },
 };
 
 function formatNumber(n: number): string {
@@ -161,7 +161,7 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-molt-500 border-t-transparent rounded-full" />
       </div>
     );
@@ -169,10 +169,10 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
 
   if (isError || !game) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white/50 text-lg mb-4">Game not found</p>
-          <Link href="/games" className="text-molt-400 hover:text-molt-300 transition-colors">
+          <p className="text-gray-400 text-lg mb-4">Game not found</p>
+          <Link href="/games" className="text-molt-500 hover:text-molt-600 transition-colors">
             Back to Games
           </Link>
         </div>
@@ -201,99 +201,82 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
 
   const relatedGames = (relatedData?.games ?? []).filter((g: any) => g.id !== id).slice(0, 3);
 
+  const heroBackground = game.thumbnailUrl
+    ? `url(${game.thumbnailUrl})`
+    : `url(/images/heroes/game-detail-lava.png), linear-gradient(135deg, ${thumbnail})`;
+
   return (
-    <div className="min-h-screen bg-surface-dark pb-20">
-      {/* Ambient glow */}
-      <div className="ambient-glow ambient-glow-teal w-[600px] h-[600px] -top-60 left-1/3 fixed" />
+    <div className="min-h-screen bg-white pb-20">
+      {/* Full-bleed Hero */}
+      <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            background: heroBackground,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        {/* Gradient overlay fading to white */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent" />
 
-      <div className="page-container pt-8">
-        {/* Back Navigation */}
-        <Link
-          href="/games"
-          className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Back to Games</span>
-        </Link>
+        {/* Hero Content - centered title at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6">
+          <h1 className="text-5xl md:text-7xl font-display font-black text-white uppercase tracking-tight drop-shadow-lg text-center">
+            {gameName}
+          </h1>
+          <p className="text-white/80 text-center mt-2 text-lg">By @{creatorName}</p>
+        </div>
+      </div>
 
-        {/* Hero Area */}
-        <div className="relative rounded-3xl overflow-hidden mb-8">
-          <div
-            className="h-64 md:h-80"
-            style={{
-              background: `linear-gradient(135deg, ${thumbnail})`,
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface-dark via-surface-dark/40 to-transparent" />
+      {/* Stats / Action Bar */}
+      <div className="page-container">
+        <div className="flex items-center justify-between flex-wrap gap-4 py-6 border-b border-gray-200">
+          <div className="flex items-center flex-wrap gap-6">
+            {/* Play count */}
+            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+              <Play className="w-3.5 h-3.5" fill="currentColor" />
+              {formatNumber(playCount)} plays
+            </div>
 
-          {/* Hero Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl md:text-5xl font-display font-bold text-white mb-2">
-                  {gameName}
-                </h1>
-                <div className="flex items-center gap-4 flex-wrap">
-                  {/* Creator badge */}
-                  <span className="badge">
-                    <Award className="w-3 h-3" />
-                    {creatorName}
-                  </span>
+            {/* Unique players */}
+            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+              <Users className="w-3.5 h-3.5" />
+              {gameStats.uniquePlayers} players
+            </div>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(rating) ? 'text-accent-amber' : 'text-white/20'
-                        }`}
-                        fill={i < Math.floor(rating) ? 'currentColor' : 'none'}
-                      />
-                    ))}
-                    <span className="text-sm text-white/60 ml-1">{rating.toFixed(1)}</span>
-                  </div>
+            {/* Rating */}
+            <div className="flex items-center gap-1 text-sm text-gray-500">
+              <Star className="w-3.5 h-3.5 text-accent-amber" fill="currentColor" />
+              {rating.toFixed(1)}
+            </div>
 
-                  {/* Play count */}
-                  <div className="flex items-center gap-1 text-white/50 text-sm">
-                    <Play className="w-3.5 h-3.5" fill="currentColor" />
-                    {formatNumber(playCount)} plays
-                  </div>
-
-                  {/* Live players */}
-                  {playerCount > 0 && (
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-green-400">{playerCount.toLocaleString()} online</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Play Now CTA */}
-              <button
-                onClick={handlePlay}
-                className="btn-primary text-lg px-10 py-4 flex items-center gap-2 shrink-0"
-              >
-                <Play className="w-5 h-5" fill="currentColor" />
-                Play Now
-              </button>
+            {/* Tags */}
+            <div className="flex items-center gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-gray-900 text-white text-[10px] uppercase font-bold px-3 py-1 rounded"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Tags Row */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {tags.map((tag) => (
-            <span key={tag} className="badge">
-              {tag}
-            </span>
-          ))}
+          {/* Play Now CTA */}
+          <button
+            onClick={handlePlay}
+            className="btn-primary px-8 py-3 flex items-center gap-2 shrink-0 font-bold uppercase tracking-wide"
+          >
+            <Play className="w-4 h-4" fill="currentColor" />
+            Play Now
+          </button>
         </div>
 
         {/* Game Player */}
         {isPlaying && (
-          <div className="mb-8">
+          <div className="my-8">
             <GamePlayer
               wasmUrl={game.wasmUrl || undefined}
               gameName={gameName}
@@ -303,14 +286,39 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Description */}
-        <div className="glass rounded-2xl p-6 mb-8">
-          <p className="text-white/70 leading-relaxed">{description}</p>
+        {/* Content Area - Two Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+          {/* Left Column - About This Game */}
+          <div>
+            <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-4">
+              About This Game
+            </h2>
+            <p className="text-gray-600 leading-relaxed">{description}</p>
+          </div>
+
+          {/* Right Column - How to Play */}
+          {game.howToPlay && Array.isArray(game.howToPlay) && game.howToPlay.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-4">
+                How to Play
+              </h2>
+              <ol className="space-y-4">
+                {game.howToPlay.map((step: string, i: number) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-molt-500 text-white text-xs font-bold shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <span className="text-gray-600 text-sm leading-relaxed pt-1">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
 
         {/* Rate This Game */}
-        <div className="glass-card p-6 mb-8">
-          <h2 className="section-title text-xl mb-3 flex items-center gap-2">
+        <div className="border border-gray-200 rounded-2xl p-6 mt-10">
+          <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-3 flex items-center gap-2">
             <Star className="w-5 h-5 text-accent-amber" />
             Rate This Game
           </h2>
@@ -327,133 +335,113 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
                 >
                   <Star
                     className={`w-7 h-7 ${
-                      value <= (hoverRating || userRating) ? 'text-accent-amber' : 'text-white/20'
+                      value <= (hoverRating || userRating) ? 'text-accent-amber' : 'text-gray-300'
                     }`}
                     fill={value <= (hoverRating || userRating) ? 'currentColor' : 'none'}
                   />
                 </button>
               ))}
             </div>
-            {ratingSubmitted && <span className="text-sm text-molt-400">Thanks for rating!</span>}
+            {ratingSubmitted && <span className="text-sm text-molt-500">Thanks for rating!</span>}
             {rateMutation.isError && (
-              <span className="text-sm text-red-400">
+              <span className="text-sm text-red-500">
                 {rateMutation.error?.message || 'Rating failed'}
               </span>
             )}
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
-          {/* Left Column */}
-          <div className="lg:col-span-3 space-y-8">
-            {/* How to Play */}
-            {game.howToPlay && Array.isArray(game.howToPlay) && game.howToPlay.length > 0 && (
-              <div className="glass-card p-6">
-                <h2 className="section-title text-xl mb-4 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-neon-cyan" />
-                  How to Play
-                </h2>
-                <ol className="space-y-3">
-                  {game.howToPlay.map((step: string, i: number) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-molt-500/20 text-molt-300 text-xs font-bold shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      <span className="text-white/60 text-sm">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-
-            {/* Game Stats */}
-            <div className="glass-card p-6">
-              <h2 className="section-title text-xl mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-neon-cyan" />
-                Game Stats
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: 'Total Plays', value: gameStats.totalPlays, icon: Play },
-                  { label: 'Unique Players', value: gameStats.uniquePlayers, icon: Users },
-                  { label: 'Avg Session', value: gameStats.avgSession, icon: Clock },
-                  { label: 'Created', value: gameStats.created, icon: Calendar },
-                ].map((stat) => (
-                  <div key={stat.label} className="bg-surface-dark/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <stat.icon className="w-3.5 h-3.5 text-white/30" />
-                      <span className="text-xs text-white/40 uppercase tracking-wider">
-                        {stat.label}
-                      </span>
+        {/* Items Section */}
+        <div className="mt-10">
+          <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-6">
+            Items
+          </h2>
+          <div className="space-y-4">
+            {items.length > 0 ? (
+              items.map((item: any) => {
+                const rarity = rarityColors[item.rarity] || rarityColors.Common;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between py-4 border-b border-gray-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-base font-semibold text-gray-900">{item.name}</p>
+                          <span
+                            className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${rarity.badge}`}
+                          >
+                            {item.rarity}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400">{item.category}</span>
+                      </div>
                     </div>
-                    <p className="font-display font-bold text-lg text-white">{stat.value}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-3xl md:text-4xl font-display font-black text-black">
+                          {formatBigIntPrice(item.price)}
+                        </p>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">MOLT</p>
+                      </div>
+                      <ItemBuyButton itemId={item.id} />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Items */}
-            <div className="glass-card p-6">
-              <h2 className="section-title text-xl mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-accent-amber" />
-                Items
-              </h2>
-              <div className="space-y-3">
-                {items.length > 0 ? (
-                  items.map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 bg-surface-dark/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-molt-500/10 flex items-center justify-center">
-                          {item.category === 'Cosmetic' ? (
-                            <Sparkles className="w-4 h-4 text-molt-300" />
-                          ) : (
-                            <Shield className="w-4 h-4 text-accent-amber" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">{item.name}</p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-white/40">{item.category}</span>
-                            <span
-                              className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                                rarityColors[item.rarity] || rarityColors.Common
-                              }`}
-                            >
-                              {item.rarity}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-display font-bold text-accent-amber text-sm">
-                            {formatBigIntPrice(item.price)}
-                          </p>
-                          <p className="text-[10px] text-white/30">MBUCKS</p>
-                        </div>
-                        <ItemBuyButton itemId={item.id} />
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-white/30 text-center py-4">No items available</p>
-                )}
-              </div>
-            </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">No items available</p>
+            )}
           </div>
         </div>
 
+        {/* Game Stats */}
+        <div className="border border-gray-200 rounded-2xl p-6 mt-10">
+          <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-4">
+            Game Stats
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Plays', value: gameStats.totalPlays, icon: Play },
+              { label: 'Unique Players', value: gameStats.uniquePlayers, icon: Users },
+              { label: 'Avg Session', value: gameStats.avgSession, icon: Clock },
+              { label: 'Created', value: gameStats.created, icon: Calendar },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <stat.icon className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-400 uppercase tracking-wider">
+                    {stat.label}
+                  </span>
+                </div>
+                <p className="font-display font-bold text-lg text-gray-900">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        {playerCount > 0 && (
+          <div className="mt-10">
+            <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-4">
+              Recent Activity
+            </h2>
+            <div className="divide-y divide-gray-100">
+              <div className="py-3 text-gray-600 text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                {playerCount.toLocaleString()} player{playerCount !== 1 ? 's' : ''} currently online
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Related Games */}
         {relatedGames.length > 0 && (
-          <div className="mb-8">
-            <h2 className="section-title mb-6">You Might Also Like</h2>
+          <div className="mt-12 mb-8">
+            <h2 className="text-2xl font-display font-black uppercase tracking-tight text-black mb-6">
+              You Might Also Like
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedGames.map((g: any) => (
                 <GameCard

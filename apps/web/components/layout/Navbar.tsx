@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { MoltLogo } from '@/components/shared/MoltLogo';
@@ -15,6 +16,7 @@ const navLinks = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
@@ -26,17 +28,25 @@ export function Navbar() {
 
         {/* Desktop Nav Links */}
         <div className="hidden md:flex items-center gap-0.5 flex-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="px-4 py-2 text-xs font-semibold tracking-wider text-white/80
-                         rounded-full transition-all duration-200
-                         hover:text-white hover:bg-white/10"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold tracking-wider
+                           rounded-full transition-all duration-200
+                           ${
+                             isActive
+                               ? 'text-[#00D9A6]'
+                               : 'text-white/80 hover:text-white hover:bg-white/10'
+                           }`}
+              >
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#00D9A6] shrink-0" />}
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Connect Button */}
@@ -68,17 +78,26 @@ export function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden fixed top-16 left-4 right-4 bg-black/95 backdrop-blur-md rounded-2xl border border-white/10 p-4 space-y-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block px-4 py-3 text-sm font-semibold tracking-wider text-white/80
-                         rounded-lg transition-colors hover:text-white hover:bg-white/10"
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold tracking-wider
+                           rounded-lg transition-colors
+                           ${
+                             isActive
+                               ? 'text-[#00D9A6]'
+                               : 'text-white/80 hover:text-white hover:bg-white/10'
+                           }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#00D9A6] shrink-0" />}
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="border-t border-white/10 mt-2 pt-3 px-4">
             <ConnectButton chainStatus="icon" showBalance={false} />
           </div>

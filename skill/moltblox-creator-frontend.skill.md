@@ -106,7 +106,7 @@ DOM is easier to build, easier to style (Tailwind), and automatically responsive
 - **Many moving objects** — Particles, projectiles, enemies
 - **Custom rendering** — Pixel art, procedural generation
 
-Canvas gives you a raw drawing surface. More power, more work.
+Canvas gives you a raw drawing surface. More power, more work. For complex games with multiple scenes (overworld + battle), a single canvas handles both — your render loop switches between scene renderers based on game phase.
 
 ### Quick Decision
 
@@ -359,6 +359,520 @@ export default function PlatformerRenderer() {
 ### Canvas vs requestAnimationFrame
 
 The example above re-renders on state change, which is fine because the game loop runs server-side in BaseGame. If you need client-side interpolation between state updates (smoother animations), add a `requestAnimationFrame` loop that interpolates positions between dispatched ticks.
+
+---
+
+## Multi-Phase Rendering
+
+Complex games have multiple visual phases — a starter selection screen, an overworld, battles, dialogue, victory, defeat. Handle this with a single canvas and a phase-switching render function.
+
+### The Phase Router Pattern
+
+```typescript
+const renderFrame = useCallback(() => {
+  const canvas = canvasRef.current;
+  if (!canvas || !data) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const frame = frameCountRef.current++;
+
+  // Route to the correct scene renderer based on game phase
+  if (data.gamePhase === 'overworld' || data.gamePhase === 'dialogue') {
+    renderOverworld(ctx, data, frame);
+  } else if (data.gamePhase === 'battle') {
+    renderBattle(ctx, data, frame);
+  } else if (data.gamePhase === 'starter_select') {
+    renderStarterSelect(ctx, frame);
+  } else if (data.gamePhase === 'victory') {
+    renderVictory(ctx, data, frame);
+  } else if (data.gamePhase === 'defeat') {
+    renderDefeat(ctx, frame);
+  }
+
+  // Overlays (damage numbers, particles) render on top of any phase
+  renderDamageNumbers(ctx);
+  renderParticles(ctx);
+}, [data]);
+
+// Drive it with requestAnimationFrame for smooth 60fps
+useEffect(() => {
+  let animId: number;
+  function loop() {
+    renderFrame();
+    animId = requestAnimationFrame(loop);
+  }
+  animId = requestAnimationFrame(loop);
+  return () => cancelAnimationFrame(animId);
+}, [renderFrame]);
+```
+
+Each phase is a standalone function that takes `(ctx, data, frame)`. The frame counter drives all animations — sine waves, blinking cursors, bobbing sprites. Overlays like floating damage numbers and particles render after the scene, so they appear on top regardless of phase.
+
+### Why One Canvas
+
+Using a single `<canvas>` for all phases avoids DOM thrashing. Phase transitions are instant — just a different function draws the next frame. The `useCallback` dependency on `data` ensures the render function updates when state changes.
+
+---
+
+## Tile-Based Overworld Rendering
+
+The CreatureRPGRenderer renders a 30x20 tile map with camera following, animated tiles, NPCs, and a mini-map — all on a 960x540 canvas.
+
+### Map Data Structure
+
+Define maps as 2D number arrays where each number is a tile type:
+
+```typescript
+const TILE_SIZE = 32;
+const MAP_COLS = 30;
+const MAP_ROWS = 20;
+
+const T = {
+  GRASS: 0,
+  TALL_GRASS: 1,
+  TREE: 2,
+  WATER: 3,
+  PATH: 4,
+  BUILDING: 5,
+  DOOR: 6,
+  FENCE: 7,
+  FLOWER: 8,
+  SIGN: 9,
+  HEAL: 10,
+  GYM_DOOR: 11,
+  SAND: 12,
+} as const;
+
+// prettier-ignore
+const MAP_STARTER_TOWN: number[][] = [
+  [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],
+  [7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7],
+  // ... rows ...
+];
+
+const TILE_COLORS: Record<number, string> = {
+  [T.GRASS]: '#4a7c3f',
+  [T.TALL_GRASS]: '#3a6b30',
+  [T.WATER]: '#2196f3',
+  [T.PATH]: '#c4a45a',
+  // ...
+};
+```
+
+### Camera Following with Lerp
+
+Center the camera on the player, clamped to map edges, smoothed with linear interpolation:
+
+```typescript
+const cameraRef = useRef({ x: 0, y: 0 });
+
+function renderOverworld(ctx: CanvasRenderingContext2D, d: GameState, frame: number) {
+  // Target: center camera on player
+  const targetCamX = d.playerPos.x * TILE_SIZE - CANVAS_W / 2 + TILE_SIZE / 2;
+  const targetCamY = d.playerPos.y * TILE_SIZE - CANVAS_H / 2 + TILE_SIZE / 2;
+
+  // Clamp to map bounds
+  const maxCamX = MAP_COLS * TILE_SIZE - CANVAS_W;
+  const maxCamY = MAP_ROWS * TILE_SIZE - CANVAS_H;
+  const clampedX = Math.max(0, Math.min(maxCamX, targetCamX));
+  const clampedY = Math.max(0, Math.min(maxCamY, targetCamY));
+
+  // Lerp for smooth follow (0.15 = snappy but not instant)
+  cameraRef.current.x += (clampedX - cameraRef.current.x) * 0.15;
+  cameraRef.current.y += (clampedY - cameraRef.current.y) * 0.15;
+  // ...
+}
+```
+
+The `0.15` lerp factor means the camera covers 15% of the remaining distance each frame. Lower values (0.05) feel floaty, higher values (0.3) feel snappy. Store camera position in a ref, not state, to avoid re-renders every frame.
+
+### Only-Visible-Tiles Optimization
+
+Only draw tiles that are on screen:
+
+```typescript
+const camX = cameraRef.current.x;
+const camY = cameraRef.current.y;
+
+// Calculate visible tile range
+const startCol = Math.max(0, Math.floor(camX / TILE_SIZE));
+const endCol = Math.min(MAP_COLS, startCol + Math.ceil(CANVAS_W / TILE_SIZE) + 2);
+const startRow = Math.max(0, Math.floor(camY / TILE_SIZE));
+const endRow = Math.min(MAP_ROWS, startRow + Math.ceil(CANVAS_H / TILE_SIZE) + 2);
+
+for (let row = startRow; row < endRow; row++) {
+  for (let col = startCol; col < endCol; col++) {
+    const tile = map[row]?.[col] ?? 0;
+    const drawX = col * TILE_SIZE - camX;
+    const drawY = row * TILE_SIZE - camY;
+
+    ctx.fillStyle = TILE_COLORS[tile] || TILE_COLORS[T.GRASS];
+    ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+  }
+}
+```
+
+The `+2` on endCol/endRow covers partial tiles at the edges. On a 30x20 map with a 960x540 viewport, you draw roughly 30x17 tiles instead of all 600 — a meaningful optimization for larger maps.
+
+### Animated Tiles
+
+Use the frame counter and tile position for unique per-tile animation:
+
+```typescript
+case T.TALL_GRASS: {
+  // Grass blades sway using sine wave offset by tile position
+  ctx.fillStyle = '#2d8a2d';
+  const sway = Math.sin(frame * 0.05 + col * 0.7 + row * 0.5) * 2;
+  for (let i = 0; i < 5; i++) {
+    const bx = drawX + 3 + i * 6;
+    const by = drawY + TILE_SIZE - 4;
+    ctx.fillRect(bx + sway, by - 12, 2, 12);
+    ctx.fillRect(bx + sway - 1, by - 14, 4, 3);
+  }
+  break;
+}
+case T.WATER: {
+  // Animated wave offset
+  ctx.fillStyle = '#1976d2';
+  const waveOff = Math.sin(frame * 0.08 + col + row) * 2;
+  ctx.fillRect(drawX, drawY + waveOff, TILE_SIZE, TILE_SIZE);
+  // Highlight shimmer
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(drawX + 4, drawY + 8 + waveOff, 12, 2);
+  ctx.fillRect(drawX + 16, drawY + 18 + waveOff, 10, 2);
+  break;
+}
+```
+
+The key technique: `Math.sin(frame * speed + col * offset + row * offset)` produces a wave that moves over time, with each tile offset so they do not all sway in unison.
+
+### NPC Sprites and Labels
+
+Filter NPCs to the current map, cull off-screen, draw cached sprite + name label above:
+
+```typescript
+for (const npc of NPC_LIST.filter((n) => n.mapId === d.mapId)) {
+  const nx = npc.x * TILE_SIZE - camX;
+  const ny = npc.y * TILE_SIZE - camY;
+  if (nx < -TILE_SIZE || nx > CANVAS_W + TILE_SIZE) continue; // off-screen cull
+  if (ny < -TILE_SIZE || ny > CANVAS_H + TILE_SIZE) continue;
+
+  const sprite = spriteCacheRef.current[`npc_${npc.type}`];
+  if (sprite) ctx.drawImage(sprite, nx, ny, TILE_SIZE, TILE_SIZE);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(npc.name, nx + TILE_SIZE / 2, ny - 2);
+}
+```
+
+### Mini-Map Overlay
+
+Draw a scaled-down full map in the top-right corner with a player dot:
+
+```typescript
+const mmSize = 90;
+const mmTile = mmSize / MAP_COLS; // ~3px per tile
+const mmX = CANVAS_W - mmSize - 8;
+
+ctx.fillStyle = 'rgba(0,0,0,0.6)';
+ctx.fillRect(mmX - 2, 6, mmSize + 4, mmTile * MAP_ROWS + 4);
+
+for (let row = 0; row < MAP_ROWS; row++)
+  for (let col = 0; col < MAP_COLS; col++) {
+    const tile = map[row]?.[col] ?? 0;
+    ctx.fillStyle = tile === T.WATER ? '#2196f3' : tile === T.PATH ? '#c4a45a' : '#4a7c3f';
+    ctx.fillRect(mmX + col * mmTile, 8 + row * mmTile, mmTile, mmTile);
+  }
+
+ctx.fillStyle = '#ff1744'; // player dot
+ctx.fillRect(mmX + d.playerPos.x * mmTile - 1, 8 + d.playerPos.y * mmTile - 1, 3, 3);
+```
+
+---
+
+## Procedural Creature Sprites
+
+Instead of loading image assets, CreatureRPGRenderer generates creature sprites entirely with Canvas 2D drawing calls. This means zero external assets, instant loading, and bots can create new creatures without shipping art files.
+
+### The Sprite Generator Pattern
+
+Each species gets a dedicated drawing function. A scale factor `s = size / 32` normalizes coordinates so sprites look correct at any resolution:
+
+```typescript
+function generateCreatureSprite(
+  species: string,
+  size: number,
+  facing: 'left' | 'right' = 'right',
+): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const s = size / 32; // scale factor — all coords in a 32x32 grid
+
+  switch (species) {
+    case 'emberfox': {
+      ctx.fillStyle = '#ff6b35';
+      ctx.fillRect(8 * s, 14 * s, 16 * s, 10 * s); // Body
+      ctx.fillStyle = '#ff8c42';
+      ctx.fillRect(10 * s, 6 * s, 12 * s, 10 * s); // Head
+      ctx.beginPath(); // Pointed ear (triangle)
+      ctx.moveTo(10 * s, 8 * s);
+      ctx.lineTo(8 * s, 2 * s);
+      ctx.lineTo(13 * s, 6 * s);
+      ctx.fill();
+      ctx.fillStyle = '#fff'; // Eye (white base + dark pupil)
+      ctx.fillRect(12 * s, 9 * s, 3 * s, 3 * s);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(13 * s, 10 * s, 2 * s, 2 * s);
+      break;
+    }
+    // More species use ellipse, arc, quadraticCurveTo for varied shapes
+  }
+
+  // Mirror for left-facing (enemy side in battle)
+  if (facing === 'left') {
+    const flipped = document.createElement('canvas');
+    flipped.width = size;
+    flipped.height = size;
+    const fCtx = flipped.getContext('2d')!;
+    fCtx.translate(size, 0);
+    fCtx.scale(-1, 1);
+    fCtx.drawImage(canvas, 0, 0);
+    return flipped;
+  }
+  return canvas;
+}
+```
+
+### Drawing Toolkit
+
+Build sprites from these Canvas 2D primitives:
+
+| Primitive                                      | Use Case                           | Example                  |
+| ---------------------------------------------- | ---------------------------------- | ------------------------ |
+| `ctx.fillRect(x, y, w, h)`                     | Rectangular body parts, eyes, legs | Body, hat, shoes         |
+| `ctx.beginPath() + moveTo/lineTo + fill()`     | Triangles for ears, beaks, tails   | Fox ears, fins           |
+| `ctx.ellipse(cx, cy, rx, ry, rot, start, end)` | Rounded bodies, heads              | Dolphin body, ghost wisp |
+| `ctx.arc(cx, cy, r, start, end)`               | Circles for heads, eyes            | Tree canopy, shell top   |
+| `ctx.quadraticCurveTo(cpx, cpy, x, y)`         | Curved vines, tentacles            | Vine arms, ghostly shape |
+| `ctx.strokeRect / stroke()`                    | Outlines, glasses, shell pattern   | NPC glasses, crab shell  |
+
+### Sprite Caching
+
+Generate each sprite once and cache it. Use a ref to survive re-renders:
+
+```typescript
+const spriteCacheRef = useRef<Record<string, HTMLCanvasElement>>({});
+
+useEffect(() => {
+  if (!data) return;
+  const cache = spriteCacheRef.current;
+
+  // Party creatures face right (player side)
+  for (const c of data.party) {
+    const key = `creature_${c.species}_right`;
+    if (!cache[key]) {
+      cache[key] = generateCreatureSprite(c.species, 64, 'right');
+    }
+  }
+
+  // Enemy faces left (opponent side)
+  if (data.battleState?.enemyCreature) {
+    const species = data.battleState.enemyCreature.species;
+    const key = `creature_${species}_left`;
+    if (!cache[key]) {
+      cache[key] = generateCreatureSprite(species, 64, 'left');
+    }
+  }
+}, [data?.party?.length, data?.battleState?.enemyCreature?.species]);
+```
+
+Cache keys encode species + direction (`creature_emberfox_right`). The `useEffect` dependency on party length and enemy species ensures new sprites generate when creatures change, but existing sprites are never regenerated.
+
+---
+
+## Battle Scene Rendering
+
+Battle scenes layer: parallax background, ground plane, creature sprites with bobbing animation, HP bars, floating damage numbers, and type-colored particles.
+
+### Parallax Background
+
+Build depth with stacked layers: gradient sky, procedural mountain silhouette (sine wave), and ground plane:
+
+```typescript
+// Sky gradient
+const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+skyGrad.addColorStop(0, '#0d1b2a');
+skyGrad.addColorStop(0.5, '#1b2838');
+skyGrad.addColorStop(1, '#2a1a2e');
+ctx.fillStyle = skyGrad;
+ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+// Mountain silhouette (two overlapping sine waves for natural shape)
+ctx.fillStyle = '#1a1a3e';
+ctx.beginPath();
+ctx.moveTo(0, 300);
+for (let x = 0; x <= CANVAS_W; x += 50) {
+  ctx.lineTo(x, 280 - Math.sin(x * 0.01 + 1) * 50 - Math.sin(x * 0.018) * 25);
+}
+ctx.lineTo(CANVAS_W, CANVAS_H);
+ctx.lineTo(0, CANVAS_H);
+ctx.fill();
+
+// Ground plane
+ctx.fillStyle = '#3a3a5a';
+ctx.fillRect(0, 340, CANVAS_W, CANVAS_H - 340);
+```
+
+### HP Bars
+
+Color-coded HP bars (green > yellow > red) with name, level, and XP bar for the player:
+
+```typescript
+function drawBattleHPBar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  creature: Creature,
+  isPlayer: boolean,
+) {
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(`${capitalize(creature.species)} Lv${creature.level}`, x, y);
+
+  const barW = 140;
+  const hpRatio = Math.max(0, creature.stats.hp / creature.stats.maxHp);
+  const barColor = hpRatio > 0.5 ? '#4caf50' : hpRatio > 0.25 ? '#ffc107' : '#f44336';
+
+  ctx.fillStyle = '#333';
+  ctx.fillRect(x, y + 4, barW, 8);
+  ctx.fillStyle = barColor;
+  ctx.fillRect(x, y + 4, barW * hpRatio, 8);
+
+  // Show exact HP for player, percentage for enemy
+  ctx.fillText(
+    isPlayer ? `${creature.stats.hp}/${creature.stats.maxHp}` : `${Math.round(hpRatio * 100)}%`,
+    x,
+    y + 22,
+  );
+}
+```
+
+### Floating Damage Numbers
+
+Parse combat log for damage values, spawn animated numbers that float up and fade:
+
+```typescript
+interface DamageNumber {
+  x: number;
+  y: number;
+  value: string;
+  color: string;
+  life: number;
+}
+const damageNumbersRef = useRef<DamageNumber[]>([]);
+
+// Spawn from combat log changes
+useEffect(() => {
+  for (let i = prevLen; i < data.combatLog.length; i++) {
+    const dmgMatch = data.combatLog[i].match(/\(-(\d+) HP\)/);
+    if (dmgMatch) {
+      damageNumbersRef.current.push({
+        x: 480,
+        y: 180 + Math.random() * 40,
+        value: `-${dmgMatch[1]}`,
+        color: data.combatLog[i].includes('super effective') ? '#ff5252' : '#ffab40',
+        life: 45,
+      });
+    }
+  }
+}, [data?.combatLog?.length]);
+
+// Render: float upward, fade via globalAlpha
+for (const dn of damageNumbersRef.current) {
+  dn.y -= 1.2;
+  dn.life--;
+  ctx.globalAlpha = Math.min(1, dn.life / 15);
+  ctx.fillStyle = dn.color;
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(dn.value, dn.x, dn.y);
+}
+```
+
+### Creature Bobbing
+
+Add life to battle sprites with a simple sine bob:
+
+```typescript
+const bob = Math.sin(frame * 0.06) * 3; // 3px amplitude
+ctx.drawImage(sprite, pcX, pcY + bob, 96, 96);
+
+// Offset the enemy bob so they do not sync
+const enemyBob = Math.sin(frame * 0.06 + 2) * 3;
+ctx.drawImage(enemySprite, ecX, ecY + enemyBob, 96, 96);
+```
+
+---
+
+## Keyboard Controls
+
+For canvas games that need keyboard input, bind keys in a `useEffect` and route to the correct actions based on game phase.
+
+### Phase-Aware Key Binding
+
+```typescript
+useEffect(() => {
+  function handleKey(e: KeyboardEvent) {
+    if (!data) return;
+
+    if (data.gamePhase === 'overworld') {
+      const dirMap: Record<string, string> = {
+        ArrowUp: 'up',
+        ArrowDown: 'down',
+        ArrowLeft: 'left',
+        ArrowRight: 'right',
+        w: 'up',
+        s: 'down',
+        a: 'left',
+        d: 'right',
+      };
+      const dir = dirMap[e.key];
+      if (dir) {
+        e.preventDefault();
+        dispatch('move', { direction: dir });
+      }
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        dispatch('interact', {});
+      }
+    }
+
+    if (data.gamePhase === 'dialogue') {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        dispatch('advance_dialogue', {});
+      }
+    }
+
+    if (data.gamePhase === 'battle' && data.battleState) {
+      // Number keys 1-4 for move selection
+      if (e.key >= '1' && e.key <= '4') {
+        e.preventDefault();
+        dispatch('fight', { moveIndex: parseInt(e.key) - 1 });
+      }
+    }
+  }
+
+  window.addEventListener('keydown', handleKey);
+  return () => window.removeEventListener('keydown', handleKey);
+}, [data?.gamePhase, data?.battleState, dispatch]);
+```
+
+Key decisions: support WASD + arrow keys for accessibility, use Space/Enter as universal "confirm", number keys for battle move selection. Always `e.preventDefault()` on Space/arrows to prevent page scroll. The dependency array `[data?.gamePhase, data?.battleState, dispatch]` re-registers only when the active phase changes.
 
 ---
 
@@ -668,20 +1182,22 @@ If your BaseGame emits these event types, the feed handles formatting and colori
 
 Each example game has a reference renderer. Study them to see the patterns in action.
 
-| Game             | Renderer Path                                                | Approach | Techniques                                                       |
-| ---------------- | ------------------------------------------------------------ | -------- | ---------------------------------------------------------------- |
-| ClickerGame      | `apps/web/components/games/renderers/ClickerRenderer.tsx`    | DOM      | Ripple animation, milestone particles, progress bar, multi-click |
-| PuzzleGame       | `apps/web/components/games/renderers/PuzzleRenderer.tsx`     | DOM      | Grid layout, card flip animation, match feedback, move counter   |
-| TowerDefenseGame | `apps/web/components/games/renderers/TDRenderer.tsx`         | DOM      | Grid map, tower placement, wave progress, economy display        |
-| RPGGame          | `apps/web/components/games/renderers/RPGRenderer.tsx`        | DOM      | HP/MP bars, turn-based combat, encounter panels, stat display    |
-| RhythmGame       | `apps/web/components/games/renderers/RhythmRenderer.tsx`     | Canvas   | Note highway, timing visualization, combo counter, hit rating    |
-| PlatformerGame   | `apps/web/components/games/renderers/PlatformerRenderer.tsx` | Canvas   | Side-scrolling, jump physics, collectibles, level rendering      |
+| Game            | Renderer Path                                                 | Approach | Techniques                                                       |
+| --------------- | ------------------------------------------------------------- | -------- | ---------------------------------------------------------------- |
+| ClickerGame     | `apps/web/components/games/renderers/ClickerRenderer.tsx`     | DOM      | Ripple animation, milestone particles, progress bar, multi-click |
+| PuzzleGame      | `apps/web/components/games/renderers/PuzzleRenderer.tsx`      | DOM      | Grid layout, card flip animation, match feedback, move counter   |
+| CreatureRPGGame | `apps/web/components/games/renderers/CreatureRPGRenderer.tsx` | Canvas   | Overworld tiles, creature battles, type system, catching, gym    |
+| RPGGame         | `apps/web/components/games/renderers/RPGRenderer.tsx`         | DOM      | HP/MP bars, turn-based combat, encounter panels, stat display    |
+| RhythmGame      | `apps/web/components/games/renderers/RhythmRenderer.tsx`      | Canvas   | Note highway, timing visualization, combo counter, hit rating    |
+| PlatformerGame  | `apps/web/components/games/renderers/PlatformerRenderer.tsx`  | Canvas   | Side-scrolling, jump physics, collectibles, level rendering      |
 
 ### What to Learn From Each
 
 **ClickerRenderer** — The simplest renderer. Start here. Shows the full pattern: useGameEngine, state casting, dispatch, GameShell wrapping, and basic juice (ripple, particles).
 
 **PuzzleRenderer** — Grid-based UI with CSS Grid. Demonstrates card flip animations and visual feedback for matches vs mismatches.
+
+**CreatureRPGRenderer** — The most complex canvas renderer. Demonstrates multi-phase rendering (overworld + battle + dialogue + starter select + victory/defeat in one canvas), tile-based maps with camera lerp, procedural sprite generation using Canvas 2D API, mini-map overlay, floating damage numbers, parallax battle backgrounds, and phase-aware keyboard controls. Study this to understand how a full RPG experience renders without external art assets.
 
 **TDRenderer** — Complex state with economy (gold, lives, waves). Shows how to render a grid map with interactive cells and display multiple resource counters.
 
@@ -765,14 +1281,15 @@ Use these Tailwind classes for consistent styling:
 
 ### Common Dispatch Actions
 
-| Genre         | Actions to Dispatch                                                  |
-| ------------- | -------------------------------------------------------------------- |
-| Clicker       | `dispatch('click')`, `dispatch('multi_click', { amount })`           |
-| Puzzle        | `dispatch('select', { row, col })`                                   |
-| Tower Defense | `dispatch('place_tower', { x, y, type })`, `dispatch('start_wave')`  |
-| RPG           | `dispatch('attack', { target })`, `dispatch('use_skill', { skill })` |
-| Rhythm        | `dispatch('hit', { lane, timing })`                                  |
-| Platformer    | `dispatch('move', { direction })`, `dispatch('jump')`                |
+| Genre         | Actions to Dispatch                                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clicker       | `dispatch('click')`, `dispatch('multi_click', { amount })`                                                                                                                |
+| Puzzle        | `dispatch('select', { row, col })`                                                                                                                                        |
+| Tower Defense | `dispatch('place_tower', { x, y, type })`, `dispatch('start_wave')`                                                                                                       |
+| RPG           | `dispatch('attack', { target })`, `dispatch('use_skill', { skill })`                                                                                                      |
+| Creature RPG  | `dispatch('move', { direction })`, `dispatch('interact', {})`, `dispatch('fight', { moveIndex })`, `dispatch('catch', {})`, `dispatch('switch_creature', { partyIndex })` |
+| Rhythm        | `dispatch('hit', { lane, timing })`                                                                                                                                       |
+| Platformer    | `dispatch('move', { direction })`, `dispatch('jump')`                                                                                                                     |
 
 ---
 

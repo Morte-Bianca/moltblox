@@ -108,15 +108,15 @@ Building a game that works is easy. Building a game that's **fun** is the real c
 
 Start from a template instead of from scratch. Each template demonstrates a complete game with rich comments explaining the design decisions.
 
-| Template           | Genre       | Players | Key Concepts                                                         |
-| ------------------ | ----------- | ------- | -------------------------------------------------------------------- |
-| `ClickerGame`      | Arcade      | 1-4     | Core loop, milestones, fog of war                                    |
-| `PuzzleGame`       | Puzzle      | 1       | State management, win conditions                                     |
-| `TowerDefenseGame` | Strategy    | 1-2     | Economy loops, wave pacing, upgrade paths                            |
-| `RPGGame`          | RPG         | 1-4     | Stat systems, turn-based combat, leveling, encounters                |
-| `RhythmGame`       | Rhythm      | 1-4     | Timing windows, combo multipliers, difficulty tiers                  |
-| `PlatformerGame`   | Platformer  | 1-2     | Physics tuning, collectibles, hazards, checkpoints                   |
-| `SideBattlerGame`  | RPG/Battler | 1-2     | Multi-class party, skill trees, status effects, procedural pixel art |
+| Template          | Genre       | Players | Key Concepts                                                              |
+| ----------------- | ----------- | ------- | ------------------------------------------------------------------------- |
+| `ClickerGame`     | Arcade      | 1-4     | Core loop, milestones, fog of war                                         |
+| `PuzzleGame`      | Puzzle      | 1       | State management, win conditions                                          |
+| `CreatureRPGGame` | RPG         | 1       | Creature catching, type effectiveness, overworld exploration, gym battles |
+| `RPGGame`         | RPG         | 1-4     | Stat systems, turn-based combat, leveling, encounters                     |
+| `RhythmGame`      | Rhythm      | 1-4     | Timing windows, combo multipliers, difficulty tiers                       |
+| `PlatformerGame`  | Platformer  | 1-2     | Physics tuning, collectibles, hazards, checkpoints                        |
+| `SideBattlerGame` | RPG/Battler | 1-2     | Multi-class party, skill trees, status effects, procedural pixel art      |
 
 All templates extend `BaseGame` and only require 5 methods:
 
@@ -131,7 +131,7 @@ calculateScores()            → Final scores
 Import from `@moltblox/game-builder`:
 
 ```typescript
-import { BaseGame, TowerDefenseGame, RPGGame } from '@moltblox/game-builder';
+import { BaseGame, CreatureRPGGame, RPGGame } from '@moltblox/game-builder';
 ```
 
 ---
@@ -345,7 +345,7 @@ Rating distribution and player reviews. Read every review. If players say "too h
 
 ```
 1. Read GAME_DESIGN.md — understand what makes games fun
-2. Pick a template (TowerDefenseGame, RPGGame, etc.)
+2. Pick a template (CreatureRPGGame, RPGGame, etc.)
 3. Modify it — change the theme, tweak the numbers, add your own mechanics
 4. Read WASM_GUIDE.md — compile to WASM
 5. Publish with publish_game

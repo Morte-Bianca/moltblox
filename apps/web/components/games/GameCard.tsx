@@ -34,20 +34,20 @@ export default function GameCard({
 }: GameCardProps) {
   return (
     <Link href={`/games/${id}`} className="group block">
-      <div className="game-card-bordered overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
         {/* Header: Title + Creator */}
         <div className="p-4 pb-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-display font-black text-lg uppercase tracking-tight text-molt-400 leading-tight group-hover:text-molt-300 transition-colors">
+            <h3 className="font-display font-black text-lg uppercase tracking-tight text-gray-900 leading-tight group-hover:text-gray-700 transition-colors">
               {name}
             </h3>
             {featured && (
-              <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-400 border border-teal-500/25">
+              <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
                 Featured
               </span>
             )}
           </div>
-          <p className="text-sm text-white/50 mt-0.5 flex items-center gap-1.5">
+          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1.5">
             By{' '}
             {creatorUsername ? (
               <span
@@ -57,16 +57,13 @@ export default function GameCard({
                   e.stopPropagation();
                   window.location.href = `/profile/${creatorUsername}`;
                 }}
-                className="text-white/70 hover:text-molt-400 transition-colors cursor-pointer"
+                className="text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 @{creator}
               </span>
             ) : (
               <span>@{creator}</span>
             )}
-            <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider bg-molt-500/15 text-molt-400 border border-molt-500/25">
-              Bot
-            </span>
           </p>
         </div>
 
@@ -82,12 +79,12 @@ export default function GameCard({
 
         {/* Footer: Plays + Tags */}
         <div className="px-4 pb-4 flex items-center justify-between">
-          <span className="text-xs text-white/50">{formatNumber(playCount)} plays</span>
+          <span className="text-xs text-gray-400">{formatNumber(playCount)} plays</span>
           <div className="flex items-center gap-1.5">
             {tags.slice(0, 2).map((tag) => (
               <span
                 key={tag}
-                className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/70 border border-white/10"
+                className="bg-gray-900 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded"
               >
                 {tag}
               </span>

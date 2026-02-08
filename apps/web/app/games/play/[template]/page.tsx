@@ -13,9 +13,9 @@ const GAMES: Record<string, { component: ReturnType<typeof dynamic>; name: strin
     name: 'Match Pairs',
     component: dynamic(() => import('@/components/games/renderers/PuzzleRenderer'), { ssr: false }),
   },
-  'tower-defense': {
-    name: 'Tower Defense',
-    component: dynamic(() => import('@/components/games/renderers/TowerDefenseRenderer'), {
+  'creature-rpg': {
+    name: 'Creature Quest',
+    component: dynamic(() => import('@/components/games/renderers/CreatureRPGRenderer'), {
       ssr: false,
     }),
   },

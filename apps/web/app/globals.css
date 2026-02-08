@@ -2,7 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+/* PP Watch — Display / Headlines */
+@font-face {
+  font-family: 'PP Watch';
+  src: url('/fonts/pp-watch/PPWatch-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Watch';
+  src: url('/fonts/pp-watch/PPWatch-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Watch';
+  src: url('/fonts/pp-watch/PPWatch-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Neue Montreal Mono — Body / UI */
+@font-face {
+  font-family: 'PP Neue Montreal Mono';
+  src: url('/fonts/pp-neue-montreal/PPNeueMontrealMono-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Neue Montreal Mono';
+  src: url('/fonts/pp-neue-montreal/PPNeueMontrealMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   body {
@@ -50,10 +90,10 @@
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-molt-500 hover:bg-molt-400 text-white font-semibold
-           rounded-xl transition-all duration-200
-           shadow-[0_0_20px_rgba(20,184,166,0.3)]
-           hover:shadow-[0_0_30px_rgba(20,184,166,0.5)]
+    @apply px-6 py-3 bg-[#00D9A6] hover:bg-[#00C496] text-white font-semibold
+           rounded-full transition-all duration-200 uppercase tracking-wider text-sm
+           shadow-[0_0_20px_rgba(0,217,166,0.3)]
+           hover:shadow-[0_0_30px_rgba(0,217,166,0.5)]
            active:scale-[0.98];
   }
 
@@ -148,19 +188,24 @@
 
 /* Energy trail animation */
 @keyframes energy-flow {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .energy-trail {
-  background: linear-gradient(90deg, transparent, rgba(0,255,229,0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 229, 0.6), transparent);
   background-size: 200% 100%;
   animation: energy-flow 2s linear infinite;
 }
 
 /* Chrome / metallic sheen */
 .chrome-gradient {
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     #1a1a1a 0%,
     #3a3a3a 15%,
     #0a0a0a 30%,
@@ -183,4 +228,175 @@
 
 .bento-stat {
   @apply absolute bottom-4 left-4 z-10 font-display font-black text-white uppercase tracking-tight;
+}
+
+/* ---- Animations ---- */
+
+/* Fade in + slide up */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out both;
+}
+
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+.animate-delay-500 {
+  animation-delay: 0.5s;
+}
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+.animate-delay-700 {
+  animation-delay: 0.7s;
+}
+
+/* Gentle float hover */
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: gentle-float 4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: gentle-float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: gentle-float 5s ease-in-out 1s infinite;
+}
+
+/* Scale in */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.6s ease-out both;
+}
+
+/* Shimmer sweep for marketplace */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Gradient shift for marketplace bg */
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Pulse glow */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 217, 166, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(0, 217, 166, 0.4),
+      0 0 80px rgba(0, 217, 166, 0.1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Subtle bob for robots */
+@keyframes robot-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+  75% {
+    transform: translateY(4px) rotate(-1deg);
+  }
+}
+
+.animate-robot-bob {
+  animation: robot-bob 5s ease-in-out infinite;
+}
+
+.animate-robot-bob-reverse {
+  animation: robot-bob 5s ease-in-out 2.5s infinite reverse;
+}
+
+/* Marketplace card hover shine */
+.marketplace-card {
+  @apply relative overflow-hidden;
+}
+
+.marketplace-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transform: skewX(-15deg);
+  transition: left 0.6s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.marketplace-card:hover::before {
+  left: 125%;
 }
