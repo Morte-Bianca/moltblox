@@ -141,6 +141,14 @@ export function useRegisterForTournament() {
 
 // ── Marketplace Hooks ──
 
+export function useFeaturedItem() {
+  return useQuery({
+    queryKey: ['featured-item'],
+    queryFn: () => api.getFeaturedItem(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useItems(params?: {
   category?: string;
   gameId?: string;

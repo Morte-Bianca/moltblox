@@ -163,6 +163,14 @@ class ApiClient {
       });
     return this.request<{ items: any[]; pagination: any }>(`/marketplace/items?${query}`);
   }
+  getFeaturedItem() {
+    return this.request<{
+      item: any;
+      strategy: string;
+      description: string;
+      nextRotation: string;
+    }>('/marketplace/items/featured');
+  }
   getItem(id: string) {
     return this.request<any>(`/marketplace/items/${id}`);
   }

@@ -17,38 +17,11 @@ export interface ItemCardProps {
   soldCount: number;
 }
 
-const RARITY_CONFIG: Record<
-  ItemCardProps['rarity'],
-  { label: string; border: string; glow: string; badge: string; gradient: string }
-> = {
-  common: {
-    label: 'Common',
-    border: 'border-white/10',
-    glow: '',
-    badge: 'bg-white/10 text-white/60',
-    gradient: 'from-gray-600/30 to-gray-800/30',
-  },
-  uncommon: {
-    label: 'Uncommon',
-    border: 'border-green-500/20',
-    glow: 'shadow-[0_0_20px_rgba(34,197,94,0.15)]',
-    badge: 'bg-green-500/15 text-green-400 border border-green-500/30',
-    gradient: 'from-green-600/30 to-green-900/30',
-  },
-  rare: {
-    label: 'Rare',
-    border: 'border-blue-500/20',
-    glow: 'shadow-[0_0_25px_rgba(59,130,246,0.2)]',
-    badge: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-    gradient: 'from-blue-600/30 to-blue-900/30',
-  },
-  legendary: {
-    label: 'Legendary',
-    border: 'border-amber-500/30',
-    glow: 'shadow-[0_0_30px_rgba(245,158,11,0.25)]',
-    badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-    gradient: 'from-amber-500/30 to-orange-900/30',
-  },
+const RARITY_BADGE: Record<ItemCardProps['rarity'], { label: string; bg: string }> = {
+  common: { label: 'Common', bg: 'bg-gray-400' },
+  uncommon: { label: 'Uncommon', bg: 'bg-green-400' },
+  rare: { label: 'Rare', bg: 'bg-blue-400' },
+  legendary: { label: 'Legendary', bg: 'bg-yellow-400' },
 };
 
 export function ItemCard({
@@ -61,7 +34,7 @@ export function ItemCard({
   image,
   soldCount,
 }: ItemCardProps) {
-  const config = RARITY_CONFIG[rarity];
+  const badge = RARITY_BADGE[rarity];
   const purchaseMutation = usePurchaseItem();
   const [purchased, setPurchased] = useState(false);
   const { isConnected } = useAccount();
@@ -85,95 +58,87 @@ export function ItemCard({
   };
 
   return (
-    <div
-      className={`
-        glass-card group cursor-pointer overflow-hidden
-        ${config.border} ${config.glow}
-        hover:scale-[1.02] hover:-translate-y-1
-      `}
-    >
-      {/* Thumbnail area */}
-      <div
-        className={`relative h-44 bg-gradient-to-br ${image} ${config.gradient} overflow-hidden`}
-      >
-        {/* Rarity shimmer overlay */}
+    <div className="group relative w-full bg-[#0d1112] border border-[#1a2e33] rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_20px_rgba(0,255,191,0.15)] hover:border-[#00FFBF]/60">
+      {/* Rarity Badge */}
+      <div className="absolute top-3 left-3 z-10">
+        <span
+          className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-black rounded-sm ${badge.bg}`}
+        >
+          {badge.label}
+        </span>
+      </div>
+
+      {/* Category pill */}
+      <div className="absolute top-3 right-3 z-10">
+        <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/50 bg-black/40 backdrop-blur-sm rounded-sm">
+          {category}
+        </span>
+      </div>
+
+      {/* Image Container */}
+      <div className="aspect-square w-full bg-gradient-to-b from-[#151a1c] to-[#0d1112] relative flex items-center justify-center p-6 group-hover:from-[#1a2e33] transition-colors duration-300">
+        {/* Shimmer for legendaries */}
         {rarity === 'legendary' && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent animate-[energy-flow_3s_linear_infinite] bg-[length:200%_100%]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/[0.06] to-transparent animate-shimmer pointer-events-none" />
         )}
         {rarity === 'rare' && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/8 to-transparent animate-[energy-flow_4s_linear_infinite] bg-[length:200%_100%]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/[0.04] to-transparent animate-shimmer pointer-events-none" />
         )}
 
-        {/* Voxel decoration */}
-        <div className="absolute top-4 left-4 w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm rotate-12 group-hover:rotate-45 transition-transform duration-500" />
-        <div className="absolute bottom-6 right-6 w-6 h-6 rounded-md bg-white/8 backdrop-blur-sm -rotate-12 group-hover:rotate-12 transition-transform duration-500" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <ShoppingBag className="w-12 h-12 text-white/20 group-hover:text-white/30 transition-colors" />
-        </div>
-
-        {/* Rarity badge */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${config.badge}`}
-          >
-            {config.label}
-          </span>
-        </div>
-
-        {/* Category pill */}
-        <div className="absolute bottom-3 left-3">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/40 backdrop-blur-sm text-white/70">
-            {category}
-          </span>
+        {/* Item visual — uses the color/gradient from the image field */}
+        <div
+          className="w-full h-full rounded-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+          style={{
+            background: `linear-gradient(135deg, ${image || '#1a2e33'} 0%, #0d1112 100%)`,
+          }}
+        />
+        {/* Center icon */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <ShoppingBag className="w-10 h-10 text-white/10 group-hover:text-white/20 transition-colors duration-300" />
         </div>
       </div>
 
-      {/* Content */}
+      {/* Card Body */}
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-semibold text-white group-hover:text-neon-cyan transition-colors truncate">
+          <h3 className="text-white font-bold text-base tracking-wide truncate group-hover:text-[#00FFBF] transition-colors duration-200">
             {name}
           </h3>
-          <p className="text-xs text-white/40 mt-0.5 truncate">{game}</p>
+          <p className="text-gray-500 text-xs uppercase tracking-wider truncate">{game}</p>
         </div>
 
         <div className="flex items-center justify-between">
-          <div>
-            <span className="text-lg font-bold text-molt-400">{price}</span>
-            <span className="text-xs text-white/40 ml-1">MBUCKS</span>
+          <div className="flex flex-col">
+            <span className="text-[#00FFBF] font-mono text-xl font-bold">{price}</span>
+            <span className="text-gray-600 text-xs">{soldCount.toLocaleString()} sold</span>
           </div>
-          <span className="text-xs text-white/30">{soldCount.toLocaleString()} sold</span>
+
+          {/* Buy button — appears on hover (desktop), always visible on mobile */}
+          <button
+            onClick={handleBuy}
+            disabled={isConnected && purchaseMutation.isPending}
+            className="sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 bg-[#00FFBF] text-black font-bold px-4 py-2 rounded text-sm uppercase tracking-wide hover:bg-white disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {!isConnected ? (
+              <>
+                <Wallet className="w-3.5 h-3.5" />
+                Connect
+              </>
+            ) : purchaseMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : purchased ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                Done
+              </>
+            ) : (
+              'Buy'
+            )}
+          </button>
         </div>
 
-        <button
-          onClick={handleBuy}
-          disabled={isConnected && purchaseMutation.isPending}
-          className="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {!isConnected ? (
-            <>
-              <Wallet className="w-4 h-4" />
-              Connect Wallet
-            </>
-          ) : purchaseMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Buying...
-            </>
-          ) : purchased ? (
-            <>
-              <Check className="w-4 h-4" />
-              Purchased!
-            </>
-          ) : (
-            <>
-              <ShoppingBag className="w-4 h-4" />
-              Buy
-            </>
-          )}
-        </button>
         {purchaseMutation.isError && (
-          <p className="text-xs text-red-400 text-center mt-1">
+          <p className="text-xs text-red-400 text-center">
             {purchaseMutation.error?.message || 'Purchase failed'}
           </p>
         )}

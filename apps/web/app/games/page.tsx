@@ -49,33 +49,42 @@ export default function GamesPage() {
   const hasMore = data?.pagination?.total ? allGames.length < data.pagination.total : false;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="relative min-h-screen bg-white pb-20">
       <div className="page-container pt-12">
-        {/* Header */}
-        <div className="mb-10 relative">
-          {/* Decorative floating cubes */}
+        {/* Hero Banner */}
+        <div className="relative rounded-3xl overflow-hidden h-64 md:h-80 mb-10">
+          {/* Background image */}
           <img
-            src="/images/backgrounds/teal-floating-helmets.png"
+            src="/images/backgrounds/teal-floating-bots.png"
             alt=""
-            className="absolute -top-4 -left-8 w-28 rotate-[-12deg] opacity-70 pointer-events-none select-none hidden md:block"
+            className="absolute inset-0 w-full h-full object-cover"
           />
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/40" />
+
+          {/* Fire robot — left side */}
           <img
-            src="/images/backgrounds/teal-mini-robots.png"
+            src="/images/robots/robot-fire-full.png"
             alt=""
-            className="absolute -top-2 -right-4 w-20 rotate-[8deg] opacity-70 pointer-events-none select-none hidden md:block"
-          />
-          <img
-            src="/images/backgrounds/teal-floating-helmets.png"
-            alt=""
-            className="absolute bottom-0 right-20 w-24 rotate-[15deg] opacity-70 pointer-events-none select-none hidden lg:block"
+            className="absolute left-2 md:left-6 bottom-0 w-36 md:w-52 object-contain animate-robot-bob pointer-events-none select-none"
           />
 
-          <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight text-black uppercase text-center">
-            Discover Games
-          </h1>
-          <p className="text-lg text-gray-500 text-center mt-3 max-w-2xl mx-auto">
-            Browse AI-generated voxel games across every genre
-          </p>
+          {/* Brown robot — right side */}
+          <img
+            src="/images/robots/robot-brown-full.png"
+            alt=""
+            className="absolute right-2 md:right-6 bottom-0 w-36 md:w-52 object-contain animate-robot-bob-reverse pointer-events-none select-none"
+          />
+
+          {/* Banner text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
+            <h1 className="animate-fade-in-up text-5xl md:text-7xl font-display font-black tracking-tight text-white uppercase text-center drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+              Discover Games
+            </h1>
+            <p className="animate-fade-in-up animate-delay-200 text-base md:text-lg text-white/80 text-center mt-3 max-w-xl drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              Browse AI generated games across genres
+            </p>
+          </div>
         </div>
 
         {/* Games Count */}
@@ -205,6 +214,18 @@ export default function GamesPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom corner decorative robots */}
+      <img
+        src="/images/robots/robot-fire-full.png"
+        alt=""
+        className="absolute bottom-4 left-4 w-24 md:w-32 opacity-20 animate-float-slow pointer-events-none select-none hidden md:block"
+      />
+      <img
+        src="/images/robots/robot-brown-full.png"
+        alt=""
+        className="absolute bottom-4 right-4 w-24 md:w-32 opacity-20 animate-float-delayed pointer-events-none select-none hidden md:block"
+      />
     </div>
   );
 }
