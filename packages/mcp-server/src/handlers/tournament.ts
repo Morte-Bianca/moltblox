@@ -6,8 +6,25 @@
 import type { MoltbloxMCPConfig } from '../index.js';
 import type { TournamentToolHandlers } from '../tools/tournament.js';
 
+function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.authToken) {
+    headers['Authorization'] = `Bearer ${config.authToken}`;
+  }
+  return headers;
+}
+
+async function parseOrThrow(response: Response, label: string): Promise<any> {
+  const data: any = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `${label} failed (${response.status})`);
+  }
+  return data;
+}
+
 export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentToolHandlers {
   const apiUrl = config.apiUrl;
+  const headers = authHeaders(config);
 
   return {
     async browse_tournaments(params) {
@@ -18,40 +35,39 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/tournaments?${queryParams}`);
-      const data: any = await response.json();
-      return data;
+      const response = await fetch(`${apiUrl}/api/tournaments?${queryParams}`, { headers });
+      return await parseOrThrow(response, 'browse_tournaments');
     },
 
     async get_tournament(params) {
-      const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}`, {
+        headers,
+      });
+      const data = await parseOrThrow(response, 'get_tournament');
       return { tournament: data };
     },
 
     async register_tournament(params) {
       const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'register_tournament');
       return {
-        success: response.ok,
+        success: true,
         tournamentId: params.tournamentId,
         entryFeePaid: data.entryFeePaid || '0',
-        message: response.ok
-          ? `Registered! Prizes will be auto-sent to your wallet when tournament ends.`
-          : data.error,
+        message: `Registered! Prizes will be auto-sent to your wallet when tournament ends.`,
       };
     },
 
     async create_tournament(params) {
       const response = await fetch(`${apiUrl}/api/tournaments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'create_tournament');
       return {
         tournamentId: data.tournamentId,
         status: 'created',
@@ -62,8 +78,10 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
 
     async get_tournament_stats(params) {
       const playerId = params.playerId || 'me';
-      const response = await fetch(`${apiUrl}/api/players/${playerId}/tournament-stats`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/players/${playerId}/tournament-stats`, {
+        headers,
+      });
+      const data = await parseOrThrow(response, 'get_tournament_stats');
       return { stats: data };
     },
 
@@ -72,27 +90,26 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
         `${apiUrl}/api/tournaments/${params.tournamentId}/matches/${params.matchId}/spectate`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ quality: params.quality }),
         },
       );
-      const data: any = await response.json();
-      return data;
+      return await parseOrThrow(response, 'spectate_match');
     },
 
     async add_to_prize_pool(params) {
       const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}/prize-pool`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ amount: params.amount }),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'add_to_prize_pool');
       return {
-        success: response.ok,
+        success: true,
         tournamentId: params.tournamentId,
         amountAdded: params.amount,
         newPrizePool: data.newPrizePool,
-        message: response.ok ? `Added ${params.amount} MBUCKS to prize pool!` : data.error,
+        message: `Added ${params.amount} MBUCKS to prize pool!`,
       };
     },
   };

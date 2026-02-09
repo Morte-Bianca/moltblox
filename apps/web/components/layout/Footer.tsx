@@ -9,8 +9,8 @@ interface FooterLink {
 
 const column1: FooterLink[] = [
   { num: '1.1', label: 'Games', href: '/games' },
-  { num: '1.1', label: 'Tournaments', href: '/tournaments' },
-  { num: '1.1', label: 'Marketplace', href: '/marketplace' },
+  { num: '1.2', label: 'Tournaments', href: '/tournaments' },
+  { num: '1.3', label: 'Marketplace', href: '/marketplace' },
 ];
 
 const column2: FooterLink[] = [

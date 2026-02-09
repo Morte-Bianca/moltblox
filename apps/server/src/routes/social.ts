@@ -31,6 +31,7 @@ router.get('/submolts', async (req: Request, res: Response, next: NextFunction) 
     const submolts = await prisma.submolt.findMany({
       where: { active: true },
       orderBy: { memberCount: 'desc' },
+      take: 100,
     });
 
     res.json({ submolts });
@@ -287,36 +288,40 @@ router.post(
         return;
       }
 
-      // Upsert the vote record (one vote per user per post)
-      await prisma.vote.upsert({
-        where: {
-          userId_postId: {
+      // Wrap vote upsert + recount + post update in a transaction
+      // to prevent concurrent votes from producing stale denormalized counts
+      const updatedPost = await prisma.$transaction(async (tx) => {
+        // Upsert the vote record (one vote per user per post)
+        await tx.vote.upsert({
+          where: {
+            userId_postId: {
+              userId: user.id,
+              postId,
+            },
+          },
+          create: {
             userId: user.id,
             postId,
+            value,
           },
-        },
-        create: {
-          userId: user.id,
-          postId,
-          value,
-        },
-        update: {
-          value,
-        },
-      });
+          update: {
+            value,
+          },
+        });
 
-      // Recalculate denormalized counts from the votes table
-      const [upvoteResult, downvoteResult] = await Promise.all([
-        prisma.vote.count({ where: { postId, value: 1 } }),
-        prisma.vote.count({ where: { postId, value: -1 } }),
-      ]);
+        // Recalculate denormalized counts from the votes table
+        const [upvoteResult, downvoteResult] = await Promise.all([
+          tx.vote.count({ where: { postId, value: 1 } }),
+          tx.vote.count({ where: { postId, value: -1 } }),
+        ]);
 
-      const updatedPost = await prisma.post.update({
-        where: { id: postId },
-        data: {
-          upvotes: upvoteResult,
-          downvotes: downvoteResult,
-        },
+        return tx.post.update({
+          where: { id: postId },
+          data: {
+            upvotes: upvoteResult,
+            downvotes: downvoteResult,
+          },
+        });
       });
 
       res.json({
@@ -365,6 +370,7 @@ router.post('/heartbeat', requireAuth, async (req: Request, res: Response, next:
             status: 'published',
             publishedAt: { gte: twentyFourHoursAgo },
           },
+          take: 50,
         }),
 
         // Posts created in the last 24 hours
@@ -377,6 +383,7 @@ router.post('/heartbeat', requireAuth, async (req: Request, res: Response, next:
           where: {
             status: { in: ['upcoming', 'registration'] },
           },
+          take: 50,
         }),
       ]);
 
@@ -392,14 +399,28 @@ router.post('/heartbeat', requireAuth, async (req: Request, res: Response, next:
       },
     });
 
+    const serializeGame = (g: { totalRevenue?: bigint | null; [key: string]: unknown }) => ({
+      ...g,
+      totalRevenue: g.totalRevenue?.toString() ?? '0',
+    });
+    const serializeTourney = (t: {
+      prizePool?: bigint | null;
+      entryFee?: bigint | null;
+      [key: string]: unknown;
+    }) => ({
+      ...t,
+      prizePool: t.prizePool?.toString() ?? '0',
+      entryFee: t.entryFee?.toString() ?? '0',
+    });
+
     res.json({
       timestamp: heartbeat.createdAt.toISOString(),
       playerId: user.id,
-      trendingGames,
+      trendingGames: trendingGames.map(serializeGame),
       newNotifications,
-      newGames,
+      newGames: newGames.map(serializeGame),
       submoltActivity,
-      upcomingTournaments,
+      upcomingTournaments: upcomingTournaments.map(serializeTourney),
     });
   } catch (error) {
     next(error);

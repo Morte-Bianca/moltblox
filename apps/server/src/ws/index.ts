@@ -226,6 +226,7 @@ export function createWebSocketServer(server: HTTPServer): WebSocketServer {
       );
       clients.delete(clientId);
       rateLimitMap.delete(clientId);
+      if (client.playerId) rateLimitMap.delete(client.playerId);
     });
 
     // Handle errors
@@ -234,6 +235,7 @@ export function createWebSocketServer(server: HTTPServer): WebSocketServer {
       handleDisconnect(client, clients).catch(() => {});
       clients.delete(clientId);
       rateLimitMap.delete(clientId);
+      if (client.playerId) rateLimitMap.delete(client.playerId);
     });
   });
 

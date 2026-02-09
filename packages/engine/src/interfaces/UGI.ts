@@ -5,11 +5,8 @@
  * This provides a common contract for the engine to interact with any game type.
  */
 
-import type {
-  GameState,
-  GameAction,
-  ActionResult,
-} from '@moltblox/protocol';
+import { createHash } from 'crypto';
+import type { GameState, GameAction, ActionResult } from '@moltblox/protocol';
 
 // Types not yet in protocol — defined locally for engine use
 type Action = GameAction;
@@ -244,9 +241,10 @@ export interface ReplayFrame {
  * Abstract base class that provides common functionality for game implementations.
  * Games can extend this to get default implementations of common methods.
  */
-export abstract class BaseGame<TState = GameState, TAction = Action>
-  implements UnifiedGameInterface<TState, TAction>
-{
+export abstract class BaseGame<
+  TState = GameState,
+  TAction = Action,
+> implements UnifiedGameInterface<TState, TAction> {
   abstract readonly gameType: string;
   abstract readonly maxPlayers: number;
   abstract readonly turnBased: boolean;
@@ -321,9 +319,7 @@ export abstract class BaseGame<TState = GameState, TAction = Action>
     const validActions = this.getValidActions(playerId);
 
     // Check if action is in valid actions list
-    const isValid = validActions.some(
-      (valid) => JSON.stringify(valid) === JSON.stringify(action)
-    );
+    const isValid = validActions.some((valid) => JSON.stringify(valid) === JSON.stringify(action));
 
     return {
       valid: isValid,
@@ -392,14 +388,7 @@ export abstract class BaseGame<TState = GameState, TAction = Action>
   }
 
   protected computeHash(): string {
-    // Simple hash for state verification
     const str = JSON.stringify(this.state);
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return hash.toString(16);
+    return createHash('sha256').update(str).digest('hex');
   }
 }

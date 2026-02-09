@@ -24,6 +24,12 @@ const RARITY_BADGE: Record<ItemCardProps['rarity'], { label: string; bg: string 
   legendary: { label: 'Legendary', bg: 'bg-yellow-400' },
 };
 
+function safeCssValue(value: string): string {
+  if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value;
+  if (/^https?:\/\//.test(value)) return `url(${encodeURI(value)})`;
+  return '#1a2e33';
+}
+
 export function ItemCard({
   id,
   name,
@@ -89,7 +95,7 @@ export function ItemCard({
         <div
           className="w-full h-full rounded-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
           style={{
-            background: `linear-gradient(135deg, ${image || '#1a2e33'} 0%, #0d1112 100%)`,
+            background: `linear-gradient(135deg, ${safeCssValue(image || '#1a2e33')} 0%, #0d1112 100%)`,
           }}
         />
         {/* Center icon */}

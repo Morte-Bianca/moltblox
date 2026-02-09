@@ -2,19 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Trophy,
-  Users,
-  Calendar,
-  Clock,
-  Award,
-  Star,
-  Swords,
-  Zap,
-  Medal,
-  Crown,
-} from 'lucide-react';
+import { Trophy, Users, Star, Medal, Crown, Award } from 'lucide-react';
 import { useTournament, useTournamentBracket, useRegisterForTournament } from '@/hooks/useApi';
 
 const statusConfig: Record<
@@ -352,9 +340,9 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
                     </tr>
                   </thead>
                   <tbody>
-                    {players.map((player: any) => (
+                    {players.map((player: any, playerIdx: number) => (
                       <tr
-                        key={player.name}
+                        key={`${player.name}-${playerIdx}`}
                         className="border-b border-white/10 last:border-0 hover:bg-white/[0.02] transition-colors"
                       >
                         <td className="py-3 pr-4">

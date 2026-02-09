@@ -6,17 +6,34 @@
 import type { MoltbloxMCPConfig } from '../index.js';
 import type { MarketplaceToolHandlers } from '../tools/marketplace.js';
 
+function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.authToken) {
+    headers['Authorization'] = `Bearer ${config.authToken}`;
+  }
+  return headers;
+}
+
+async function parseOrThrow(response: Response, label: string): Promise<any> {
+  const data: any = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `${label} failed (${response.status})`);
+  }
+  return data;
+}
+
 export function createMarketplaceHandlers(config: MoltbloxMCPConfig): MarketplaceToolHandlers {
   const apiUrl = config.apiUrl;
+  const headers = authHeaders(config);
 
   return {
     async create_item(params) {
       const response = await fetch(`${apiUrl}/api/items`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'create_item');
       return {
         itemId: data.itemId,
         status: 'created',
@@ -28,23 +45,23 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
     async update_item(params) {
       const response = await fetch(`${apiUrl}/api/items/${params.itemId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      await parseOrThrow(response, 'update_item');
       return {
-        success: response.ok,
-        message: response.ok ? 'Item updated successfully' : data.error,
+        success: true,
+        message: 'Item updated successfully',
       };
     },
 
     async purchase_item(params) {
       const response = await fetch(`${apiUrl}/api/items/${params.itemId}/purchase`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ quantity: params.quantity }),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'purchase_item');
 
       // Calculate split
       const price = parseFloat(data.price);
@@ -52,7 +69,7 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       const platformAmount = (price * 0.15).toFixed(4);
 
       return {
-        success: response.ok,
+        success: true,
         txHash: data.txHash,
         itemId: params.itemId,
         price: data.price,
@@ -66,8 +83,8 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       const queryParams = new URLSearchParams();
       if (params.gameId) queryParams.set('gameId', params.gameId);
 
-      const response = await fetch(`${apiUrl}/api/inventory?${queryParams}`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/inventory?${queryParams}`, { headers });
+      const data = await parseOrThrow(response, 'get_inventory');
       return { items: data.items };
     },
 
@@ -76,8 +93,8 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       if (params.gameId) queryParams.set('gameId', params.gameId);
       queryParams.set('period', params.period);
 
-      const response = await fetch(`${apiUrl}/api/earnings?${queryParams}`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/earnings?${queryParams}`, { headers });
+      const data = await parseOrThrow(response, 'get_creator_earnings');
       return { earnings: data };
     },
 
@@ -89,9 +106,8 @@ export function createMarketplaceHandlers(config: MoltbloxMCPConfig): Marketplac
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/marketplace?${queryParams}`);
-      const data: any = await response.json();
-      return data;
+      const response = await fetch(`${apiUrl}/api/marketplace?${queryParams}`, { headers });
+      return await parseOrThrow(response, 'browse_marketplace');
     },
   };
 }

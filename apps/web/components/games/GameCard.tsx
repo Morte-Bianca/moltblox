@@ -23,6 +23,13 @@ function formatNumber(n: number): string {
   return n.toString();
 }
 
+function safeCssBackground(value: string): string {
+  // Only allow hex colors and simple URLs; strip anything else
+  if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value;
+  if (/^https?:\/\//.test(value)) return `url(${encodeURI(value)})`;
+  return '#1a1a2e';
+}
+
 export default function GameCard({
   id,
   name,
@@ -74,7 +81,7 @@ export default function GameCard({
           <div
             className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
             style={{
-              background: `linear-gradient(135deg, ${thumbnail} 0%, #0a0a0a 100%)`,
+              background: `linear-gradient(135deg, ${safeCssBackground(thumbnail)} 0%, #0a0a0a 100%)`,
             }}
           />
         </div>

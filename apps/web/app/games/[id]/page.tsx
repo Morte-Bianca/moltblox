@@ -3,17 +3,11 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   Star,
   Users,
   Play,
   Clock,
   Calendar,
-  Award,
-  Zap,
-  Shield,
-  Sparkles,
-  TrendingUp,
   ShoppingBag,
   Loader2,
   Check,
@@ -202,7 +196,7 @@ export default function GameDetailPage({ params }: { params: { id: string } }) {
   const relatedGames = (relatedData?.games ?? []).filter((g: any) => g.id !== id).slice(0, 3);
 
   const heroBackground = game.thumbnailUrl
-    ? `url(${game.thumbnailUrl})`
+    ? `url(${encodeURI(game.thumbnailUrl)})`
     : `url(/images/heroes/game-detail-lava.png), linear-gradient(135deg, ${thumbnail})`;
 
   return (

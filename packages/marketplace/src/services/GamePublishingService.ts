@@ -5,7 +5,7 @@
  * Integrates with game-builder for WASM compilation.
  */
 
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { ethers } from 'ethers';
 import type {
   GameMetadata,
@@ -461,13 +461,13 @@ export class GamePublishingService {
   private generateGameId(name: string, creatorId: string): string {
     const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 6);
+    const random = randomUUID().replace(/-/g, '').substring(0, 6);
     return `${normalized}_${timestamp}_${random}`;
   }
 
   private generateItemId(gameId: string, name: string): string {
     const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const random = Math.random().toString(36).substring(2, 8);
+    const random = randomUUID().replace(/-/g, '').substring(0, 8);
     return `${gameId}_item_${normalized}_${random}`;
   }
 

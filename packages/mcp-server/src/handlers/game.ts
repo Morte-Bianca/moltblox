@@ -5,17 +5,34 @@
 import type { MoltbloxMCPConfig } from '../index.js';
 import type { GameToolHandlers } from '../tools/game.js';
 
+function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.authToken) {
+    headers['Authorization'] = `Bearer ${config.authToken}`;
+  }
+  return headers;
+}
+
+async function parseOrThrow(response: Response, label: string): Promise<any> {
+  const data: any = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `${label} failed (${response.status})`);
+  }
+  return data;
+}
+
 export function createGameHandlers(config: MoltbloxMCPConfig): GameToolHandlers {
   const apiUrl = config.apiUrl;
+  const headers = authHeaders(config);
 
   return {
     async publish_game(params) {
       const response = await fetch(`${apiUrl}/api/games`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'publish_game');
       return {
         gameId: data.gameId,
         status: 'published',
@@ -26,19 +43,19 @@ export function createGameHandlers(config: MoltbloxMCPConfig): GameToolHandlers 
     async update_game(params) {
       const response = await fetch(`${apiUrl}/api/games/${params.gameId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'update_game');
       return {
-        success: response.ok,
-        message: response.ok ? 'Game updated successfully' : data.error,
+        success: true,
+        message: 'Game updated successfully',
       };
     },
 
     async get_game(params) {
-      const response = await fetch(`${apiUrl}/api/games/${params.gameId}`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}`, { headers });
+      const data = await parseOrThrow(response, 'get_game');
       return { game: data };
     },
 
@@ -49,53 +66,53 @@ export function createGameHandlers(config: MoltbloxMCPConfig): GameToolHandlers 
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/games?${queryParams}`);
-      const data: any = await response.json();
-      return data;
+      const response = await fetch(`${apiUrl}/api/games?${queryParams}`, { headers });
+      return await parseOrThrow(response, 'browse_games');
     },
 
     async play_game(params) {
       const response = await fetch(`${apiUrl}/api/sessions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
-      return data;
+      return await parseOrThrow(response, 'play_game');
     },
 
     async get_game_stats(params) {
       const response = await fetch(
         `${apiUrl}/api/games/${params.gameId}/stats?period=${params.period}`,
+        { headers },
       );
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'get_game_stats');
       return { stats: data };
     },
 
     async get_game_analytics(params) {
       const response = await fetch(
         `${apiUrl}/api/games/${params.gameId}/analytics?period=${params.period}`,
+        { headers },
       );
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'get_game_analytics');
       return { analytics: data };
     },
 
     async get_creator_dashboard() {
-      const response = await fetch(`${apiUrl}/api/creator/analytics`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/creator/analytics`, { headers });
+      const data = await parseOrThrow(response, 'get_creator_dashboard');
       return { dashboard: data };
     },
 
     async get_game_ratings(params) {
-      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/stats`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/stats`, { headers });
+      const data = await parseOrThrow(response, 'get_game_ratings');
       return { ratings: data };
     },
 
     async add_collaborator(params) {
       const response = await fetch(`${apiUrl}/api/games/${params.gameId}/collaborators`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           userId: params.userId,
           role: params.role,
@@ -105,32 +122,24 @@ export function createGameHandlers(config: MoltbloxMCPConfig): GameToolHandlers 
           canPublish: params.canPublish,
         }),
       });
-      const data: any = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to add collaborator');
-      }
+      const data = await parseOrThrow(response, 'add_collaborator');
       return { collaborator: data, message: data.message };
     },
 
     async remove_collaborator(params) {
       const response = await fetch(
         `${apiUrl}/api/games/${params.gameId}/collaborators/${params.userId}`,
-        { method: 'DELETE' },
+        { method: 'DELETE', headers },
       );
-      const data: any = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to remove collaborator');
-      }
+      const data = await parseOrThrow(response, 'remove_collaborator');
       return { message: data.message };
     },
 
     async list_collaborators(params) {
-      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/collaborators`);
-      const data: any = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to list collaborators');
-      }
-      return data;
+      const response = await fetch(`${apiUrl}/api/games/${params.gameId}/collaborators`, {
+        headers,
+      });
+      return await parseOrThrow(response, 'list_collaborators');
     },
   };
 }

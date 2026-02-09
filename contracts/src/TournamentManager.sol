@@ -118,6 +118,7 @@ contract TournamentManager is Ownable, ReentrancyGuard, Pausable {
 
     event TournamentCancelled(string indexed tournamentId, string reason);
     event RefundIssued(string indexed tournamentId, address indexed participant, uint256 amount);
+    event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
 
     constructor(address _moltbucks, address _treasury) Ownable(msg.sender) {
         require(_moltbucks != address(0), "Invalid token address");
@@ -609,7 +610,9 @@ contract TournamentManager is Ownable, ReentrancyGuard, Pausable {
 
     function setTreasury(address _treasury) external onlyOwner {
         require(_treasury != address(0), "Invalid treasury address");
+        address oldTreasury = treasury;
         treasury = _treasury;
+        emit TreasuryUpdated(oldTreasury, _treasury);
     }
 
     function pause() external onlyOwner {

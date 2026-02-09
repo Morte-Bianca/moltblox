@@ -21,7 +21,20 @@ const wss = createWebSocketServer(server);
 
 (async () => {
   // Connect Redis before starting the server
-  await redis.connect().catch(err => console.warn('[Redis] Could not connect:', err.message));
+  await redis.connect().catch((err) => console.warn('[Redis] Could not connect:', err.message));
+
+  // Mark any stale active sessions as abandoned (from previous crash/restart)
+  try {
+    const { count } = await prisma.gameSession.updateMany({
+      where: { status: 'active' },
+      data: { status: 'abandoned', endedAt: new Date() },
+    });
+    if (count > 0) {
+      console.log(`[DB] Marked ${count} stale active session(s) as abandoned`);
+    }
+  } catch (err) {
+    console.warn('[DB] Could not clean stale sessions:', err);
+  }
 
   // Start listening
   server.listen(PORT, HOST, () => {
@@ -66,3 +79,13 @@ function shutdown(signal: string): void {
 
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled rejection:', reason);
+  shutdown('unhandledRejection');
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err);
+  shutdown('uncaughtException');
+});

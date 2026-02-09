@@ -23,6 +23,7 @@ const router: Router = Router();
 function serializeTournament(tournament: {
   prizePool?: bigint | null;
   entryFee?: bigint | null;
+  game?: { totalRevenue?: bigint | null; [key: string]: unknown } | null;
   participants?: {
     entryFeePaid?: bigint | null;
     prizeWon?: bigint | null;
@@ -36,10 +37,15 @@ function serializeTournament(tournament: {
     prizeWon: p.prizeWon?.toString() ?? null,
   }));
 
+  const game = tournament.game
+    ? { ...tournament.game, totalRevenue: tournament.game.totalRevenue?.toString() ?? '0' }
+    : tournament.game;
+
   return {
     ...tournament,
     prizePool: tournament.prizePool?.toString() ?? '0',
     entryFee: tournament.entryFee?.toString() ?? '0',
+    ...(game !== undefined && { game }),
     ...(participants && { participants }),
   };
 }

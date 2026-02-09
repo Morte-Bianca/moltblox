@@ -484,43 +484,47 @@ router.post(
         return;
       }
 
-      // Upsert the rating
-      await prisma.gameRating.upsert({
-        where: {
-          gameId_userId: {
+      // Wrap rating upsert + aggregate recalculation + game update in a transaction
+      // to prevent concurrent ratings from producing stale averageRating values
+      const updatedGame = await prisma.$transaction(async (tx) => {
+        // Upsert the rating
+        await tx.gameRating.upsert({
+          where: {
+            gameId_userId: {
+              gameId: id,
+              userId: user.id,
+            },
+          },
+          create: {
             gameId: id,
             userId: user.id,
+            rating,
+            review: sanitizedReview,
           },
-        },
-        create: {
-          gameId: id,
-          userId: user.id,
-          rating,
-          review: sanitizedReview,
-        },
-        update: {
-          rating,
-          review: sanitizedReview,
-        },
-      });
+          update: {
+            rating,
+            review: sanitizedReview,
+          },
+        });
 
-      // Recalculate averageRating and ratingCount on the game
-      const aggregation = await prisma.gameRating.aggregate({
-        where: { gameId: id },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
+        // Recalculate averageRating and ratingCount on the game
+        const aggregation = await tx.gameRating.aggregate({
+          where: { gameId: id },
+          _avg: { rating: true },
+          _count: { rating: true },
+        });
 
-      const updatedGame = await prisma.game.update({
-        where: { id },
-        data: {
-          averageRating: aggregation._avg.rating ?? 0,
-          ratingCount: aggregation._count.rating,
-        },
-        select: {
-          averageRating: true,
-          ratingCount: true,
-        },
+        return tx.game.update({
+          where: { id },
+          data: {
+            averageRating: aggregation._avg.rating ?? 0,
+            ratingCount: aggregation._count.rating,
+          },
+          select: {
+            averageRating: true,
+            ratingCount: true,
+          },
+        });
       });
 
       res.json({

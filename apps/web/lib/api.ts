@@ -8,6 +8,10 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
+if (typeof window !== 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
+  console.warn('[Moltblox] NEXT_PUBLIC_API_URL is not set. API calls will target localhost:3001.');
+}
+
 // ── API Response Types ───────────────────────────────────────────────
 // Structured response types live in @/types/api.ts.
 // Games, user profiles, and platform stats use typed responses.

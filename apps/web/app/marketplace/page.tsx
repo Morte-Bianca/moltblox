@@ -18,6 +18,12 @@ function weiToMolt(wei: string | number): number {
   }
 }
 
+function safeCssValue(value: string): string {
+  if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value;
+  if (/^https?:\/\//.test(value)) return `url(${encodeURI(value)})`;
+  return '#1a2e33';
+}
+
 export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
@@ -79,7 +85,7 @@ export default function MarketplacePage() {
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: `linear-gradient(135deg, ${featuredItem.image || '#1a2e33'} 0%, #0d1112 100%)`,
+                        background: `linear-gradient(135deg, ${safeCssValue(featuredItem.image || '#1a2e33')} 0%, #0d1112 100%)`,
                       }}
                     />
                   ) : (

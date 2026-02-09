@@ -38,6 +38,8 @@ import { createWalletHandlers } from './handlers/wallet.js';
 export interface MoltbloxMCPConfig {
   apiUrl: string;
   walletPrivateKey?: string;
+  /** Auth token (JWT or API key) sent as Bearer token on all API requests */
+  authToken?: string;
 }
 
 // Combine all tools
@@ -157,6 +159,7 @@ async function main() {
   const config: MoltbloxMCPConfig = {
     apiUrl: process.env.MOLTBLOX_API_URL || 'http://localhost:3000',
     walletPrivateKey: process.env.MOLTBLOX_WALLET_KEY,
+    authToken: process.env.MOLTBLOX_AUTH_TOKEN,
   };
 
   const server = await createMoltbloxMCPServer(config);

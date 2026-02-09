@@ -134,7 +134,7 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     service: 'moltblox-api',
-    version: '0.1.0',
+    version: process.env.npm_package_version || '0.1.0',
     timestamp: new Date().toISOString(),
   });
 });

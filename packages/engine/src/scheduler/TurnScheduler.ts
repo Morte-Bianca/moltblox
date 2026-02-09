@@ -5,6 +5,7 @@
  * Supports both turn-based and real-time games with latency compensation.
  */
 
+import { createHash } from 'crypto';
 import type { GameAction as Action } from '@moltblox/protocol';
 
 // =============================================================================
@@ -126,10 +127,7 @@ export class TurnScheduler {
     if (playerId && this.config.networkCompensation) {
       const profile = this.latencyProfiles.get(playerId);
       if (profile) {
-        const adjustment = Math.min(
-          profile.averageLatency,
-          this.config.maxLatencyAllowance
-        );
+        const adjustment = Math.min(profile.averageLatency, this.config.maxLatencyAllowance);
         deadline += adjustment;
       }
     }
@@ -156,11 +154,7 @@ export class TurnScheduler {
   /**
    * Submit an action for a player
    */
-  submitAction(
-    playerId: string,
-    action: Action,
-    clientTimestamp?: number
-  ): boolean {
+  submitAction(playerId: string, action: Action, clientTimestamp?: number): boolean {
     if (!this.players.has(playerId)) {
       return false;
     }
@@ -177,9 +171,7 @@ export class TurnScheduler {
     // Calculate adjusted timestamp for fairness
     const profile = this.latencyProfiles.get(playerId);
     const latency = profile?.averageLatency || 0;
-    const adjustedTimestamp = this.config.networkCompensation
-      ? clientTs + latency
-      : now;
+    const adjustedTimestamp = this.config.networkCompensation ? clientTs + latency : now;
 
     const pending: PendingAction = {
       playerId,
@@ -330,14 +322,7 @@ export class TurnScheduler {
 
   private hashAction(action: Action, nonce: string): string {
     const data = JSON.stringify({ action, nonce });
-    // Simple hash - in production use crypto
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return hash.toString(16);
+    return createHash('sha256').update(data).digest('hex');
   }
 
   private sleep(ms: number): Promise<void> {

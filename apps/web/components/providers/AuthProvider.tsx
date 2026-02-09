@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -39,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const authAttemptedRef = useRef<string | null>(null);
 
   const authenticate = useCallback(async () => {
     if (!address || !chainId || isAuthenticating) return;
@@ -96,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // When wallet connects, try to authenticate
   useEffect(() => {
     if (isConnected && address && !user && !isAuthenticating) {
+      // Prevent re-triggering auth for the same address after a failed attempt
+      if (authAttemptedRef.current === address) return;
+      authAttemptedRef.current = address;
       // Check if already authenticated via cookie first
       api
         .getMe()
@@ -110,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // When wallet disconnects, clear auth
     if (!isConnected && user) {
+      authAttemptedRef.current = null;
       logout();
     }
   }, [isConnected, address]);

@@ -1,20 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Search, SlidersHorizontal, Gamepad2, Star, TrendingUp, Play } from 'lucide-react';
+import { Search, SlidersHorizontal, Gamepad2 } from 'lucide-react';
 import GameCard from '@/components/games/GameCard';
-import { useGames, useFeaturedGames, useTrendingGames } from '@/hooks/useApi';
+import { useGames } from '@/hooks/useApi';
 import type { GameResponse } from '@/types/api';
-
-const EXAMPLE_GAMES = [
-  { slug: 'clicker', name: 'Click Race', desc: 'Race to 100 clicks', icon: '🖱️' },
-  { slug: 'puzzle', name: 'Match Pairs', desc: '4x4 memory card game', icon: '🧩' },
-  { slug: 'tower-defense', name: 'Tower Defense', desc: 'Place towers, survive waves', icon: '🏰' },
-  { slug: 'rpg', name: 'Dungeon Crawl', desc: 'Turn-based combat adventure', icon: '⚔️' },
-  { slug: 'rhythm', name: 'Beat Blaster', desc: 'Hit notes to the beat', icon: '🎵' },
-  { slug: 'platformer', name: 'Voxel Runner', desc: 'Jump, run, collect coins', icon: '🏃' },
-] as const;
 
 const CATEGORIES = ['All', 'Arcade', 'Puzzle', 'Multiplayer', 'Casual', 'Competitive'] as const;
 const SORT_OPTIONS = ['Trending', 'Newest', 'Top Rated', 'Most Played'] as const;
@@ -32,9 +22,6 @@ export default function GamesPage() {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(8);
 
-  const { data: featuredData } = useFeaturedGames(6);
-  const { data: trendingData } = useTrendingGames(6);
-
   const { data, isLoading, isError } = useGames({
     genre: category !== 'All' ? category.toLowerCase() : undefined,
     sort: SORT_MAP[sortBy] || 'popular',
@@ -42,8 +29,6 @@ export default function GamesPage() {
     limit: visibleCount,
   });
 
-  const featuredGames: GameResponse[] = featuredData?.games ?? [];
-  const trendingGames: GameResponse[] = trendingData?.games ?? [];
   const allGames: GameResponse[] = data?.games ?? [];
   const visibleGames = allGames;
   const hasMore = data?.pagination?.total ? allGames.length < data.pagination.total : false;

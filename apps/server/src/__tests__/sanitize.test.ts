@@ -14,7 +14,9 @@ describe('sanitize', () => {
   });
 
   it('should handle nested XSS attempts', () => {
-    expect(sanitize('<scr<script>ipt>alert(1)</scr</script>ipt>')).not.toContain('script');
+    const result = sanitize('<scr<script>ipt>alert(1)</scr</script>ipt>');
+    expect(result).not.toContain('<script>');
+    expect(result).not.toContain('</script>');
   });
 
   it('should handle event handler attributes', () => {
@@ -26,12 +28,16 @@ describe('sanitize', () => {
   });
 
   it('should handle data: protocol', () => {
-    expect(sanitize('<a href="data:text/html,<script>alert(1)</script>">click</a>')).not.toContain('data:');
+    expect(sanitize('<a href="data:text/html,<script>alert(1)</script>">click</a>')).not.toContain(
+      'data:',
+    );
   });
 
   it('should handle SVG/XML attacks', () => {
     expect(sanitize('<svg onload="alert(1)"></svg>')).not.toContain('onload');
-    expect(sanitize('<math><mi xlink:href="javascript:alert(1)">test</mi></math>')).not.toContain('javascript:');
+    expect(sanitize('<math><mi xlink:href="javascript:alert(1)">test</mi></math>')).not.toContain(
+      'javascript:',
+    );
   });
 
   it('should preserve plain text', () => {

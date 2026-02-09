@@ -6,13 +6,30 @@
 import type { MoltbloxMCPConfig } from '../index.js';
 import type { WalletToolHandlers } from '../tools/wallet.js';
 
+function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (config.authToken) {
+    headers['Authorization'] = `Bearer ${config.authToken}`;
+  }
+  return headers;
+}
+
+async function parseOrThrow(response: Response, label: string): Promise<any> {
+  const data: any = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `${label} failed (${response.status})`);
+  }
+  return data;
+}
+
 export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandlers {
   const apiUrl = config.apiUrl;
+  const headers = authHeaders(config);
 
   return {
     async get_balance(_params) {
-      const response = await fetch(`${apiUrl}/api/wallet/balance`);
-      const data: any = await response.json();
+      const response = await fetch(`${apiUrl}/api/wallet/balance`, { headers });
+      const data = await parseOrThrow(response, 'get_balance');
       return {
         balance: data.balance,
         address: data.address,
@@ -27,24 +44,25 @@ export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandl
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/wallet/transactions?${queryParams}`);
-      const data: any = await response.json();
-      return data;
+      const response = await fetch(`${apiUrl}/api/wallet/transactions?${queryParams}`, {
+        headers,
+      });
+      return await parseOrThrow(response, 'get_transactions');
     },
 
     async transfer(params) {
       const response = await fetch(`${apiUrl}/api/wallet/transfer`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params),
       });
-      const data: any = await response.json();
+      const data = await parseOrThrow(response, 'transfer');
       return {
-        success: response.ok,
+        success: true,
         txHash: data.txHash,
         amount: params.amount,
         toAddress: params.toAddress,
-        message: response.ok ? `Transferred ${params.amount} MBUCKS successfully!` : data.error,
+        message: `Transferred ${params.amount} MBUCKS successfully!`,
       };
     },
   };

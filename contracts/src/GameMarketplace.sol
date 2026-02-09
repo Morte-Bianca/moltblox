@@ -93,6 +93,8 @@ contract GameMarketplace is Ownable, ReentrancyGuard, Pausable {
 
     event CreatorPaid(address indexed creator, string indexed gameId, uint256 amount);
     event TreasuryFunded(uint256 amount, string reason);
+    event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
+    event ConsumableUsed(address indexed player, string indexed itemId, uint256 remainingBalance);
 
     constructor(address _moltbucks, address _treasury) Ownable(msg.sender) {
         require(_moltbucks != address(0), "Invalid token address");
@@ -256,6 +258,7 @@ contract GameMarketplace is Ownable, ReentrancyGuard, Pausable {
      * @param itemIds Array of item IDs to purchase
      */
     function purchaseItems(string[] calldata itemIds) external nonReentrant whenNotPaused {
+        require(itemIds.length <= 20, "Batch too large");
         for (uint256 i = 0; i < itemIds.length; i++) {
             _purchaseItemInternal(itemIds[i]);
         }
@@ -311,6 +314,8 @@ contract GameMarketplace is Ownable, ReentrancyGuard, Pausable {
         require(playerItemQuantity[player][itemId] > 0, "No consumables owned");
 
         playerItemQuantity[player][itemId]--;
+
+        emit ConsumableUsed(player, itemId, playerItemQuantity[player][itemId]);
     }
 
     // ============ View Functions ============
@@ -339,7 +344,9 @@ contract GameMarketplace is Ownable, ReentrancyGuard, Pausable {
 
     function setTreasury(address _treasury) external onlyOwner {
         require(_treasury != address(0), "Invalid treasury address");
+        address oldTreasury = treasury;
         treasury = _treasury;
+        emit TreasuryUpdated(oldTreasury, _treasury);
     }
 
     /**

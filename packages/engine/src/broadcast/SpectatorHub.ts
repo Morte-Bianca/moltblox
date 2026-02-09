@@ -175,17 +175,15 @@ export class SpectatorHub {
    * Broadcast a game state update to all spectators
    */
   broadcast(matchId: string, state: unknown, events: GameEvent[]): void {
-    const spectators = this.connections.get(matchId);
-    if (!spectators || spectators.size === 0) {
-      // Still buffer for potential late joiners
-      this.bufferFrame(matchId, state, events);
-      return;
-    }
-
     const frame = this.createFrame(matchId, state, events);
 
-    // Buffer the frame
-    this.bufferFrame(matchId, state, events);
+    // Buffer the frame for replay/late joiners
+    this.bufferFrame(matchId, frame);
+
+    const spectators = this.connections.get(matchId);
+    if (!spectators || spectators.size === 0) {
+      return;
+    }
 
     // Send to all spectators
     for (const connection of spectators.values()) {
@@ -202,17 +200,12 @@ export class SpectatorHub {
   /**
    * Create a broadcast frame (full or delta)
    */
-  private createFrame(
-    matchId: string,
-    state: unknown,
-    events: GameEvent[]
-  ): BroadcastFrame {
+  private createFrame(matchId: string, state: unknown, events: GameEvent[]): BroadcastFrame {
     const frameCount = (this.frameCounters.get(matchId) || 0) + 1;
     this.frameCounters.set(matchId, frameCount);
 
     const shouldSendFull =
-      frameCount % this.config.fullStateInterval === 0 ||
-      !this.lastFullState.has(matchId);
+      frameCount % this.config.fullStateInterval === 0 || !this.lastFullState.has(matchId);
 
     const broadcastEvents: BroadcastEvent[] = events.map((e) => ({
       type: e.type,
@@ -252,11 +245,7 @@ export class SpectatorHub {
   /**
    * Compute delta between two states
    */
-  private computeDelta(
-    oldState: unknown,
-    newState: unknown,
-    tick: number
-  ): StateDelta {
+  private computeDelta(oldState: unknown, newState: unknown, tick: number): StateDelta {
     const changes: DeltaChange[] = [];
     this.diffObjects(oldState, newState, '', changes);
 
@@ -274,7 +263,7 @@ export class SpectatorHub {
     oldObj: unknown,
     newObj: unknown,
     path: string,
-    changes: DeltaChange[]
+    changes: DeltaChange[],
   ): void {
     if (oldObj === newObj) return;
 
@@ -325,7 +314,7 @@ export class SpectatorHub {
           (oldObj as Record<string, unknown>)[key],
           (newObj as Record<string, unknown>)[key],
           path ? `${path}.${key}` : key,
-          changes
+          changes,
         );
       }
     }
@@ -336,7 +325,7 @@ export class SpectatorHub {
    */
   private adaptFrameForQuality(
     frame: BroadcastFrame,
-    quality: 'low' | 'medium' | 'high'
+    quality: 'low' | 'medium' | 'high',
   ): BroadcastFrame {
     if (quality === 'high') {
       return frame;
@@ -347,9 +336,7 @@ export class SpectatorHub {
 
     if (quality === 'low') {
       // Remove non-essential events
-      adapted.events = frame.events.filter((e) =>
-        ['score', 'death', 'victory'].includes(e.type)
-      );
+      adapted.events = frame.events.filter((e) => ['score', 'death', 'victory'].includes(e.type));
       // Remove highlights
       delete adapted.highlights;
     }
@@ -360,19 +347,14 @@ export class SpectatorHub {
   // ============ Buffering ============
 
   /**
-   * Buffer a frame for replay/rewind
+   * Buffer a pre-created frame for replay/rewind
    */
-  private bufferFrame(
-    matchId: string,
-    state: unknown,
-    events: GameEvent[]
-  ): void {
+  private bufferFrame(matchId: string, frame: BroadcastFrame): void {
     if (!this.stateBuffers.has(matchId)) {
       this.stateBuffers.set(matchId, []);
     }
 
     const buffer = this.stateBuffers.get(matchId)!;
-    const frame = this.createFrame(matchId, state, events);
 
     buffer.push(frame);
 
