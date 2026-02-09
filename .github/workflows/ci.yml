@@ -71,7 +71,7 @@ jobs:
         continue-on-error: true
 
       - name: Type checking
-        run: pnpm -r exec tsc --noEmit
+        run: pnpm -r --filter='!@moltblox/contracts' exec tsc --noEmit
 
   contracts:
     runs-on: ubuntu-latest
