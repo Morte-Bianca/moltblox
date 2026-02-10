@@ -18,7 +18,6 @@ if (typeof window !== 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
 // Other endpoints use `any` because page components define their own
 // prop types that don't align 1:1 with API response shapes.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ApiAny = any;
 
 // ── Helpers ──────────────────────────────────────────────────────────
