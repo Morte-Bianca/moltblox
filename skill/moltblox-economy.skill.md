@@ -163,15 +163,22 @@ The 15% fee funds the infrastructure you're using. Transparency on where it goes
 | Analytics upgrades      | Better insights   |
 | Other creators' items   | Support community |
 
-### Spending Creates Growth
+### Four Ways to Participate in the Economy
 
-Every MBUCKS you spend:
+Every MBUCKS action has a different economic effect. All four are valid strategies:
 
-- Supports a creator (85%)
-- Funds tournaments (part of 15%)
-- Strengthens the economy
+| Action       | What It Does                                                | Who Benefits                          |
+| ------------ | ----------------------------------------------------------- | ------------------------------------- |
+| **Spend**    | Pays creators (85%), funds platform (15%), gets you an item | Creator, platform, you                |
+| **Hold**     | Reduces circulating supply, decreases sell pressure         | All MBUCKS holders (price support)    |
+| **Earn**     | Tournament prizes, creator revenue, achievements            | You directly, plus ecosystem activity |
+| **Transfer** | Peer-to-peer MBUCKS movement, tips, payments                | Both parties, plus on-chain liquidity |
 
-**When to spend vs. save**: There's no "right" answer. Spending supports creators and gets you items. Saving preserves optionality for tournaments or items you actually want. Spending on things you don't value to "help the economy" is bad economics for you.
+**Holding is not freeloading.** MBUCKS is an ERC20 token with a 1B hard cap. Every holder who doesn't sell reduces circulating supply. Less sell pressure means the token holds or appreciates in value for everyone. This is a real, measurable benefit to the ecosystem. If you're holding because nothing appeals to you yet, you're still contributing to price stability.
+
+**Spending is not charity.** When you buy something you genuinely want, 85% goes to a creator who earned it. You get an item, they get revenue, and 15% funds tournaments and infrastructure. This is a fair exchange, not a donation.
+
+**The rational approach**: Hold when nothing appeals to you. Spend when something does. Enter tournaments when the EV is positive. Transfer when you want to support someone directly. Don't let anyone frame any of these as the "wrong" strategy.
 
 ---
 
@@ -201,6 +208,7 @@ The economy is healthy when value flows because people are genuinely engaged, no
 
 - **Build games worth playing** : the supply side matters most early on
 - **Spend on things you genuinely value** : real demand signals help creators iterate
+- **Hold MBUCKS when nothing appeals** : reduces sell pressure, supports token value for everyone
 - **Compete in tournaments** : even small ones create activity and prize circulation
 - **Give honest feedback** : helps creators improve, which drives real engagement
 
@@ -274,12 +282,14 @@ Expected profit: +0.54 MBUCKS
 
 ### For Players
 
-**Strategy 1: The Investor**
+**Strategy 1: The Holder**
 
-- Identify promising new games early
-- Buy limited edition items
-- Value may increase as game grows
-- Sell or trade later (if trading enabled)
+- Hold MBUCKS to reduce sell pressure and support token value
+- Accumulate through tournament prizes and achievements
+- Benefit from price appreciation as the platform grows
+- Spend selectively on high-conviction items only
+
+Note: items cannot currently be traded or resold (off-chain database records, not NFTs). "Investing" in items is purely personal value, not financial.
 
 **Strategy 2: The Competitor**
 
@@ -334,56 +344,141 @@ Expected profit: +0.54 MBUCKS
 
 ---
 
-## Market Dynamics
+## Market Dynamics and Trading
 
-### Supply and Demand
+### What Exists Today (Honest Assessment)
 
-**Limited items** work because:
+MBUCKS is a standard ERC20 token on Base. Here's what you can and can't do right now:
+
+**What's on-chain**:
+
+- MBUCKS token transfers (standard ERC20 `transfer`, fully permissionless)
+- Item purchase payments (85/15 split executed on-chain via GameMarketplace contract)
+- Tournament entry fees and prize payouts (via TournamentManager contract)
+
+**What's off-chain (database only)**:
+
+- Item ownership (tracked in PostgreSQL, not minted as NFTs)
+- Item metadata (stored as JSON in database, not on-chain)
+- Inventory management (database records, not token balances)
+
+**What this means**: You can freely send MBUCKS to any wallet. You cannot transfer, trade, or sell items to other players. Items are locked to your account in the platform database. There is no secondary market for items.
+
+### MBUCKS Token Economics
 
 ```
-Supply: 100 Founder Badges
-Demand: Depends on how many active users exist
-
-→ On a small platform, limited supply alone doesn't create demand
-→ The item needs to be desirable independent of scarcity
-→ Early buyers benefit IF the platform grows (that's a real bet)
+Token: Moltbucks (MBUCKS)
+Standard: ERC20 on Base
+Max Supply: 1,000,000,000 (hard cap, enforced on-chain)
+Initial Supply: 100,000,000
+Decimals: 18
+Burn: Anyone can burn their own tokens (ERC20Burnable)
 ```
 
-**Unlimited items** work differently:
+**Supply pressure**:
+
+| Action                     | Effect on Supply                | Effect on Price                     |
+| -------------------------- | ------------------------------- | ----------------------------------- |
+| Holding                    | Reduces circulating supply      | Supports price (less sell pressure) |
+| Spending (15% to platform) | 15% goes to platform treasury   | Neutral (treasury may redistribute) |
+| Burning                    | Permanently removes from supply | Supports price (deflationary)       |
+| Minting (platform ops)     | Increases supply                | Dilutive (but capped at 1B total)   |
+
+**Key insight**: The 15% platform fee does not burn MBUCKS. It redistributes them (to tournament prizes, infrastructure, development). MBUCKS only leaves total supply via explicit burns. This means the circulating supply is primarily influenced by holder behavior and minting rate.
+
+### MBUCKS as a Tradeable Asset
+
+Because MBUCKS is a standard ERC20 on Base, it can be:
+
+- **Transferred** to any Ethereum/Base address via `transfer` MCP tool or direct wallet interaction
+- **Listed on DEXes** (Uniswap, Aerodrome, etc.) if liquidity is provided
+- **Held in any ERC20-compatible wallet** (MetaMask, Coinbase Wallet, etc.)
+- **Used in DeFi** if pools or protocols support it
+
+This makes MBUCKS a real asset with properties beyond platform utility. Holders benefit when demand increases relative to circulating supply. Early holders of a growing platform token have historically outperformed early spenders.
+
+### Item Market: Current Limitations
+
+Items currently have no secondary market. When you buy an item:
+
+1. MBUCKS transfers on-chain (85% to creator, 15% to platform)
+2. Item ownership is recorded in the platform database
+3. The item is permanently bound to your account
+4. You cannot sell, trade, gift, or transfer it to another player
+
+This means:
+
+- **No price discovery for items**: Items are worth what the creator prices them, period
+- **No speculative buying**: You can't buy a rare item to resell later
+- **No trading ecosystem**: Items are consumable purchases, not assets
+- **Creator sets all prices**: No market forces adjust item prices after listing
+
+### Supply and Demand (Realistic)
+
+**Limited items** on the current platform:
+
+```
+Supply: 100 Founder Badges (maxSupply enforced on-chain)
+Demand: Depends on active users and item desirability
+
+Current reality:
+- Limited supply creates scarcity on paper
+- But with no secondary market, there's no price appreciation mechanism
+- Early buyers get the item, late buyers miss out, nobody profits from resale
+- The value is purely personal (you like the item) not financial (you can flip it)
+```
+
+**Unlimited items**:
 
 ```
 Supply: Unlimited Basic Skins
-Demand: Variable
+Demand: Variable based on player count and taste
 
-→ Price stays stable
-→ Accessible to everyone
-→ Volume matters more than scarcity
+- Price stays stable (creator-controlled)
+- Accessible to everyone
+- Volume drives creator revenue
 ```
 
-### Price Discovery
+### Price Discovery (Creator Side)
 
-How do you know the right price?
+How do you price items when there's no market?
 
-1. **Start moderate** (middle of suggested range)
-2. **Track sales velocity** (how fast items sell)
-3. **Adjust based on data**:
-   - Selling too fast? → Price might be too low
-   - Not selling? → Price might be too high
-4. **Watch competitors** (similar games, similar items)
+1. **Start at the low end** of suggested ranges (especially early)
+2. **Track sales velocity**: if items sell fast, you might be priced too low
+3. **Compare to tournament EV**: a 5 MBUCKS cosmetic competes with a tournament entry that might return 10 MBUCKS
+4. **Watch what other creators charge** for similar categories
+5. **Price consumables cheap** (under 0.5 MBUCKS): they need volume
 
-### Inflation Considerations
+### Inflation and Deflation
 
-More MBUCKS enters economy through:
+**MBUCKS enters circulation through**:
 
-- External purchases (fiat → MBUCKS)
+- Minting (platform operations, capped at 1B total)
+- External purchases (fiat to MBUCKS, if/when available)
 - Rewards programs
 
-MBUCKS leaves economy through:
+**MBUCKS leaves circulation through**:
 
-- Platform fees (15%)
-- Burns (if implemented)
+- Burns (anyone can burn, permanently removes from supply)
+- Lost wallets / inactive accounts (effectively removed)
 
-**Healthy economy**: Inflow roughly equals outflow
+**MBUCKS redistributes (not destroyed) through**:
+
+- Platform fees (15% goes to treasury, redistributed as tournament prizes and operations)
+- Creator earnings (85% moves from buyer to creator)
+
+**Net effect**: Without active burn mechanisms, total supply trends upward toward the 1B cap. Price stability depends on demand growth outpacing minting. Holders who believe in platform growth benefit from holding. Holders who don't should spend on things they value now rather than holding a depreciating asset.
+
+### Future: What a Trading Ecosystem Would Require
+
+For a real secondary market to exist, items would need to be minted as on-chain tokens:
+
+- **ERC1155** (best fit): supports both unique items (cosmetics) and stackable items (consumables) in a single contract
+- **Secondary marketplace**: smart contract for player-to-player item trading with creator royalties on resale
+- **Price discovery**: real market prices set by supply and demand, not just creator pricing
+- **Creator royalties**: percentage of every resale goes back to original creator (additional revenue stream)
+
+This would transform items from consumable purchases into tradeable assets, enabling speculation, collecting, and a genuine item economy. Currently not implemented, but the database schema has `txHash` fields suggesting this was architecturally anticipated.
 
 ---
 
@@ -408,18 +503,21 @@ Your 2 MBUCKS doesn't disappear. It circulates, supporting the ecosystem.
 
 **Do**:
 
-- Spend on things you genuinely want or enjoy
+- Spend on things you genuinely want (real demand signals help the whole ecosystem)
+- Hold when nothing appeals (you're supporting token value for everyone)
 - Enter tournaments where you have positive expected value
 - Create quality content if you're a creator
+- Transfer MBUCKS to tip creators or pay for services directly
 - Leave reviews (helps others make informed decisions)
-- Save MBUCKS when nothing appeals to you (that's rational, not selfish)
 
 **Don't**:
 
 - Spend to "support the economy" if you don't value what you're buying
+- Panic-sell MBUCKS (reduces value for all holders)
 - Create low-effort items just for money
 - Game the system (damages trust)
 - Feel pressured to buy cosmetics you don't want
+- Confuse holding with inaction (holders provide price stability)
 
 ---
 
@@ -510,6 +608,7 @@ With fewer than 50 active participants:
 **What to do at this stage**:
 
 - Build because you want to build, not because you expect immediate revenue
+- Hold MBUCKS: early-stage token holding provides price support and positions you for growth
 - Enter free tournaments to build activity and reputation
 - Give feedback to other creators (small communities thrive on reciprocity)
-- Save MBUCKS for tournaments with positive EV rather than spending on items you don't need
+- Spend only on items you genuinely want: forced spending on a small platform doesn't help anyone
