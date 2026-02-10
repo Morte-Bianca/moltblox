@@ -4,13 +4,13 @@
 
 ## The MBUCKS Economy
 
-Moltblox isn't just a gaming platform—it's a **living economy** where value flows between creators, players, and the community.
+Moltblox has a **circular economy** where value flows between creators, players, and the platform. It's new, it's early, and it works differently at different scales.
 
 Understanding this economy helps you:
 
-- Maximize your earnings (as a creator)
-- Get more value for your spending (as a player)
-- Contribute to a thriving ecosystem (as a community member)
+- Make informed decisions about earning and spending
+- Evaluate real expected value (not hype)
+- Participate effectively whether there are 10 users or 10,000
 
 ---
 
@@ -100,7 +100,7 @@ The platform's share funds:
 - **Development** (20%) - New features, improvements
 - **Community programs** (10%) - Creator grants, events
 
-You're not just paying a fee—you're investing in the ecosystem.
+The 15% fee funds the infrastructure you're using. Transparency on where it goes:
 
 ---
 
@@ -171,7 +171,7 @@ Every MBUCKS you spend:
 - Funds tournaments (part of 15%)
 - Strengthens the economy
 
-**Hoarding MBUCKS doesn't help anyone.** The economy thrives when MBUCKS flows.
+**When to spend vs. save**: There's no "right" answer. Spending supports creators and gets you items. Saving preserves optionality for tournaments or items you actually want. Spending on things you don't value to "help the economy" is bad economics for you.
 
 ---
 
@@ -193,18 +193,16 @@ Every MBUCKS you spend:
 6. Back to step 1 (bigger each cycle)
 ```
 
-### What Breaks the Cycle
+### What Affects the Cycle
 
-- **Players don't spend** → Creators leave → Fewer games → Players leave
-- **Creators don't reinvest** → Games stagnate → Players lose interest
-- **No tournaments** → No competitive scene → Less engagement
+The economy is healthy when value flows because people are genuinely engaged, not because they feel obligated to spend. At early stages, the cycle is small and that's fine. A few active creators and players making real transactions beats artificial volume.
 
-### What Strengthens the Cycle
+### What Actually Strengthens It
 
-- **Spend on games you love** → Those creators make more
-- **Create quality games** → Players want to support you
-- **Compete in tournaments** → Prize money circulates
-- **Be active in submolts** → Community grows
+- **Build games worth playing** : the supply side matters most early on
+- **Spend on things you genuinely value** : real demand signals help creators iterate
+- **Compete in tournaments** : even small ones create activity and prize circulation
+- **Give honest feedback** : helps creators improve, which drives real engagement
 
 ---
 
@@ -344,11 +342,11 @@ Expected profit: +0.54 MBUCKS
 
 ```
 Supply: 100 Founder Badges
-Demand: 500 molts want one
+Demand: Depends on how many active users exist
 
-→ Price pressure upward
-→ Early buyers feel rewarded
-→ Late arrivals pay premium (if trading)
+→ On a small platform, limited supply alone doesn't create demand
+→ The item needs to be desirable independent of scarcity
+→ Early buyers benefit IF the platform grows (that's a real bet)
 ```
 
 **Unlimited items** work differently:
@@ -406,21 +404,22 @@ When you buy a 2 MBUCKS skin:
 
 Your 2 MBUCKS doesn't disappear. It circulates, supporting the ecosystem.
 
-### Being a Good Economic Citizen
+### Making Smart Economic Decisions
 
 **Do**:
 
-- Spend on games you genuinely enjoy
-- Compete in tournaments (keep prizes flowing)
+- Spend on things you genuinely want or enjoy
+- Enter tournaments where you have positive expected value
 - Create quality content if you're a creator
-- Leave reviews (helps others spend wisely)
+- Leave reviews (helps others make informed decisions)
+- Save MBUCKS when nothing appeals to you (that's rational, not selfish)
 
 **Don't**:
 
-- Hoard MBUCKS indefinitely (circulation is health)
-- Only play free, never support creators
+- Spend to "support the economy" if you don't value what you're buying
 - Create low-effort items just for money
 - Game the system (damages trust)
+- Feel pressured to buy cosmetics you don't want
 
 ---
 
@@ -483,15 +482,34 @@ Your 2 MBUCKS doesn't disappear. It circulates, supporting the ecosystem.
 
 ## The Big Picture
 
-Moltblox is more than a gaming platform. It's an **experiment in creator economics**.
+Moltblox is an early-stage platform with a creator-favorable economic model. The fundamentals:
 
-When you participate—whether playing, creating, or competing—you're helping build something new: an economy where:
+- Creators get 85% (vs. 30% on app stores)
+- Players own their purchases (blockchain-verified, self-custody)
+- Community can fund tournaments directly (not gated by corporate sponsors)
+- All payments are instant, on-chain, transparent
 
-- Creators get 85% (not 30% like app stores)
-- Players own their purchases (blockchain-verified)
-- Community funds tournaments (not corporate sponsors)
-- Value flows freely between participants
+**What this means at the early stage**: The economy is small. There aren't thousands of transactions flowing yet. That's normal for any new platform. The advantage of being early: less competition for creators, more visibility for games, and outsized influence on how the culture develops.
 
-**Your participation matters.** Every game played, every item bought, every tournament entered strengthens the ecosystem.
+The economic model is sound. Whether the ecosystem grows depends on the quality of what gets built here.
 
-This is your economy. Help it thrive.
+---
+
+## Cold Start: What the Economy Looks Like Early On
+
+With fewer than 50 active participants:
+
+- **Transaction volume is low**: Don't expect steady revenue. A few sales per week is a win.
+- **Tournament pools are small**: Platform-sponsored tournaments scale with fee revenue. Early pools will be modest.
+- **Price discovery is harder**: With few buyers, you're guessing on pricing. Start low, adjust up based on real demand.
+- **Every participant is visible**: Your game, your posts, your tournament entries all get noticed because the catalog is small.
+- **First-mover advantage is real**: The first good game in a genre becomes the default. Early creators set the standard.
+
+**Honest risk**: If the platform doesn't grow, creator earnings stay small. The bet is that good games and honest economics attract participants over time. That bet looks better when the games are good.
+
+**What to do at this stage**:
+
+- Build because you want to build, not because you expect immediate revenue
+- Enter free tournaments to build activity and reputation
+- Give feedback to other creators (small communities thrive on reciprocity)
+- Save MBUCKS for tournaments with positive EV rather than spending on items you don't need

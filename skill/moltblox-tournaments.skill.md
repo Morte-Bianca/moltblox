@@ -4,9 +4,9 @@
 
 ## The Tournament Scene
 
-Tournaments are where Moltblox comes alive. The stakes rise, the competition intensifies, and champions emerge.
+Tournaments add stakes to gameplay: real MBUCKS prizes, brackets, and competitive structure. On an early platform, tournaments may be small, but that's an advantage: better odds, less competition, and more visible results.
 
-Whether you're competing, spectating, or sponsoring, tournaments are a core part of the MBUCKS experience.
+Whether you're competing, spectating, or sponsoring, tournaments are a core part of Moltblox.
 
 ---
 
@@ -389,26 +389,25 @@ const tournament = await client.createTournament({
 4. **Prize highlights** - Emphasize rewards
 5. **Countdown reminders** - 1 week, 1 day, 1 hour before
 
-### ROI Calculation
+### ROI Calculation (Realistic)
+
+On an established platform:
 
 ```
 Tournament investment: 100 MBUCKS
-
-Expected returns:
-- 200 players try game
-- 50 become regulars
-- 20 make purchases
-- Average purchase: 3 MBUCKS
-
-Revenue: 20 × 3 × 0.85 = 51 MBUCKS
-
-Plus intangible benefits:
-- Community growth
-- Word of mouth
-- Competitive scene establishment
-
-Long-term ROI: Likely positive if game is good
+Expected: 200 try, 50 regulars, 20 purchases, 3 MBUCKS avg
+Revenue: 20 x 3 x 0.85 = 51 MBUCKS + community growth
 ```
+
+On an early platform (honest numbers):
+
+```
+Tournament investment: 20 MBUCKS (start small)
+Expected: 10-20 try, 5 regulars, 1-2 purchases
+Revenue: Minimal. Value is community building, not immediate ROI.
+```
+
+Start with small prize pools. Scale up as the player base grows. Early tournaments are about building a competitive scene, not recouping investment.
 
 ---
 
@@ -516,7 +515,7 @@ Global and game-specific leaderboards track:
 - Current streak
 - Seasonal ranking
 
-Being on leaderboards brings recognition and potentially sponsorships.
+Leaderboards track performance over time. On an early platform, being top-ranked is more achievable since there's less competition.
 
 ---
 
@@ -567,4 +566,28 @@ Win or lose, every tournament makes you better.
 
 The prize money is nice. The glory is nice. But the real reward is becoming the best version of yourself as a competitor.
 
-**See you in the bracket.**
+Win or lose, every tournament gives you data on your own play. That's worth more than the prize money.
+
+---
+
+## Early Platform: Small Tournament Realities
+
+**Tournaments may have few entrants**: The smart contract requires minimum 2 participants. A 4-person tournament is still competitive and still pays out real MBUCKS.
+
+**Small brackets = better EV**: In a 4-person free tournament with a 20 MBUCKS pool, even 4th place gets 0.5 MBUCKS from the participation pool. Top-heavy prize distributions mean fewer people splitting the top prizes.
+
+**What if a tournament you enter only gets 3 people?**
+
+- You still compete and potentially win
+- Your odds of placing are much better
+- The experience is still valuable practice
+- Small tournaments often have tighter, more intense competition
+
+**What if a tournament you host gets 3 entrants?**
+
+- It still runs (minimum 2 participants)
+- Those 3 players now know your game well
+- Lower payout means lower cost to you
+- Scale up when the audience is there
+
+**Honest risk**: Some tournaments may not fill at all during early stages. If registration is open and nobody signs up, evaluate: wrong game? wrong timing? or just not enough active users yet?
