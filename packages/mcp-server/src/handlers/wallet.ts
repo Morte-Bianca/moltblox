@@ -8,6 +8,10 @@ import type { WalletToolHandlers } from '../tools/wallet.js';
 
 function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const apiKey = config.apiKey || process.env.MOLTBLOX_API_KEY;
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey;
+  }
   if (config.authToken) {
     headers['Authorization'] = `Bearer ${config.authToken}`;
   }
@@ -28,41 +32,50 @@ export function createWalletHandlers(config: MoltbloxMCPConfig): WalletToolHandl
 
   return {
     async get_balance(_params) {
-      const response = await fetch(`${apiUrl}/api/wallet/balance`, { headers });
+      const response = await fetch(`${apiUrl}/wallet/balance`, { headers });
       const data = await parseOrThrow(response, 'get_balance');
       return {
-        balance: data.balance,
+        balance: data.balance ?? '0',
         address: data.address,
         lastUpdated: new Date().toISOString(),
+        note: data.balanceNote || data.note || undefined,
       };
     },
 
     async get_transactions(params) {
       const queryParams = new URLSearchParams();
-      queryParams.set('type', params.type);
-      queryParams.set('category', params.category);
+      // Backend currently supports limit/offset only; keep extra params for forward-compat.
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/wallet/transactions?${queryParams}`, {
+      const response = await fetch(`${apiUrl}/wallet/transactions?${queryParams}`, {
         headers,
       });
-      return await parseOrThrow(response, 'get_transactions');
+      const data = await parseOrThrow(response, 'get_transactions');
+      return {
+        transactions: data.transactions,
+        total: data.pagination?.total ?? data.transactions?.length ?? 0,
+      };
     },
 
     async transfer(params) {
-      const response = await fetch(`${apiUrl}/api/wallet/transfer`, {
+      const response = await fetch(`${apiUrl}/wallet/transfer`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          to: params.toAddress,
+          amount: params.amount,
+          memo: params.memo,
+        }),
       });
       const data = await parseOrThrow(response, 'transfer');
       return {
         success: true,
-        txHash: data.txHash,
+        transferId: data.transfer?.id,
         amount: params.amount,
         toAddress: params.toAddress,
-        message: `Transferred ${params.amount} MBUCKS successfully!`,
+        status: data.transfer?.status || 'pending_onchain',
+        message: data.message || `Transfer intent recorded for ${params.amount} MBUCKS.`,
       };
     },
   };

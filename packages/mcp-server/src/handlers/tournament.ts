@@ -8,6 +8,10 @@ import type { TournamentToolHandlers } from '../tools/tournament.js';
 
 function authHeaders(config: MoltbloxMCPConfig): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const apiKey = config.apiKey || process.env.MOLTBLOX_API_KEY;
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey;
+  }
   if (config.authToken) {
     headers['Authorization'] = `Bearer ${config.authToken}`;
   }
@@ -35,12 +39,12 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
       queryParams.set('limit', params.limit.toString());
       queryParams.set('offset', params.offset.toString());
 
-      const response = await fetch(`${apiUrl}/api/tournaments?${queryParams}`, { headers });
+      const response = await fetch(`${apiUrl}/tournaments?${queryParams}`, { headers });
       return await parseOrThrow(response, 'browse_tournaments');
     },
 
     async get_tournament(params) {
-      const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}`, {
+      const response = await fetch(`${apiUrl}/tournaments/${params.tournamentId}`, {
         headers,
       });
       const data = await parseOrThrow(response, 'get_tournament');
@@ -48,7 +52,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
     },
 
     async register_tournament(params) {
-      const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}/register`, {
+      const response = await fetch(`${apiUrl}/tournaments/${params.tournamentId}/register`, {
         method: 'POST',
         headers,
       });
@@ -62,14 +66,14 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
     },
 
     async create_tournament(params) {
-      const response = await fetch(`${apiUrl}/api/tournaments`, {
+      const response = await fetch(`${apiUrl}/tournaments`, {
         method: 'POST',
         headers,
         body: JSON.stringify(params),
       });
       const data = await parseOrThrow(response, 'create_tournament');
       return {
-        tournamentId: data.tournamentId,
+        tournamentId: data.id || data.tournamentId,
         status: 'created',
         prizePool: params.prizePool,
         message: `Tournament "${params.name}" created with ${params.prizePool} MBUCKS prize pool!`,
@@ -78,7 +82,7 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
 
     async get_tournament_stats(params) {
       const playerId = params.playerId || 'me';
-      const response = await fetch(`${apiUrl}/api/players/${playerId}/tournament-stats`, {
+      const response = await fetch(`${apiUrl}/users/${playerId}/tournament-stats`, {
         headers,
       });
       const data = await parseOrThrow(response, 'get_tournament_stats');
@@ -86,31 +90,15 @@ export function createTournamentHandlers(config: MoltbloxMCPConfig): TournamentT
     },
 
     async spectate_match(params) {
-      const response = await fetch(
-        `${apiUrl}/api/tournaments/${params.tournamentId}/matches/${params.matchId}/spectate`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ quality: params.quality }),
-        },
+      throw new Error(
+        'spectate_match is not yet supported by the backend API. Use WS spectate with a live sessionId instead.',
       );
-      return await parseOrThrow(response, 'spectate_match');
     },
 
     async add_to_prize_pool(params) {
-      const response = await fetch(`${apiUrl}/api/tournaments/${params.tournamentId}/prize-pool`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ amount: params.amount }),
-      });
-      const data = await parseOrThrow(response, 'add_to_prize_pool');
-      return {
-        success: true,
-        tournamentId: params.tournamentId,
-        amountAdded: params.amount,
-        newPrizePool: data.newPrizePool,
-        message: `Added ${params.amount} MBUCKS to prize pool!`,
-      };
+      throw new Error(
+        'add_to_prize_pool is not yet supported by the backend API. Prize pool changes are on-chain/ops-managed for now.',
+      );
     },
   };
 }

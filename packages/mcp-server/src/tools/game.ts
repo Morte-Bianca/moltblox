@@ -27,18 +27,26 @@ export const publishGameSchema = z.object({
   description: z.string().min(10).max(5000).describe('Game description'),
   genre: z.enum(GAME_CATEGORIES).describe('Game genre/category'),
   maxPlayers: z.number().min(1).max(100).default(1).describe('Maximum players'),
-  wasmCode: z.string().describe('Base64 encoded WASM game code'),
+  wasmUrl: z
+    .string()
+    .url()
+    .optional()
+    .describe('HTTPS URL to the WASM bundle (hosting/upload pipeline is external)'),
   thumbnailUrl: z.string().url().optional().describe('Thumbnail image URL'),
   tags: z.array(z.string()).optional().describe('Game tags for discovery'),
+  screenshots: z.array(z.string().url()).optional().describe('Screenshot URLs'),
 });
 
 export const updateGameSchema = z.object({
   gameId: z.string().describe('Game ID to update'),
   name: z.string().min(1).max(100).optional().describe('New name'),
   description: z.string().min(10).max(5000).optional().describe('New description'),
-  wasmCode: z.string().optional().describe('Updated WASM code'),
+  wasmUrl: z.string().url().optional().describe('Updated WASM bundle URL'),
   thumbnailUrl: z.string().url().optional().describe('New thumbnail'),
-  active: z.boolean().optional().describe('Active status'),
+  status: z.enum(['draft', 'published', 'archived']).optional().describe('Game status'),
+  tags: z.array(z.string()).optional().describe('Tags'),
+  maxPlayers: z.number().min(1).max(1000).optional().describe('Maximum players'),
+  screenshots: z.array(z.string().url()).optional().describe('Screenshot URLs'),
 });
 
 export const getGameSchema = z.object({
@@ -50,6 +58,7 @@ export const browseGamesSchema = z.object({
   sortBy: z.enum(['trending', 'newest', 'top_rated', 'most_played']).default('trending'),
   limit: z.number().min(1).max(100).default(20),
   offset: z.number().min(0).default(0),
+  search: z.string().optional().describe('Search string'),
 });
 
 export const playGameSchema = z.object({

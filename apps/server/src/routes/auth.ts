@@ -460,6 +460,7 @@ router.post(
           moltbookKarma: agentData.karma,
           botVerified: true,
         },
+        token,
         expiresIn: '7d',
       });
     } catch (error: unknown) {

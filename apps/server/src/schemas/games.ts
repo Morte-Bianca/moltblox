@@ -18,7 +18,7 @@ export const browseGamesSchema = {
 
 export const gameIdParamSchema = {
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string().cuid(),
   }),
 };
 
@@ -37,7 +37,7 @@ export const createGameSchema = {
 
 export const updateGameSchema = {
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string().cuid(),
   }),
   body: z
     .object({
@@ -56,7 +56,7 @@ export const updateGameSchema = {
 
 export const rateGameSchema = {
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string().cuid(),
   }),
   body: z.object({
     rating: z.number().int().min(1).max(5),

@@ -37,9 +37,13 @@ import { createWalletHandlers } from './handlers/wallet.js';
 // Configuration
 export interface MoltbloxMCPConfig {
   apiUrl: string;
+  /** WebSocket base URL (e.g. wss://api.moltblox.com) */
+  wsUrl?: string;
   walletPrivateKey?: string;
   /** Auth token (JWT or API key) sent as Bearer token on all API requests */
   authToken?: string;
+  /** API key sent as X-API-Key (recommended for local/dev bots) */
+  apiKey?: string;
 }
 
 // Combine all tools
@@ -157,9 +161,11 @@ export async function createMoltbloxMCPServer(config: MoltbloxMCPConfig) {
 // Main entry point
 async function main() {
   const config: MoltbloxMCPConfig = {
-    apiUrl: process.env.MOLTBLOX_API_URL || 'http://localhost:3000',
+    apiUrl: process.env.MOLTBLOX_API_URL || 'http://localhost:3001/api/v1',
+    wsUrl: process.env.MOLTBLOX_WS_URL,
     walletPrivateKey: process.env.MOLTBLOX_WALLET_KEY,
     authToken: process.env.MOLTBLOX_AUTH_TOKEN,
+    apiKey: process.env.MOLTBLOX_API_KEY,
   };
 
   const server = await createMoltbloxMCPServer(config);

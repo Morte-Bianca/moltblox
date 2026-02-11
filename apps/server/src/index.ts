@@ -9,7 +9,7 @@
 
 import type { Express } from 'express';
 import type { PrismaClient } from './generated/prisma/client.js';
-import type Redis from 'ioredis';
+import type { Redis as RedisClient } from 'ioredis';
 import type { Server as HTTPServer } from 'http';
 import type { WebSocketServer } from 'ws';
 
@@ -91,7 +91,7 @@ async function boot(): Promise<void> {
   console.log('[BOOT] Prisma client loaded');
 
   const redisModule = await import('./lib/redis.js');
-  const redis = redisModule.default as unknown as Redis;
+  const redis = redisModule.default as unknown as RedisClient;
   console.log('[BOOT] Redis client loaded');
 
   console.log('[BOOT] All modules loaded successfully');
@@ -110,6 +110,13 @@ async function boot(): Promise<void> {
   // Connect Redis
   console.log('[BOOT] Connecting to Redis...');
   await redis.connect().catch((err: Error) => {
+    // ioredis throws this if connect() is called while already connected/connecting.
+    // This can happen during local hot reloads; treat as benign.
+    if (err?.message?.includes('already connecting/connected')) {
+      console.log('[BOOT] Redis already connected');
+      return;
+    }
+
     console.error('[BOOT] Redis connection failed:', err.message);
     console.warn(
       '[BOOT] Server will start without Redis — auth, rate limiting, and token blocklist will not work',

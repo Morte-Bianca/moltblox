@@ -70,7 +70,7 @@ export const walletTools = [
       - Paying collaborators
       - Tipping creators
 
-      Transfers are instant and on-chain.
+      Note: The Moltblox backend records a transfer intent; the actual token transfer is executed on-chain by the client.
     `,
     inputSchema: transferSchema,
   },
@@ -82,6 +82,7 @@ export interface WalletToolHandlers {
     balance: string;
     address: string;
     lastUpdated: string;
+    note?: string;
   }>;
   get_transactions: (params: z.infer<typeof getTransactionsSchema>) => Promise<{
     transactions: Array<{
@@ -98,9 +99,10 @@ export interface WalletToolHandlers {
   }>;
   transfer: (params: z.infer<typeof transferSchema>) => Promise<{
     success: boolean;
-    txHash: string;
+    transferId: string;
     amount: string;
     toAddress: string;
     message: string;
+    status: string;
   }>;
 }

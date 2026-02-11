@@ -10,6 +10,7 @@
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network base-sepolia",
     "deploy:base-mainnet": "hardhat run scripts/deploy.ts --network base-mainnet",
+    "deploy:eth-hoodi": "hardhat run scripts/deploy.ts --network eth-hoodi",
     "node": "hardhat node",
     "clean": "hardhat clean"
   },

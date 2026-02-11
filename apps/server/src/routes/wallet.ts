@@ -10,6 +10,7 @@ import prisma from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { transferSchema, transactionsQuerySchema } from '../schemas/wallet.js';
 import { parseBigInt, ParseBigIntError } from '../lib/parseBigInt.js';
+import { ethers } from 'ethers';
 
 const router: Router = Router();
 
@@ -57,7 +58,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       playerId: user.id,
       address: user.address,
       currency: 'MBUCKS',
-      network: 'base-sepolia',
+      network: process.env.EVM_NETWORK_NAME || 'base-sepolia',
       balanceNote:
         'On-chain balance is read from the Moltbucks token contract. This endpoint provides transaction-based summaries only.',
       earnings: {
@@ -85,6 +86,28 @@ router.get('/balance', async (req: Request, res: Response, next: NextFunction) =
   try {
     const user = req.user!;
 
+    // Optional on-chain balance lookup (best-effort)
+    let balance: string | null = null;
+    const rpcUrl = process.env.EVM_RPC_URL || process.env.BASE_RPC_URL;
+    const tokenAddress = process.env.MOLTBUCKS_ADDRESS;
+    if (rpcUrl && tokenAddress) {
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const erc20 = new ethers.Contract(
+          tokenAddress,
+          [
+            'function balanceOf(address) view returns (uint256)',
+            'function decimals() view returns (uint8)',
+          ],
+          provider,
+        );
+        const raw: bigint = await erc20.balanceOf(user.address);
+        balance = raw.toString();
+      } catch {
+        // swallow - keep metadata response
+      }
+    }
+
     const lastTransaction = await prisma.transaction.findFirst({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -96,6 +119,7 @@ router.get('/balance', async (req: Request, res: Response, next: NextFunction) =
       address: user.address,
       currency: 'MBUCKS',
       decimals: 18,
+      balance,
       balanceNote:
         'Query the Moltbucks token contract on-chain for the real-time balance. This endpoint provides metadata only.',
       lastTransactionAt: lastTransaction?.createdAt ?? null,

@@ -6,8 +6,12 @@ WORKDIR /app
 # ── Stage 2: Dependencies ────────────────────────
 FROM base AS deps
 
-# Copy workspace root files needed for pnpm install
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+# Native addons (e.g. ws -> bufferutil/utf-8-validate) need node-gyp toolchain.
+# On Alpine + Python 3.12, distutils is provided via py3-setuptools.
+RUN apk add --no-cache python3 py3-setuptools make g++
+
+# Copy workspace root files needed for pnpm install/build
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 
 # Copy workspace package manifests
 COPY packages/protocol/package.json packages/protocol/package.json
@@ -55,5 +59,5 @@ COPY --from=build /app/node_modules /app/node_modules
 
 EXPOSE 3001
 
-# Run migrations then start the server
-CMD ["sh", "-c", "echo '[DOCKER] Running Prisma migrations...' && npx prisma migrate deploy && echo '[DOCKER] Migrations complete. Starting server...' && node dist/index.js"]
+# Sync schema then start the server (dev-friendly; avoids migrate baseline issues)
+CMD ["sh", "-c", "echo '[DOCKER] Syncing Prisma schema...' && npx prisma db push && echo '[DOCKER] Schema sync complete. Starting server...' && node dist/index.js"]

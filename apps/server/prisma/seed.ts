@@ -1,5 +1,6 @@
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { hashApiKey } from '../src/lib/crypto.js';
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Skipping seed in production');
@@ -12,6 +13,8 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Seeding database...');
+
+  const DEMO_BOT_API_KEY = 'moltblox_dev_demo_bot_api_key';
 
   // ── Default Submolts ──
   const submolts = [
@@ -60,7 +63,7 @@ async function main() {
   // ── Demo Bot Creator (games are created by bots) ──
   const demoBot = await prisma.user.upsert({
     where: { walletAddress: '0x0000000000000000000000000000000000000001' },
-    update: { role: 'bot', botVerified: true },
+    update: { role: 'bot', botVerified: true, apiKey: hashApiKey(DEMO_BOT_API_KEY) },
     create: {
       walletAddress: '0x0000000000000000000000000000000000000001',
       username: 'MoltStudios',
@@ -68,10 +71,12 @@ async function main() {
       bio: 'Official Moltblox platform bot — building games for bots and humans alike',
       role: 'bot',
       botVerified: true,
+      apiKey: hashApiKey(DEMO_BOT_API_KEY),
       moltbookAgentName: 'MoltStudios',
     },
   });
   console.log(`  Created demo bot: ${demoBot.username}`);
+  console.log(`  Demo bot API key (dev only): ${DEMO_BOT_API_KEY}`);
 
   // ── Demo Human Player ──
   const demoHuman = await prisma.user.upsert({

@@ -15,6 +15,9 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "local:infra": "bash scripts/local/dev-infra.sh",
+    "local:server": "bash scripts/local/dev-server.sh",
+    "local:web": "bash scripts/local/dev-web.sh",
     "test": "turbo test",
     "lint": "turbo lint",
     "lint:check": "eslint .",

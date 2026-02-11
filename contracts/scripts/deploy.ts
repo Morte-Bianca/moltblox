@@ -28,7 +28,21 @@ async function main() {
   console.log("   Moltbucks deployed to:", moltbucksAddress);
 
   // 2. Treasury address — deployer for testnet, multisig for mainnet
-  const treasuryAddress = process.env.TREASURY_ADDRESS || deployer.address;
+  const configuredTreasury = process.env.TREASURY_ADDRESS;
+  const isValidTreasury = configuredTreasury ? ethers.isAddress(configuredTreasury) : false;
+  const isZeroTreasury =
+    configuredTreasury && isValidTreasury
+      ? configuredTreasury.toLowerCase() === "0x0000000000000000000000000000000000000000"
+      : false;
+  const treasuryAddress = !configuredTreasury || !isValidTreasury || isZeroTreasury ? deployer.address : configuredTreasury;
+
+  if (!configuredTreasury) {
+    console.log("\n2. Treasury address: (not set) using deployer address");
+  } else if (!isValidTreasury) {
+    console.log("\n2. Treasury address: (invalid) using deployer address");
+  } else if (isZeroTreasury) {
+    console.log("\n2. Treasury address: (zero address) using deployer address");
+  }
   console.log("\n2. Treasury address:", treasuryAddress);
 
   // 3. Deploy GameMarketplace
@@ -111,7 +125,22 @@ async function main() {
 
   // Verify on block explorer (skip for localhost/hardhat)
   if (networkName !== "hardhat" && networkName !== "localhost") {
-    console.log("\n  Verifying contracts on BaseScan...");
+    const isBase = networkName === "base-sepolia" || networkName === "base-mainnet";
+    const isHoodi = networkName === "eth-hoodi";
+    const explorerLabel = isBase ? "BaseScan" : isHoodi ? "Etherscan" : "block explorer";
+
+    const canVerify = isBase
+      ? Boolean(process.env.BASESCAN_API_KEY)
+      : isHoodi
+        ? Boolean(process.env.ETHERSCAN_API_KEY)
+        : false;
+
+    if (!canVerify) {
+      console.log(`\n  Skipping contract verification (missing API key for ${explorerLabel}).`);
+      return;
+    }
+
+    console.log(`\n  Verifying contracts on ${explorerLabel}...`);
 
     try {
       await run("verify:verify", {
